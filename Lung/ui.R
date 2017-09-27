@@ -12,9 +12,12 @@ shinyUI(fluidPage(
           tabPanel('Processed',dataTableOutput('full_num')),
           tabPanel('pFEV',dataTableOutput('pFEV_wf_r')),
           tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf_r')),
+          tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf_r')),
+          #i_pFEV_sm_lf_r
           #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
           tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f_r")),
-          tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f_r"))
+          tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f_r")),
+          tabPanel('cluster',dataTableOutput("cluster_data"))
           
           #tabPanel('lm',dataTableOutput("df_lm_table")),
           #tabPanel('lm imputed',dataTableOutput("df_lm_table_i")),

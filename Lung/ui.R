@@ -71,30 +71,15 @@ shinyUI(fluidPage(
                              
                              ),    
                     
-                    ###### CLUSTERING #########
-                    tabPanel('Clustering',
-                             selectInput('mix_clust_col_fac','Clustering Columns',colnames(full_fac_0),multiple = T,selected = default_cluster_list ,width = 600),
-                             selectInput('mix_clust_col_num','Clustering Columns',colnames(i_pFEV_ts),multiple = T,selected = c(pFEV_numeric_colnames_f),width = 600),
-                             HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
-                             numericInput('fac_weight', "Weight of Factors", 0, min = 0, max = 20, step = 1),
-                             plotOutput('mix_clu'),
-                             plotOutput('discrete_cluster_plot'),
-                             numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
-         
-                             dataTableOutput('discrete_x_table'),
-                             plotOutput('discrete_cutree_line'),
-                             plotOutput('discrete_cutree_mean')
-                             
 
-                    ),
-                    ##### BOSS #######
-                    tabPanel('BOSS',
-                             tabsetPanel(
-                               tabPanel('BOSS temp',
-                                        plotOutput('boss_test'))
-                             )
-                             
-                    ),#BOSS
+                    # ##### BOSS #######
+                    # tabPanel('BOSS',
+                    #          tabsetPanel(
+                    #            tabPanel('BOSS temp',
+                    #                     plotOutput('boss_test'))
+                    #          )
+                    #          
+                    # ),#BOSS
                     ############## STAT ################
                     tabPanel('Stats',
                              column(12,
@@ -125,12 +110,13 @@ shinyUI(fluidPage(
                                                        HTML(paste0('T test calculated on pFEV slopes for each patient, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('slope_pFEV_text'))),
                                                        tabsetPanel(
                                                          tabPanel('Original Data',
-                                                           dataTableOutput('slope_table'),
-                                                           plotOutput('slope_boxplot')
+                                                          plotOutput('slope_boxplot'),
+                                                           dataTableOutput('slope_table')
                                                          ), 
                                                          tabPanel('Imputed',
-                                                               dataTableOutput('slope_table_i'),
-                                                               plotOutput('slope_boxplot_i')
+                                                               plotOutput('slope_boxplot_i'),
+                                                               dataTableOutput('slope_table_i')
+                                                               #plotOutput('slope_boxplot_i')
                                                          )
                                                        )
                                               ),
@@ -153,16 +139,18 @@ shinyUI(fluidPage(
                                                    HTML(paste0('T test calculated on imputed smoothed first differential values (D1), (use with caution)')),
                                                    HTML(paste0('the timepoints can be adjusted using the Pre and Post Treatment Range Sliders ',textOutput('t_range_text'))),
                                                    
-                                                   column(6,sliderInput('pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,-2),width = 800)),
-                                                   column(6,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(2,6),width = 800)),
+                                                   column(6,sliderInput('pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
+                                                   column(6,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
                                                    tabsetPanel(
                                                      tabPanel('Original Data',
-                                                              dataTableOutput('pp_t_table_ranges'),
-                                                              plotOutput('boxplot_pp_ranges')
+                                                              plotOutput('boxplot_pp_ranges'),
+                                                              dataTableOutput('pp_t_table_ranges')
+                                                              
                                                      ),
                                                      tabPanel('Imputed',
-                                                              dataTableOutput('pp_t_table_ranges_i'),
-                                                              plotOutput('boxplot_pp_ranges_i')
+                                                              plotOutput('boxplot_pp_ranges_i'),
+                                                              dataTableOutput('pp_t_table_ranges_i')
+                                                              
                                                      )
                                                    )
 
@@ -200,13 +188,14 @@ shinyUI(fluidPage(
                                                        HTML(paste0('T test calculated on log2 ratio, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_ratio_text'))),
                                                        tabsetPanel(
                                                          tabPanel('Original Data',
-                                                           dataTableOutput('pp_t_table_ratio'),
-                                                           plotOutput('boxplot_pp_ratio')
+                                                           plotOutput('boxplot_pp_ratio'),
+                                                           dataTableOutput('pp_t_table_ratio')
                                                             ),
                                                          tabPanel('Imputed',
                                                                   #HTML(paste0('T test calculated on log2 ratio, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_ratio_text'))),
-                                                                  dataTableOutput('pp_t_table_ratio_i'),
-                                                                  plotOutput('boxplot_pp_ratio_i')
+                                                                  plotOutput('boxplot_pp_ratio_i'),
+                                                                  dataTableOutput('pp_t_table_ratio_i')
+                                                                  
                                                                )
                                                          
                                                          )
@@ -244,20 +233,7 @@ shinyUI(fluidPage(
                                                    )
                                             #column(6,plotOutput('boxplot_i_change'))
                                             ),
-                                        #### CLUSTERING ####
-                                        tabPanel('Clustering',
-                            
-                                                 selectInput('d1_mix_clust_col_fac','Clustering Columns',colnames(full_fac_0),multiple = T,selected = c("Status","SignOfInfection","NewCTChange","HLAType","HLAStrength"),width = 600),
-                                                 selectInput('d1_mix_clust_col_num','Clustering Columns',colnames(i_pFEV_ts),multiple = T,selected = c(pFEV_numeric_colnames_f),width = 600),
-                                                 numericInput('d1_fac_weight', "Weight of Factors", 0, min = 0, max = 10, step = 1),
-                                                 plotOutput('mix_clu_d1'),
-                                                 plotOutput('discrete_cluster_plot_d1'),
-                                                 numericInput('d1_clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
-                                                 
-                                                 dataTableOutput('discrete_x_table_d1'),
-                                                 plotOutput('discrete_cutree_line_d1'),
-                                                 plotOutput('discrete_cutree_mean_d1')
-                                                 ),
+
                                         ##### STATS ###########
                                         tabPanel('Stats',
                                                  tabsetPanel(
@@ -269,9 +245,8 @@ shinyUI(fluidPage(
                                                    ),
                                                    tabPanel('Slope',
                                                             HTML(paste0('T test calculated on imputed smoothed first differential slopes for each patient, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('slope_d1_text'))),
-                                                            
-                                                            dataTableOutput('slope_table_d1'),
-                                                            plotOutput('slope_boxplot_d1')
+                                                            plotOutput('slope_boxplot_d1'),
+                                                            dataTableOutput('slope_table_d1')
                                                    ),
                                                    # tabPanel('t test',
                                                    #          HTML(paste0('T test calculated on imputed smoothed first differential values (D1), (use with caution)')),
@@ -283,11 +258,16 @@ shinyUI(fluidPage(
                                                    tabPanel('t test',
                                                             HTML(paste0('T test calculated on imputed smoothed first differential values (D1), (use with caution)')),
                                                             HTML(paste0('the timepoints can be adjusted using the Pre and Post Treatment Range Sliders ',textOutput('t_d1_text'))),
+                                                            HTML(paste(textOutput('paired_t_d1'))),
+                                                            column(6,sliderInput('d1_pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
+                                                            column(6,sliderInput('d1_post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
+                                                            column(12,
+                                                                   plotOutput('boxplot_pp_ranges_d1'),
+
+                                                              dataTableOutput('pp_t_table_ranges_d1')
+                                                            )
                                                             
-                                                            column(6,sliderInput('d1_pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,-2),width = 800)),
-                                                            column(6,sliderInput('d1_post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(2,6),width = 800)),
-                                                            dataTableOutput('pp_t_table_ranges_d1'),
-                                                            plotOutput('boxplot_pp_ranges_d1')
+                                                            
                                                             
                                                             )
                                                    
@@ -313,14 +293,56 @@ shinyUI(fluidPage(
 
              )) #tabsetPanel
     ),#change
+    #### CLUSTERING ####
+    tabPanel('Clustering',
+             
+             column(6,
+                    selectInput('mix_clust_col_fac','Discrete Columns',colnames(full_fac_0),multiple = T,selected = default_cluster_list,width = 600),
+                    numericInput('fac_weight', "Weight of Factors", 0, min = 0, max = 20, step = 1)),
+             column(6,
+                    selectInput('mix_clust_col_num','Continuous Columns',colnames(i_pFEV_ts),multiple = T,selected = c(pFEV_numeric_colnames_f),width = 600),
+                    numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1)),
+             column(12,
+                HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
+                    
+                tabsetPanel(
+                  ###### CLUSTERING #########
+                  tabPanel('Imputed pFEV Data',
+                           #selectInput('mix_clust_col_fac','Clustering Columns',colnames(full_fac_0),multiple = T,selected = default_cluster_list ,width = 600),
+                           #selectInput('mix_clust_col_num','Clustering Columns',colnames(i_pFEV_ts),multiple = T,selected = c(pFEV_numeric_colnames_f),width = 600),
+                           #HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
+                           #numericInput('fac_weight', "Weight of Factors", 0, min = 0, max = 20, step = 1),
+                           plotOutput('mix_clu'),
+                           plotOutput('discrete_cluster_plot'),
+                           #numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
+                           dataTableOutput('discrete_x_table'),
+                           plotOutput('discrete_cutree_line'),
+                           plotOutput('discrete_cutree_mean'),
+                           htmlOutput('D_text')
+                           
+                           
+                  ),
+                  tabPanel('Change Data (D1)',
+                   plotOutput('mix_clu_d1'),
+                   plotOutput('discrete_cluster_plot_d1'),
+                   dataTableOutput('discrete_x_table_d1'),
+                   plotOutput('discrete_cutree_line_d1'),
+                   plotOutput('discrete_cutree_mean_d1'),
+                   htmlOutput('D_d1_text')
+                  ),
+                  tabPanel('Comparison',
+                           HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
+                           plotOutput('cluster_comparison'))
+                )
+             )
+    ),
 
     ######### R SESSION INFO #########
           tabPanel('R Session Info',
-                   tabsetPanel(
-                     tabPanel('SessionInfo',HTML(paste(htmlOutput("sessionInfo")))),
-                     tabPanel('Package Citations',HTML(paste(htmlOutput('cite'))))
-                   )
-          )
+                              htmlOutput('citation1')
+                              
+                              )
+
   #### END #########
 
   )#tabset

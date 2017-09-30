@@ -13,6 +13,19 @@ shinyServer(function(input, output) {
     paste(capture.output(si$R.version$version.string), '"<br />"')
   })
   
+  output$citation1 = renderText({
+    citations = c(paste(si$R.version$version.string),'"<br />"',paste0('<span style="font-weight:bold">Rcpp</span>'),toBibtex(citation('base')))
+    
+    for(i in c(1:length(si$otherPkgs))){
+      pack = si$otherPkgs[[i]]$Package
+      if(pack != 'base'){
+        citations = c(citations,'<br/>',paste0('<span style="font-weight:bold">',pack,'</span>'),toBibtex(citation(pack)))
+      }
+    }
+    paste(citations,collapse='<br/>')
+    #toBibtex(citation('dendextend'))
+  })
+  
   output$t1 = renderText(input$anova_range[1])
   output$t2 = renderText(input$anova_range[2])
   output$t_range_text = renderText(paste('(',input$pre_range[1],' to ',input$pre_range[2],') vs (',input$post_range[1],' to ',input$post_range[2],')'))
@@ -417,6 +430,9 @@ shinyServer(function(input, output) {
   ##### CLUSTERING ###############
   
   discrete_cluster_D = reactive({
+    data = i_pFEV_wf[c(1:10),c(1:10)]
+    fac_weight = 10
+    d_num = 3
     r_list = retained_patients()
     f_cols = eval(input$mix_clust_col_fac)
     n_cols = eval(input$mix_clust_col_num)
@@ -424,8 +440,9 @@ shinyServer(function(input, output) {
     data = i_pFEV_wf[r_list,c(n_cols,f_cols)]
     o_data = data
     colnames(data)
-    weights = c()
+    
     fac_weight = input$fac_weight
+    weights = c()
     for(entry in colnames(data)){
       if(entry %in% pFEV_numeric_colnames_f){
         weights = c(weights,10)
@@ -433,6 +450,7 @@ shinyServer(function(input, output) {
         weights = c(weights,fac_weight)
       }
     }
+    weights
     data_dist = dist.subjects(data,weights = weights)
     D = dendro.subjects(data_dist,weights = weights)
     x = cutree(D, k = d_num)
@@ -446,43 +464,33 @@ shinyServer(function(input, output) {
     list(D = D,o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
   })
   
-  # isolate_cluster = reactive({
-  #   data = discrete_cluster_D()$data
-  #   print(data$cluster)
+  # test_dd = reactive({
+    #gg<-rect.hclust(D,k=2)
+  #   gg
+    # D %>% set("branches_k_color", k = 5) %>%
+    #   plot(main)
   #   
-  #   pFEV_wf_r()$cluster = data$cluster
-  #   pFEV_lf_r_c = melt(pFEV_wf_r(), id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = colnames(pFEV_w))
-  #   
-  #   i_pFEV_wf_r()$cluster <- data$cluster
-  #   
-  #   i_pFEV_lf_r()$cluster <- pFEV_lf_r_c$cluster[match(i_pFEV_lf_r()$MRN,pFEV_lf_r_c$MRN)]
-  #   
-  #   i_pFEV_sm_d1_f_r()$cluster <- pFEV_wf_r()$cluster[match(i_pFEV_sm_d1_f_r()$MRN,pFEV_wf_r()$MRN)]
-  #   i_pFEV_sm_d1_fl_r()$cluster <- pFEV_lf_r_c$cluster[match(i_pFEV_sm_d1_fl_r()$MRN,pFEV_lf_r_c$MRN)]
-  #   
-  #   i_pFEV_sm_d2_f_r()$cluster <- pFEV_wf_r()$cluster[match(i_pFEV_sm_d2_f_r()$MRN,pFEV_wf_r()$MRN)]
-  #   i_pFEV_sm_d2_fl_r()$cluster <- pFEV_lf_r_c$cluster[match(i_pFEV_sm_d2_fl_r()$MRN,pFEV_lf_r_c$MRN)]
-  #   
-  #   list(i = i_pFEV_wf_r(), il = i_pFEV_lf_r(), 
-  #        p = pFEV_wf_r(), pl = pFEV_lf_r_c, 
-  #        d1 = i_pFEV_sm_d1_f_r(), d1l = i_pFEV_sm_d1_fl_r(),
-  #        d2 = i_pFEV_sm_d2_f_r(), d2l = i_pFEV_sm_d2_fl_r())
   # })
-  # 
-      #### ISOLATE cluster ##### 
-          # i_pFEV_wf_r = reactive(isolate_cluster()$i)
-          # i_pFEV_lf_r = reactive(isolate_cluster()$il)
-          # pFEV_wf_r = reactive(isolate_cluster()$p)
-          # pFEV_lf_r = reactive(isolate_cluster()$pl)
-          # i_pFEV_sm_d1_f_r = reactive(isolate_cluster()$d1)
-          # i_pFEV_sm_d1_fl_r = reactive(isolate_cluster()$d1l)
-          # i_pFEV_sm_d2_f_r = reactive(isolate_cluster()$d2)
-          # i_pFEV_sm_d2_fl_r = reactive(isolate_cluster()$d2l)
+  
+  
       ### PLOT CLUSTERS ####
-
+          output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
+  
+          #output$D = renderText(print(str(discrete_cluster_D()$D)))
+  
+           
           output$discrete_cluster_plot = renderPlot({
             D = discrete_cluster_D()$D
-            plot(D,cex.lab = 0.5)
+            #plot(D,cex.lab = 0.5)
+            
+            #ggdendrogram(D)
+            #ggdend(D)
+            d_num = input$clutree_num
+            cols = rev(ggplotColours(d_num))
+            par(lwd = 5)
+            D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+              plot()
+
           })
 
           output$discrete_x_table = renderDataTable(discrete_cluster_D()$x_cluster)
@@ -660,16 +668,16 @@ shinyServer(function(input, output) {
   discrete_cluster_D_d1 = reactive({
     r_list = retained_patients()
 
-    f_cols = eval(input$d1_mix_clust_col_fac)
+    f_cols = eval(input$mix_clust_col_fac)
 
-    n_cols = eval(input$d1_mix_clust_col_num)
+    n_cols = eval(input$mix_clust_col_num)
 
-    d_num = input$d1_clutree_num
+    d_num = input$clutree_num
     data = i_pFEV_sm_d1_f[r_list,c(n_cols,f_cols)]
     o_data = data
 
     weights = c()
-    fac_weight = input$d1_fac_weight
+    fac_weight = input$fac_weight
     for(entry in colnames(data)){
       if(entry %in% pFEV_numeric_colnames_f){
         weights = c(weights,10)
@@ -692,58 +700,30 @@ shinyServer(function(input, output) {
     list(D = D,o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
   })
   
-  isolate_cluster_d1 = reactive({
-    data = discrete_cluster_D_d1()$data
-    
-    pFEV_wf_r()$cluster_d1 = data$cluster
-    pFEV_lf_r_c = melt(pFEV_wf_r(), id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w))
-    
-    
-    #pFEV_lf_r()$cluster_d1 <- data$cluster[match(pFEV_lf_r()$MRN,data$MRN)]
-  
-    #i_pFEV_wf_r()$cluster_d1 <- data$cluster[match(i_pFEV_wf_r()$MRN,data$MRN)]
-    i_pFEV_wf_r()$cluster_d1 <- data$cluster
-    
-    i_pFEV_lf_r()$cluster_d1 <- pFEV_lf_r_c$cluster_d1[match(i_pFEV_lf_r()$MRN,pFEV_lf_r_c$MRN)]
-    
-    i_pFEV_sm_d1_f_r()$cluster_d1 <- pFEV_wf_r()$cluster_d1[match(i_pFEV_sm_d1_f_r()$MRN,pFEV_wf_r()$MRN)]
-    i_pFEV_sm_d1_fl_r()$cluster_d1 <- pFEV_lf_r_c$cluster_d1[match(i_pFEV_sm_d1_fl_r()$MRN,pFEV_lf_r_c$MRN)]
-    
-    i_pFEV_sm_d2_f_r()$cluster_d1 <- pFEV_wf_r()$cluster_d1[match(i_pFEV_sm_d2_f_r()$MRN,pFEV_wf_r()$MRN)]
-    i_pFEV_sm_d2_fl_r()$cluster_d1 <- pFEV_lf_r_c$cluster_d1[match(i_pFEV_sm_d2_fl_r()$MRN,pFEV_lf_r_c$MRN)]
-    
-    
-    list(i = i_pFEV_wf_r(), il = i_pFEV_lf_r(), 
-         p = pFEV_wf_r(), pl = pFEV_lf_r_c, 
-         d1 = i_pFEV_sm_d1_f_r(), d1l = i_pFEV_sm_d1_fl_r(), 
-         d2 = i_pFEV_sm_d2_f_r(), d2l = i_pFEV_sm_d2_fl_r())
-  })
-  
-      #### ISOLATE cluster ##### 
-        # i_pFEV_wf_r = reactive(isolate_cluster_d1()$i)
-        # i_pFEV_lf_r = reactive(isolate_cluster_d1()$il)
-        # pFEV_wf_r = reactive(isolate_cluster_d1()$p)
-        # pFEV_lf_r = reactive(isolate_cluster_d1()$pl)
-        # i_pFEV_sm_d1_f_r = reactive(isolate_cluster_d1()$d1)
-        # i_pFEV_sm_d1_fl_r = reactive(isolate_cluster_d1()$d1l)
-        # i_pFEV_sm_d2_f_r = reactive(isolate_cluster_d1()$d2)
-        # i_pFEV_sm_d2_fl_r = reactive(isolate_cluster_d1()$d2l)
       ### PLOT CLUSTERS ####
       
         output$discrete_cluster_plot_d1 = renderPlot({
           D = discrete_cluster_D_d1()$D
-          plot(D,cex.lab = 0.5)
+          #plot(D,cex.lab = 0.5)
+          d_num = input$clutree_num
+          cols = rev(ggplotColours(d_num))
+          par(lwd = 5)
+          D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+            plot()
         })
         
-        
-        output$discrete_x_table_d1 = renderDataTable(discrete_cluster_D_d1()$x_cluster)
+        output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
+  
+        output$discrete_x_table_d1 = renderDataTable({
+          discrete_cluster_D_d1()$x_cluster
+          })
         
       
         discrete_cutree_line_plots_d1 = reactive({
           data = discrete_cluster_D_d1()$data
           cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
           data = cbind(data,full_fac_0[rownames(data),])
-          n_cols = eval(input$d1_mix_clust_col_num)
+          n_cols = eval(input$mix_clust_col_num)
           max_n_cols = factor(max(as.numeric(n_cols)))
           min_n_cols = factor(min(as.numeric(n_cols)))
           m = which(colnames(i_pFEV_sm_d1) == min_n_cols)
@@ -787,6 +767,12 @@ shinyServer(function(input, output) {
           weights = discrete_cluster_D_d1()$weights
           D = discrete_cluster_D_d1()$D
           mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
+        })
+        
+        output$cluster_comparison = renderPlot({
+          ggplot(NULL) + 
+            stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=4,aes(x = variable, y = value,group=cluster,col = cluster)) +
+            stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=2,aes(x = variable, y = value,group=cluster_d1,col= cluster_d1)) 
         })
   
 ####################### D2 #########################
@@ -996,18 +982,27 @@ shinyServer(function(input, output) {
             df = slope_function(full_data,factor,cols)
             
           })
+          
+          slope_boxplot_data = reactive(slope_boxplot_data_function(df_lm_sample(),df_slope(),input$global_factor))
+          output$slope_boxplot = renderPlot(slope_boxplot_function(slope_boxplot_data(),input$global_factor))
+          #output$slope_table_i = renderDataTable((slope_boxplot_data_i()))
           output$slope_table = renderDataTable(t(df_slope()))
           
+          # output$slope_table = renderDataTable({
+          #   df = df_slope()
+          #   t(df)
+          #   })
+          
           #output$slope_table = renderDataTable(df_slope()[,c("Factor","Status","T_p_value")])
-          output$slope_boxplot = renderPlot({
-            #data = df_sample
-            data = df_lm_sample()
-            slope_cols = c("slope_Pre","slope_Post")
-            data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = slope_cols)
-            
-            ggplot(data = data_l)+
-              geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor))
-          })
+          # output$slope_boxplot = renderPlot({
+          #   #data = df_sample
+          #   data = df_lm_sample()
+          #   slope_cols = c("slope_Pre","slope_Post")
+          #   data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = slope_cols)
+          #   
+          #   ggplot(data = data_l)+
+          #     geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor))
+          # })
           
           # imputed
           
@@ -1029,18 +1024,13 @@ shinyServer(function(input, output) {
             df = slope_function(full_data,factor,cols)
             
           })
-          output$slope_table_i = renderDataTable(df_slope_i())
           
-          #output$slope_table_i = renderDataTable(df_slope_i()[,c("Factor","Status","T_p_value")])
-          output$slope_boxplot_i = renderPlot({
-            #data = df_sample
-            data = df_lm_sample_i()
-            slope_cols = c("slope_Pre","slope_Post")
-            data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = slope_cols)
-            
-            ggplot(data = data_l)+
-              geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor))
-          })
+          slope_boxplot_data_i = reactive(slope_boxplot_data_function(df_lm_sample_i(),df_slope_i(),input$global_factor))
+          output$slope_boxplot_i = renderPlot(slope_boxplot_function(slope_boxplot_data_i(),input$global_factor))
+          #output$slope_table_i = renderDataTable((slope_boxplot_data_i()))
+          output$slope_table_i = renderDataTable(t(df_slope_i()))
+          
+ 
         
         ######### T test ##############
 
@@ -1092,18 +1082,23 @@ shinyServer(function(input, output) {
                     pre2 = input$pre_range[2]
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
-                    df = pp_t_test_range_function(full_data,factor,pre1,pre1,post1,post2)
+                    df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
                   })
                   output$pp_t_table_ranges = renderDataTable(t(pp_t_test_ranges()))
-                  output$boxplot_pp_ranges = renderPlot({
+                  pp_ranges_data = reactive({
                     full_data = pFEV_lf_r()
+                    df = pp_t_test_ranges()
                     pre1 = input$pre_range[1]
                     pre2 = input$pre_range[2]
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
                     global_factor = input$global_factor
-                    p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor)
-                    print(p)
+                    pp_data = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor,df)
+                    pp_data
+                  })
+                  
+                  output$boxplot_pp_ranges = renderPlot({
+                    t_boxplot_function(pp_ranges_data(),input$global_factor)
                   })
                   
                   #### Imputed ###
@@ -1115,18 +1110,25 @@ shinyServer(function(input, output) {
                     pre2 = input$pre_range[2]
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
-                    df = pp_t_test_range_function(full_data,factor,pre1,pre1,post1,post2)
+                    df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
                   })
                   output$pp_t_table_ranges_i = renderDataTable(t(pp_t_test_ranges_i()))
-                  output$boxplot_pp_ranges_i = renderPlot({
+                  pp_ranges_data_i = reactive({
+    
                     full_data = i_pFEV_lf_r()
+                    df = pp_t_test_ranges_i()
                     pre1 = input$pre_range[1]
                     pre2 = input$pre_range[2]
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
                     global_factor = input$global_factor
-                    p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor)
-                    print(p)
+                    p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor,df)
+                    p
+                    #print(p)
+                  })
+                  
+                  output$boxplot_pp_ranges_i = renderPlot({
+                    t_boxplot_function(pp_ranges_data_i(),input$global_factor)
                   })
                   
       ### Ratio  FULL #### 
@@ -1164,12 +1166,8 @@ shinyServer(function(input, output) {
   
       ### Ratio ####
         pp_t_test_ratio = reactive({
-          #df = data.frame(Factor = numeric(0))
           full_data = pFEV_lf_r()
-          #factor = 'Status'
           factor = input$global_factor
-          #t1 = -6
-          #t2 = 6
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           df = pp_t_test_ratio_function(full_data,factor,t1,t2)
@@ -1183,7 +1181,7 @@ shinyServer(function(input, output) {
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           global_factor = input$global_factor
-          p = boxplot_pp_ratio_function(full_data,global_factor,t1,t2)
+          p = boxplot_pp_ratio_function(full_data,global_factor,t1,t2,pp_t_test_ratio())
           print(p)
           
         })
@@ -1206,7 +1204,7 @@ shinyServer(function(input, output) {
               t1 = input$anova_range[1]
               t2 = input$anova_range[2]
               factor = input$global_factor
-              p = boxplot_pp_ratio_function(full_data,factor,t1,t2)
+              p = boxplot_pp_ratio_function(full_data,factor,t1,t2,pp_t_test_ratio())
               print(p)
               
             })
@@ -1333,18 +1331,21 @@ shinyServer(function(input, output) {
             factor = input$global_factor
             full_data = df_lm_sample_d1()
             df = slope_function(full_data,factor,cols)
+            df = df[order(df$Status),]
             df
-            
           })
           output$slope_table_d1 = renderDataTable(t(df_slope_d1()))
           output$slope_boxplot_d1 = renderPlot({
             #data = df_sample
             data = df_lm_sample_d1()
+            df = df_slope_d1()
+            data$significant = factor(df$significant[match(data[,input$global_factor],df$Status)])
             slope_cols = c("slope_Pre","slope_Post")
-            data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = slope_cols)
-            
+            data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1','significant'), measure.vars = slope_cols)
             ggplot(data = data_l)+
-              geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor))
+              geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor,fill = 'significant')) +
+              #scale_fill_brewer(col = c('white','blanchedalmond'))
+              scale_fill_manual(values = c("white", "blanchedalmond"))
           })
     ### T test #####
           pp_t_test_d1 = reactive({
@@ -1372,19 +1373,41 @@ shinyServer(function(input, output) {
             pre2 = input$d1_pre_range[2]
             post1 = input$d1_post_range[1]
             post2 = input$d1_post_range[2]
-            df = pp_t_test_range_function(full_data,factor,pre1,pre1,post1,post2)
+            df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
           })
           output$pp_t_table_ranges_d1 = renderDataTable(t(pp_t_test_ranges_d1()))
-          output$boxplot_pp_ranges_d1 = renderPlot({
+          # output$boxplot_pp_ranges_d1 = renderPlot({
+          #   full_data = i_pFEV_sm_d1_fl_r()
+          #   df = pp_t_test_ranges_d1()
+          #   pre1 = input$d1_pre_range[1]
+          #   pre2 = input$d1_pre_range[2]
+          #   post1 = input$d1_post_range[1]
+          #   post2 = input$d1_post_range[2]
+          #   global_factor = input$global_factor
+          #   p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor,df)
+          #   print(p)
+          # })
+          # 
+
+          pp_ranges_data_d1 = reactive({
+            
             full_data = i_pFEV_sm_d1_fl_r()
-            pre1 = input$d1_pre_range[1]
-            pre2 = input$d1_pre_range[2]
-            post1 = input$d1_post_range[1]
-            post2 = input$d1_post_range[2]
+            df = pp_t_test_ranges_d1()
+            pre1 = input$pre_range[1]
+            pre2 = input$pre_range[2]
+            post1 = input$post_range[1]
+            post2 = input$post_range[2]
             global_factor = input$global_factor
-            p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor)
-            print(p)
+            p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor,df)
+            p
+            #print(p)
           })
+          
+          output$boxplot_pp_ranges_d1 = renderPlot({
+            t_boxplot_function(pp_ranges_data_d1(),input$global_factor)
+          })
+          
+          
   
   ########## D2 ######################
   df_lm_d2 = reactive({

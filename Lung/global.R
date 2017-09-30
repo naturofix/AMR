@@ -11,6 +11,7 @@ library(pspline)
 library(DT)
 library(CluMix)
 library(dendextend)
+#library(ggdendro)
 
 
 si = sessionInfo()
@@ -23,7 +24,7 @@ source('defaults.R')
 
 
 ############ UPLOAD DATA ####################
-g_sheet = T # decided is data is to be read from google sheets or not
+g_sheet = F # decided is data is to be read from google sheets or not
 if(g_sheet == T){
   googlesheets::gs_auth(token = 'shiny_app_token.rds')
   

@@ -10,7 +10,7 @@ shinyUI(fluidPage(
                tabsetPanel(
                  tabPanel('first'),
                  tabPanel('New',
-                    textOutput('discrete_cluster_D_by_function')
+                    textOutput('test_text')
                ))),
       tabPanel("Data",
                

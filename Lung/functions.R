@@ -797,7 +797,7 @@ clustering_function = function(full_data,r_list,d_num,
     x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
   }
   data$cluster = factor(x) 
-  return(list(D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
+  return(list(data.dist = data.dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
 }
 
 clust_comparison_total = function(df,clust_col){

@@ -1640,6 +1640,8 @@ shinyServer(function(input, output) {
         cluster_data_list
       })
   
+    output$test_text = renderPrint(discrete_cluster_D()$data.dist)
+  
 
   
   

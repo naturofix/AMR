@@ -6,14 +6,16 @@ shinyUI(fluidPage(
     column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
     tabsetPanel(
     ############# DATA ##############
-      tabPanel('Test Stuff',
+      tabPanel('Testing',
                tabsetPanel(
-                 tabPanel('first',
-                          textOutput('test_text_1'),
-                          dataTableOutput('test_table_1')),
-                 tabPanel('New',
-                    plotOutput('plot_test')
-               ))),
+                 tabPanel('Plot',
+                          plotOutput('cover_plot')
+                          ),
+                 tabPanel('text',
+                          textOutput('test_text_1')),
+                tabPanel('table',
+                          dataTableOutput('test_table_1'))
+               )),
       tabPanel("Data",
                
         tabsetPanel(
@@ -328,31 +330,38 @@ shinyUI(fluidPage(
                 tabsetPanel(
                   ###### CLUSTERING #########
                   tabPanel('Imputed pFEV Data',
-                           #selectInput('mix_clust_col_fac','Clustering Columns',colnames(full_fac_0),multiple = T,selected = default_cluster_list ,width = 600),
-                           #selectInput('mix_clust_col_num','Clustering Columns',colnames(i_pFEV_ts),multiple = T,selected = c(pFEV_numeric_colnames_f),width = 600),
-                           #HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
-                           #numericInput('fac_weight', "Weight of Factors", 0, min = 0, max = 20, step = 1),
-                           plotOutput('mix_clu'),
-                           plotOutput('discrete_cluster_plot'),
-                           dataTableOutput('cluster_analysis_within_table_selected'),
-                           
-                           #numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
-                           dataTableOutput('discrete_x_table'),
-                           plotOutput('discrete_cutree_line'),
-                           plotOutput('discrete_cutree_mean'),
-                           htmlOutput('D_text')
-                           
-                           
-                  ),
+                           tabsetPanel(
+                             tabPanel('Dendograms',
+                                 plotOutput('mix_clu'),
+                                 plotOutput('discrete_cluster_plot'),
+                                 dataTableOutput('cluster_analysis_within_table_selected'),
+                                 dataTableOutput('discrete_x_table'),
+                                 plotOutput('discrete_cutree_line'),
+                                 plotOutput('discrete_cutree_mean'),
+                                 htmlOutput('D_text')
+                             ),
+                             tabPanel('ScatterPlots',
+                                      plotOutput('distance_scatter'),
+                                      plotOutput('distance_density'),
+                                      plotOutput('distance_polygon'),
+                                      plotOutput('distance_polygon_neat')
+                             ))), # Imputed pFEV Data
                   tabPanel('Change Data (D1)',
-                   plotOutput('mix_clu_d1'),
-                   plotOutput('discrete_cluster_plot_d1'),
-                   dataTableOutput('cluster_analysis_within_table_selected_d1'),
-                   dataTableOutput('discrete_x_table_d1'),
-                   plotOutput('discrete_cutree_line_d1'),
-                   plotOutput('discrete_cutree_mean_d1'),
-                   htmlOutput('D_d1_text')
-                  ),
+                           tabsetPanel(
+                             tabPanel('Dendograms',
+                                         plotOutput('mix_clu_d1'),
+                                         plotOutput('discrete_cluster_plot_d1'),
+                                         dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                                         dataTableOutput('discrete_x_table_d1'),
+                                         plotOutput('discrete_cutree_line_d1'),
+                                         plotOutput('discrete_cutree_mean_d1'),
+                                         htmlOutput('D_d1_text')), #Dendrogram
+                             tabPanel('ScatterPlot',
+                                      plotOutput('distance_scatter_d1'),
+                                      plotOutput('distance_density_d1'),
+                                      plotOutput('distance_polygon_d1'),
+                                      plotOutput('distance_polygon_neat_d1')
+                                      ))),# change Data
                   tabPanel('Comparison',
                            HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
                            plotOutput('cluster_comparison')),

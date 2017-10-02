@@ -757,6 +757,8 @@ boxplot_pp_ratio_plot_function = function(df_m){
 #                     input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
 #                     input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
 
+
+
 clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
                                num_w_1,num_col_list_1,num_w_2,num_col_list_2){
@@ -767,7 +769,7 @@ clustering_function = function(full_data,r_list,d_num,
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
   clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
   clust_col_list = c(clust_num_col_list,clust_fac_col_list)
-  print(clust_col_list)
+  #print(clust_col_list)
   
   
   data = full_data[r_list,clust_col_list]
@@ -789,7 +791,7 @@ clustering_function = function(full_data,r_list,d_num,
     if(entry %in% num_col_list_1){
       weight_v = num_w_1
     }
-    print(weight_v)
+    #print(weight_v)
     weights_2 = c(weights_2,weight_v)
   }
   weights = weights_2
@@ -802,7 +804,7 @@ clustering_function = function(full_data,r_list,d_num,
     x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
   }
   data$cluster = factor(x) 
-  result = list(D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
+  result = list(data_dist = data_dist,D = D, o_data = o_data, data = data, x = x, x_cluster = x_cluster, weights = weights)
   return(result)
   #return(result)
 }

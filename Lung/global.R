@@ -12,6 +12,7 @@ library(DT)
 #library(CluMix)
 library(dendextend)
 #library(ggdendro)
+library(plyr)
 
 
 si = sessionInfo()

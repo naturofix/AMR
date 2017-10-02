@@ -1637,10 +1637,46 @@ shinyServer(function(input, output) {
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+        #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
         cluster_data_list
       })
   
-    output$test_text = renderPrint(discrete_cluster_D()$data.dist)
+    output$test_text_1 = renderPrint({
+      d_list = discrete_cluster_D()
+      d_list$data_dist
+    })
+    
+    output$test_table_1 = renderDataTable({
+      data = discrete_cluster_D()$data_dist
+      p = cmdscale(data)
+      p
+    })
+    
+    output$plot_test = renderPlot({
+      data = i_pFEV_wf[c(1:30),c(1:30)]
+      weights = rep(10,30)
+      #weights = discrete_cluster_D()$weights
+      #data = discrete_cluster_D()$data
+      d_num = 3
+      data_dist = dist.subjects(data,weights = weights)
+      #d_scale = cmdscale(data_dist)
+      D = dendro.subjects(data_dist,weights = weights)
+      x = cutree(D, k = d_num)
+      #x_cluster = data.frame(MRN = numeric(0))
+      #data_dist = discrete_cluster_D()$data_dist
+      #x = discrete_cluster_D()$x
+      #data_dist = 
+      #hc = discrete_cluster_D()$D
+      #cluster = discrete_cluster_D()$x_cluster
+      #cm = as.data.frame(data_dist)
+      cm = cmdscale(data_dist)
+      xy <- data.frame(cm, factor(x))
+      names(xy) <- c("x", "y", "cluster")
+      xy$model <- rownames(xy)
+      
+      library(ggplot2)
+      ggplot(xy, aes(x, y)) + geom_point(aes(colour=cluster), size=3)
+      })
   
 
   

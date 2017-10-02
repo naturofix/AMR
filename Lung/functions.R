@@ -760,12 +760,16 @@ boxplot_pp_ratio_plot_function = function(df_m){
 clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
                                num_w_1,num_col_list_1,num_w_2,num_col_list_2){
-
+  data = i_pFEV_wf[c(1:30),c(1:30)]
+  weights = rep(10,30)
+  #d_num = 3
   clust_fac_col_list = c(fac_col_list_1,fac_col_list_2)
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
   clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
   clust_col_list = c(clust_num_col_list,clust_fac_col_list)
   print(clust_col_list)
+  
+  
   data = full_data[r_list,clust_col_list]
   o_data = data
   
@@ -790,6 +794,7 @@ clustering_function = function(full_data,r_list,d_num,
   }
   weights = weights_2
   data_dist = dist.subjects(data,weights = weights)
+  #d_scale = cmdscale(data_dist)
   D = dendro.subjects(data_dist,weights = weights)
   x = cutree(D, k = d_num)
   x_cluster = data.frame(MRN = numeric(0))
@@ -797,7 +802,9 @@ clustering_function = function(full_data,r_list,d_num,
     x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
   }
   data$cluster = factor(x) 
-  return(list(data.dist = data.dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
+  result = list(D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
+  return(result)
+  #return(result)
 }
 
 clust_comparison_total = function(df,clust_col){

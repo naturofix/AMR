@@ -8,9 +8,11 @@ shinyUI(fluidPage(
     ############# DATA ##############
       tabPanel('Test Stuff',
                tabsetPanel(
-                 tabPanel('first'),
+                 tabPanel('first',
+                          textOutput('test_text_1'),
+                          dataTableOutput('test_table_1')),
                  tabPanel('New',
-                    textOutput('test_text')
+                    plotOutput('plot_test')
                ))),
       tabPanel("Data",
                

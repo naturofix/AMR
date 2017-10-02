@@ -180,6 +180,10 @@ slope_function = function(full_data,factor,cols){
     df[paste(factor,entry),'Paired'] = paired
     
     df[paste(factor,entry),'significant'] = s
+    
+    df[paste(factor,entry),'function'] = 'slope_function'
+    df[paste(factor,entry),'pre_data'] = paste(data$slope_Post,collapse = ', ')
+    df[paste(factor,entry),'post_data'] = paste(data$slope_Post,collapse = ', ')
   }
   df
 
@@ -251,6 +255,10 @@ pp_t_test_function = function(full_data,factor,t1,t2){
     }
     df[paste(factor,entry),'significant'] = s
     
+    df[paste(factor,entry),'function'] = 'pp_t_test_function'
+    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
+    
   }
 
   df = df[order(df$Status),]
@@ -302,6 +310,11 @@ pp_t_test_range_function = function(full_data,factor,pre1,pre2,post1,post2){
       s = 1
     }
     df[paste(factor,entry),'significant'] = s
+    
+    df[paste(factor,entry),'function'] = 'pp_t_test_range_function'
+    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
+    
     
   }
   
@@ -358,8 +371,6 @@ t_boxplot_function = function(pp_data,global_factor){
 }
 
   
-
-
 pp_t_test_ratio_full_function = function(full_data,t1,t2){
   df = data.frame(Factor = numeric(0))
   factor = 'ALL'
@@ -401,6 +412,11 @@ pp_t_test_ratio_full_function = function(full_data,t1,t2){
     s = 1
   }
   df[paste(factor,entry),'significant'] = s
+  df[paste(factor,entry),'function'] = 'pp_t_test_ratio_full_function'
+  df[paste(factor,entry),'pre_data'] = paste(pre_ratio,collapse = ', ')
+  df[paste(factor,entry),'post_data'] = paste(post_ratio,collapse = ', ')
+  
+  
   
 
   df = df[order(df$Status),]
@@ -479,6 +495,23 @@ pp_t_test_zero_function = function(full_data,factor,t1,t2){
     
     df[paste(factor,entry),'pre paired'] = pre_paired
     df[paste(factor,entry),'post paired'] = post_paired
+    pre_s = 0
+    if(p_pre < 0.05){
+      pre_s = 1
+    }
+    post_s = 0
+    if(p_post < 0.05){
+      post_s = 1
+    }
+    df[paste(factor,entry),'pre_significant'] = pre_s
+    df[paste(factor,entry),'post_significant'] = post_s
+    
+    
+    
+    df[paste(factor,entry),'function'] = 'pp_t_test_zero_function'
+    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+    df[paste(factor,entry),'zero_data'] = paste(zero,collapse = ', ')
+    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
     
     
 
@@ -514,6 +547,63 @@ boxplot_pp_zero_function = function(full_data,factor,t1,t2){
 }
 
 
+boxplot_pp_zero_data_function = function(full_data,factor,t1,t2,df_s){
+  df = data.frame(Factor = numeric(0))
+  df = data.frame(Factor = numeric(0), Status = numeric(0),pre = numeric(0),zero = numeric(),post = numeric(0))
+  
+  col1 = factor(c(t1:-1))
+  col2 = factor(c(1:t2))
+  factor_levels = unique(full_data[,factor])
+  for(entry in factor_levels){
+    pre_data = full_data$value[full_data[,factor] == entry & full_data$variable == t1]
+    zero = full_data$value[full_data[,factor] == entry & full_data$variable == 0]
+    post_data = full_data$value[full_data[,factor] == entry & full_data$variable == t2]
+    df1 = data.frame(Factor = factor, Status = entry,pre = pre_data,zero = zero,post = post_data)
+    
+    df = rbind(df,df1)
+  }
+  df_m = melt(df)
+  sig_list = c()
+  for(i in c(1:dim(df_m)[1])){
+    row_entry = df_m[i,]
+    #print(row_entry)
+    if(row_entry$variable == 'pre'){
+      sig = df_s$pre_significant[df_s$Status == row_entry$Status]
+    }
+    if(row_entry$variable == 'post'){
+      sig = df_s$post_significant[df_s$Status == row_entry$Status]
+    }
+    if(row_entry$variable == 'zero'){
+      sig = '0'
+    }
+    sig_list = c(sig_list,sig)
+  }
+  #print(sig_list)
+  df_m$significant = factor(sig_list)
+  #df_m$significant[df$variable == 'pre'] = factor(df_s$pre_significant[match(df_m$Status[df$variable == 'pre'],df_s$Status)])
+  
+  return(df_m)
+}
+
+boxplot_pp_zero_plot_function = function(df_m){
+  
+  u = as.numeric(as.character(unique(df_m$Status)))
+  u = factor(u[(order(u))])
+  sig_col = c("white", "blanchedalmond")
+  if(!(0 %in% df_m$significant)){
+    sig_col = c("blanchedalmond")
+  }
+  p = ggplot(df_m, aes(x = Status,y=value,col=variable,fill = significant)) +
+    geom_hline(yintercept=0)+
+    geom_boxplot() +
+    scale_x_discrete(limits = u) +
+    scale_fill_manual(values = sig_col)
+  
+  return(p)
+}
+
+
+
 pp_t_test_ratio_function = function(full_data,factor,t1,t2){
   df = data.frame(Factor = numeric(0))
   col1 = factor(c(t1:-1))
@@ -525,6 +615,11 @@ pp_t_test_ratio_function = function(full_data,factor,t1,t2){
     post_data = full_data$value[full_data[,factor] == entry & full_data$variable == t2]
     pre_ratio = log2(zero/pre_data)
     post_ratio = log2(post_data/zero)
+    
+    pre_change_per = round(mean(((zero-pre_data)/pre_data)*100,na.rm=T),2)
+    post_change_per = round(mean(((post_data-zero)/zero)*100,na.rm=T),2)
+
+
     
     pre_num = length(pre_data[!is.na(pre_ratio)])
     post_num = length(post_data[!is.na(post_ratio)])
@@ -553,20 +648,29 @@ pp_t_test_ratio_function = function(full_data,factor,t1,t2){
     df[paste(factor,entry),'p value'] = signif(p,3)
     df[paste(factor,entry),'pre_mean'] = signif(pre_mean,3)
     df[paste(factor,entry),'post_mean'] = signif(post_mean,3)
+    df[paste(factor,entry),'Pre percentage change'] = paste(pre_change_per,'%')
+    df[paste(factor,entry),'Post perentage change'] = paste(post_change_per,'%')
+    
+    
     df[paste(factor,entry),'pre_num'] = signif(pre_num,3)
     df[paste(factor,entry),'post_num'] = signif(post_num,3)
     df[paste(factor,entry),'pre_sd'] = signif(pre_sd,3)
     df[paste(factor,entry),'post_sd'] = signif(post_sd,3)
     df[paste(factor,entry),'Paired'] = paired
     
-    
     df[paste(factor,entry),'significant'] = s
+    
+    df[paste(factor,entry),'function'] = 'pp_t_test_ratio_function'
+    df[paste(factor,entry),'pre_data'] = paste(pre_ratio,collapse = ', ')
+    df[paste(factor,entry),'post_data'] = paste(post_ratio,collapse = ', ')
     
     
   }
   df = df[order(df$Status),]
   return(df)
 }
+
+
 boxplot_pp_ratio_function = function(full_data,factor,t1,t2,df_s){
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
@@ -582,21 +686,173 @@ boxplot_pp_ratio_function = function(full_data,factor,t1,t2,df_s){
     df = rbind(df,df1)
   }
   df_m = melt(df)
-  df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
+  #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
   
   u = as.numeric(as.character(unique(df_m$Status)))
   u = factor(u[(order(u))])
-  sig_col = c("white", "blanchedalmond")
-  if(!(0 %in% df_m$significant)){
-    sig_col = c("blanchedalmond")
-  }
-  p = ggplot(df_m, aes(x = Status,y=value,col=variable,fill = significant)) +
+  #sig_col = c("white", "blanchedalmond")
+  #if(!(0 %in% df_m$significant)){
+  #  sig_col = c("blanchedalmond")
+  #}
+  p = ggplot(df_m, aes(x = Status,y=value,col=variable)) +
     geom_hline(yintercept=0)+
     geom_boxplot() +
-    scale_x_discrete(limits = u)+
-    scale_fill_manual(values = sig_col)
+    scale_x_discrete(limits = u)
+   # scale_fill_manual(values = sig_col)
   
   
   return(p)
 }
 
+
+boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
+  col1 = factor(c(t1:-1))
+  col2 = factor(c(1:t2))
+  factor_levels = unique(full_data[,global_factor])
+  df = data.frame(Factor = numeric(0), Status = numeric(0),pre = numeric(0),post = numeric(0))
+  for(entry in factor_levels){
+    pre_data = full_data$value[full_data[,global_factor] == entry & full_data$variable == t1]
+    zero = full_data$value[full_data[,global_factor] == entry & full_data$variable == 0]
+    post_data = full_data$value[full_data[,global_factor] == entry & full_data$variable == t2]
+    pre_ratio = log2(zero/pre_data)
+    post_ratio = log2(post_data/zero)
+    df1 = data.frame(Factor = global_factor, Status = entry,pre = pre_ratio,post = post_ratio)
+    df = rbind(df,df1)
+  }
+  
+  df_m = melt(df)
+  df_m$significant = factor(df_s$significant[match(df_m$Status,df_s$Status)])
+  
+  df_m
+}
+  #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
+boxplot_pp_ratio_plot_function = function(df_m){ 
+  u = as.numeric(as.character(unique(df_m$Status)))
+  u = factor(u[(order(u))])
+  #sig_col = c("white", "blanchedalmond")
+  #if(!(0 %in% df_m$significant)){
+  #  sig_col = c("blanchedalmond")
+  #}
+  df_m = df_m[!is.na(df_m$value),]
+  sig_col = c("white", "blanchedalmond")
+  if(!(0 %in% df_m$significant)){
+    sig_col = c("blanchedalmond")
+  }
+  p = ggplot(df_m, aes(x = Status,y=value,col=variable, fill = significant)) +
+    geom_hline(yintercept=0)+
+    geom_boxplot() +
+    scale_x_discrete(limits = u) + 
+    scale_fill_manual(values = sig_col)
+  # scale_fill_manual(values = sig_col)
+  
+  
+  return(p)
+}
+
+
+
+
+###### CLUSTERING #########
+# clustering_function(data,retained_patients(),input$clutree_num,
+#                     input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+#                     input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+
+clustering_function = function(full_data,r_list,d_num,
+                               fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
+                               num_w_1,num_col_list_1,num_w_2,num_col_list_2){
+
+  clust_fac_col_list = c(fac_col_list_1,fac_col_list_2)
+  clust_num_col_list = c(num_col_list_1,num_col_list_2)
+  clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
+  clust_col_list = c(clust_num_col_list,clust_fac_col_list)
+  print(clust_col_list)
+  data = full_data[r_list,clust_col_list]
+  o_data = data
+  
+  
+  weights_2 = c()
+  for(entry in colnames(data)){
+    weight_v = 0
+    if(entry %in% fac_col_list_2){
+      weight_v = fac_w_2
+    }
+    if(entry %in% fac_col_list_1){
+      weight_v = fac_w_1
+    }
+    if(entry %in% num_col_list_2){
+      weight_v = num_w_2
+    }
+    if(entry %in% num_col_list_1){
+      weight_v = num_w_1
+    }
+    print(weight_v)
+    weights_2 = c(weights_2,weight_v)
+  }
+  weights = weights_2
+  data_dist = dist.subjects(data,weights = weights)
+  D = dendro.subjects(data_dist,weights = weights)
+  x = cutree(D, k = d_num)
+  x_cluster = data.frame(MRN = numeric(0))
+  for(entry in unique(x)){
+    x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
+  }
+  data$cluster = factor(x) 
+  return(list(D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
+}
+
+clust_comparison_total = function(df,clust_col){
+  num_clusters = unique(df[,clust_col])
+  num_clusters = num_clusters[order(num_clusters)]
+  df_c = data.frame(cluster = num_clusters)
+  rownames(df_c) = df_c$num_clusters
+  total = dim(df)[1]
+  for(factor_name in colnames(full_fac_0)[-1]){
+    for(i in num_clusters){
+      status = unique(df[,factor_name])
+      status = status[order(status)]
+      for(j in status){
+        status_total = length(df[,factor_name][df[,factor_name] == j])
+        total = status_total
+        num = length(df[,factor_name][df[,clust_col] == i & df[,factor_name] == j])
+        per = round((num/total)*100,2)
+        df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
+        df_c["Status",paste(factor_name,j,sep='_')] = j
+        df_c["Data",paste(factor_name,j,sep='_')] = clust_col
+        df_c[i,paste(factor_name,j,sep='_')] = per
+      }
+    }
+  }
+  df_tc = as.data.frame(t(df_c))
+  df_tc = df_tc[,c('Factor','Status',num_clusters)]
+  return(df_tc)
+}
+
+clust_comparison_within = function(df,clust_col){
+  num_clusters = unique(df[,clust_col])
+  num_clusters = num_clusters[(order(num_clusters))]
+  #print(num_clusters)
+  df_c = data.frame(cluster = num_clusters)
+  rownames(df_c) = df_c$num_clusters
+
+  for(i in num_clusters){
+    df_clust = df[df[,clust_col] == i,]
+    total = dim(df_clust)[1]
+    for(factor_name in colnames(full_fac_0)[-1]){
+      status = unique(df_clust[,factor_name])
+      status = status[order(status)]
+      for(j in status){
+        num = length(df_clust[,factor_name][df_clust[,factor_name] == j])
+        per = round((num/total)*100,2)
+        df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
+        df_c["Status",paste(factor_name,j,sep='_')] = j
+        df_c["Data",paste(factor_name,j,sep='_')] = clust_col
+        df_c[i,paste(factor_name,j,sep='_')] = per
+      }
+    }
+  }
+
+  df_tc = as.data.frame(t(df_c))
+  df_tc = df_tc[,c('Factor','Status',num_clusters)]
+  df_tc
+  return(df_tc)
+}

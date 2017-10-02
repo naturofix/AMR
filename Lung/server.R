@@ -50,6 +50,8 @@ shinyServer(function(input, output) {
     output$i_pFEV_sm_d1_f_r = renderDataTable(i_pFEV_sm_d1_f_r())
     output$i_pFEV_sm_d2_f_r = renderDataTable(i_pFEV_sm_d2_f_r())
     output$cluster_data = renderDataTable(discrete_cluster_D()$data)
+    output$cluster_data_d1 = renderDataTable(discrete_cluster_D_d1()$data)
+    
     
     output$na2z = renderDataTable(clust_0)
 
@@ -427,122 +429,7 @@ shinyServer(function(input, output) {
   ################ pFEV HEATMAP ########################
   
 
-  ##### CLUSTERING ###############
-  
-  discrete_cluster_D = reactive({
-    data = i_pFEV_wf[c(1:10),c(1:10)]
-    fac_weight = 10
-    d_num = 3
-    r_list = retained_patients()
-    f_cols = eval(input$mix_clust_col_fac)
-    n_cols = eval(input$mix_clust_col_num)
-    d_num = input$clutree_num
-    data = i_pFEV_wf[r_list,c(n_cols,f_cols)]
-    o_data = data
-    colnames(data)
-    
-    fac_weight = input$fac_weight
-    weights = c()
-    for(entry in colnames(data)){
-      if(entry %in% pFEV_numeric_colnames_f){
-        weights = c(weights,10)
-      }else{
-        weights = c(weights,fac_weight)
-      }
-    }
-    weights
-    data_dist = dist.subjects(data,weights = weights)
-    D = dendro.subjects(data_dist,weights = weights)
-    x = cutree(D, k = d_num)
-    x_cluster = data.frame(MRN = numeric(0))
-    for(entry in unique(x)){
-      x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
-    }
-    print(unique(x))
-    data$cluster = factor(x) 
-    print(factor(x))
-    list(D = D,o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
-  })
-  
-  # test_dd = reactive({
-    #gg<-rect.hclust(D,k=2)
-  #   gg
-    # D %>% set("branches_k_color", k = 5) %>%
-    #   plot(main)
-  #   
-  # })
-  
-  
-      ### PLOT CLUSTERS ####
-          output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
-  
-          #output$D = renderText(print(str(discrete_cluster_D()$D)))
-  
-           
-          output$discrete_cluster_plot = renderPlot({
-            D = discrete_cluster_D()$D
-            #plot(D,cex.lab = 0.5)
-            
-            #ggdendrogram(D)
-            #ggdend(D)
-            d_num = input$clutree_num
-            cols = rev(ggplotColours(d_num))
-            par(lwd = 5)
-            D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-              plot()
 
-          })
-
-          output$discrete_x_table = renderDataTable(discrete_cluster_D()$x_cluster)
-          
-          discrete_cutree_line_plots = reactive({
-            data = discrete_cluster_D()$data
-            cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
-            data = cbind(data,full_fac_0[rownames(data),])
-            n_cols = eval(input$mix_clust_col_num)
-            max_n_cols = factor(max(as.numeric(n_cols)))
-            min_n_cols = factor(min(as.numeric(n_cols)))
-            m = which(colnames(i_pFEV_ts) == min_n_cols)
-            n = which(colnames(i_pFEV_ts) == max_n_cols)
-            sub_n_cols = colnames(i_pFEV_ts)[c(m:n)]
-            plot_data = i_pFEV_wf[rownames(data),]
-            plot_data$cluster = data$cluster
-            data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
-            p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-              geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-              
-              geom_line() +
-              #geom_point(aes(y = data),size = 3) +
-              stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                           aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
-              theme(axis.text.x = element_text(size=14, angle=90)) +
-              scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-              ggtitle("Clusters from imputer pFEV")
-            
-            
-            s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-              #geom_line() +
-              geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-              
-              stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                           aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
-              theme(axis.text.x = element_text(size=14, angle=90)) +
-              scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-              ggtitle("Mean of clusters from imputed pFEV values")
-              
-            list(p = p,s = s)
-            })
-          output$discrete_cutree_line = renderPlot(discrete_cutree_line_plots()$p)
-          output$discrete_cutree_mean = renderPlot(discrete_cutree_line_plots()$s)
-          
-          
-          output$mix_clu = renderPlot({
-            data = discrete_cluster_D()$o_data
-            weights = discrete_cluster_D()$weights
-            D = discrete_cluster_D()$D
-            mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
-          })
- 
   
 
   
@@ -663,117 +550,7 @@ shinyServer(function(input, output) {
     
   })
   
-  ####### D1 Clustering ############
-  
-  discrete_cluster_D_d1 = reactive({
-    r_list = retained_patients()
 
-    f_cols = eval(input$mix_clust_col_fac)
-
-    n_cols = eval(input$mix_clust_col_num)
-
-    d_num = input$clutree_num
-    data = i_pFEV_sm_d1_f[r_list,c(n_cols,f_cols)]
-    o_data = data
-
-    weights = c()
-    fac_weight = input$fac_weight
-    for(entry in colnames(data)){
-      if(entry %in% pFEV_numeric_colnames_f){
-        weights = c(weights,10)
-      }else{
-        weights = c(weights,fac_weight)
-      }
-    }
-    
-    
-    data_dist = dist.subjects(data,weights = weights)
-
-    D = dendro.subjects(data_dist,weights = weights)
-
-    x = cutree(D, k = d_num)
-    x_cluster = data.frame(MRN = numeric(0))
-    for(entry in unique(x)){
-      x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
-    }
-    data$cluster = factor(x) 
-    list(D = D,o_data = o_data, data = data, x_cluster = x_cluster, weights = weights)
-  })
-  
-      ### PLOT CLUSTERS ####
-      
-        output$discrete_cluster_plot_d1 = renderPlot({
-          D = discrete_cluster_D_d1()$D
-          #plot(D,cex.lab = 0.5)
-          d_num = input$clutree_num
-          cols = rev(ggplotColours(d_num))
-          par(lwd = 5)
-          D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-            plot()
-        })
-        
-        output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
-  
-        output$discrete_x_table_d1 = renderDataTable({
-          discrete_cluster_D_d1()$x_cluster
-          })
-        
-      
-        discrete_cutree_line_plots_d1 = reactive({
-          data = discrete_cluster_D_d1()$data
-          cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
-          data = cbind(data,full_fac_0[rownames(data),])
-          n_cols = eval(input$mix_clust_col_num)
-          max_n_cols = factor(max(as.numeric(n_cols)))
-          min_n_cols = factor(min(as.numeric(n_cols)))
-          m = which(colnames(i_pFEV_sm_d1) == min_n_cols)
-          n = which(colnames(i_pFEV_sm_d1) == max_n_cols)
-          sub_n_cols = colnames(i_pFEV_sm_d1)[c(m:n)]
-          #sub_n_cols
-          #print(sub_n_cols)
-          plot_data = i_pFEV_sm_d1_f[rownames(data),]
-          plot_data$cluster = data$cluster
-          data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
-          p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-            geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-            
-            geom_line() +
-            #geom_point(aes(y = data),size = 3) +
-            stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                         aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
-            theme(axis.text.x = element_text(size=14, angle=90)) +
-            scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-            ggtitle("Clusters from imputer pFEV")
-          
-          
-          s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-            #geom_line() +
-            geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-            
-            stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                         aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
-            theme(axis.text.x = element_text(size=14, angle=90)) +
-            scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-            ggtitle("Mean of clusters from imputed pFEV values")
-          
-          list(p = p,s = s)
-        })
-        output$discrete_cutree_line_d1 = renderPlot(discrete_cutree_line_plots_d1()$p)
-        output$discrete_cutree_mean_d1 = renderPlot(discrete_cutree_line_plots_d1()$s)
-        
-        
-        output$mix_clu_d1 = renderPlot({
-          data = discrete_cluster_D_d1()$o_data
-          weights = discrete_cluster_D_d1()$weights
-          D = discrete_cluster_D_d1()$D
-          mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
-        })
-        
-        output$cluster_comparison = renderPlot({
-          ggplot(NULL) + 
-            stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=4,aes(x = variable, y = value,group=cluster,col = cluster)) +
-            stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=2,aes(x = variable, y = value,group=cluster_d1,col= cluster_d1)) 
-        })
   
 ####################### D2 #########################
   
@@ -851,6 +628,7 @@ shinyServer(function(input, output) {
                 #full_data=pFEV_lf[pFEV_lf$variable %in% cols,]
                 function_data = pFEV_lf_r()
                 df = lm_function(function_data,factor,cols)
+                df = df[order(df$Status),]
               })
             output$lm_table = renderDataTable(t(df_lm()))
             
@@ -910,6 +688,7 @@ shinyServer(function(input, output) {
               #full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% cols,]
               function_data = i_pFEV_lf_r()
               df = lm_function(function_data,factor,cols)
+              df = df[order(df$Status),]
             })
             output$lm_table_i = renderDataTable(t(df_lm_i()))
             
@@ -972,14 +751,16 @@ shinyServer(function(input, output) {
             cols = factor(c(input$anova_range[1]:input$anova_range[2]))
             cols
             df = lm_sample_function(function_data,factor,cols,df)
+            
           })
-          output$df_lm_table = renderDataTable(t(df_lm_sample()))
+          output$df_lm_table = renderDataTable((df_lm_sample()))
 
           df_slope= reactive({
             factor = 'Status'
             factor = input$global_factor
             full_data = df_lm_sample()
             df = slope_function(full_data,factor,cols)
+            df = df[order(df$Status),]
             
           })
           
@@ -1022,7 +803,7 @@ shinyServer(function(input, output) {
             factor = input$global_factor
             full_data = df_lm_sample_i()
             df = slope_function(full_data,factor,cols)
-            
+            df = df[order(df$Status),]
           })
           
           slope_boxplot_data_i = reactive(slope_boxplot_data_function(df_lm_sample_i(),df_slope_i(),input$global_factor))
@@ -1041,6 +822,7 @@ shinyServer(function(input, output) {
               t1 = input$anova_range[1]
               t2 = input$anova_range[2]
               df = pp_t_test_function(full_data,factor,t1,t2)
+              df = df[order(df$Status),]
             })
           output$pp_t_table = renderDataTable(t(pp_t_test()))
           output$boxplot_pp = renderPlot({
@@ -1083,7 +865,8 @@ shinyServer(function(input, output) {
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
                     df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
-                  })
+                    df = df[order(df$Status),]
+                    })
                   output$pp_t_table_ranges = renderDataTable(t(pp_t_test_ranges()))
                   pp_ranges_data = reactive({
                     full_data = pFEV_lf_r()
@@ -1111,7 +894,8 @@ shinyServer(function(input, output) {
                     post1 = input$post_range[1]
                     post2 = input$post_range[2]
                     df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
-                  })
+                    df = df[order(df$Status),]
+                    })
                   output$pp_t_table_ranges_i = renderDataTable(t(pp_t_test_ranges_i()))
                   pp_ranges_data_i = reactive({
     
@@ -1137,7 +921,9 @@ shinyServer(function(input, output) {
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           df = pp_t_test_ratio_full_function(full_data,t1,t2)
+          df = df[order(df$Status),]
           df
+          
         })
         output$pp_t_table_ratio_full = renderDataTable(t(pp_t_test_ratio_full()))
         output$boxplot_pp_ratio_full = renderPlot({
@@ -1153,6 +939,7 @@ shinyServer(function(input, output) {
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           df = pp_t_test_ratio_full_function(full_data,t1,t2)
+          df = df[order(df$Status),]
           df
         })
         output$pp_t_table_ratio_full_i = renderDataTable(t(pp_t_test_ratio_full_i()))
@@ -1171,45 +958,62 @@ shinyServer(function(input, output) {
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           df = pp_t_test_ratio_function(full_data,factor,t1,t2)
+          df_s = df[order(df$Status),]
+          #View(df_s)
+          df_s
           
+          #print(df)
         })
         output$pp_t_table_ratio = DT::renderDataTable({
           datatable(t(pp_t_test_ratio()),rownames = TRUE)
           })
-        output$boxplot_pp_ratio = renderPlot({
+        boxplot_pp_ratio_data = reactive({
           full_data = pFEV_lf_r()
+          df_s = pp_t_test_ratio()
           t1 = input$anova_range[1]
           t2 = input$anova_range[2]
           global_factor = input$global_factor
-          p = boxplot_pp_ratio_function(full_data,global_factor,t1,t2,pp_t_test_ratio())
-          print(p)
+          df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
+          #View(df)
+          df
           
         })
-  
+        output$boxplot_pp_ratio = renderPlot({
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data())
+        })
             #### Imputed####
-            
-            pp_t_test_ratio_i = reactive({
-              full_data = i_pFEV_lf_r()
-              factor = input$global_factor
-              t1 = input$anova_range[1]
-              t2 = input$anova_range[2]
-              df = pp_t_test_ratio_function(full_data,factor,t1,t2)
-              
-            })
-            output$pp_t_table_ratio_i = DT::renderDataTable({
-              datatable(t(pp_t_test_ratio_i()),rownames = T)
-              })
-            output$boxplot_pp_ratio_i = renderPlot({
-              full_data = i_pFEV_lf_r()
-              t1 = input$anova_range[1]
-              t2 = input$anova_range[2]
-              factor = input$global_factor
-              p = boxplot_pp_ratio_function(full_data,factor,t1,t2,pp_t_test_ratio())
-              print(p)
-              
-            })
+        pp_t_test_ratio_i = reactive({
+          full_data = i_pFEV_lf_r()
+          factor = input$global_factor
+          t1 = input$anova_range[1]
+          t2 = input$anova_range[2]
+          df = pp_t_test_ratio_function(full_data,factor,t1,t2)
+          df_s = df[order(df$Status),]
+          #View(df_s)
+          df_s
+          
+          #print(df)
+        })
+        output$pp_t_table_ratio_i = DT::renderDataTable({
+          datatable(t(pp_t_test_ratio_i()),rownames = TRUE)
+        })
+        boxplot_pp_ratio_data = reactive({
+          full_data = i_pFEV_lf_r()
+          df_s = pp_t_test_ratio_i()
+          t1 = input$anova_range[1]
+          t2 = input$anova_range[2]
+          global_factor = input$global_factor
+          df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
+          #View(df)
+          df
+          
+        })
+        output$boxplot_pp_ratio_i = renderPlot({
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data())
+        })
+        
       
-      ### ZERO ###
+      ### ZERO ####
       pp_t_test_zero = reactive({
         #df = data.frame(Factor = numeric(0))
         full_data = pFEV_lf_r()
@@ -1220,18 +1024,26 @@ shinyServer(function(input, output) {
         t1 = input$anova_range[1]
         t2 = input$anova_range[2]
         df = pp_t_test_zero_function(full_data,factor,t1,t2)
+        df_s = df[order(df$Status),]
+        #View(df_s)
+        df_s
         
       })
       output$pp_t_table_zero = DT::renderDataTable({
         datatable(t(pp_t_test_zero()),rownames = TRUE)
       })
-      output$boxplot_pp_zero = renderPlot({
+      boxplot_pp_zero_data = reactive({
         full_data = pFEV_lf_r()
+        df_s = pp_t_test_zero()
         t1 = input$anova_range[1]
         t2 = input$anova_range[2]
         factor = input$global_factor
-        p = boxplot_pp_zero_function(full_data,factor,t1,t2)
-        print(p)
+        df = boxplot_pp_zero_data_function(full_data,factor,t1,t2,df_s)
+        #View(df)
+        df
+      })
+      output$boxplot_pp_zero = renderPlot({
+        boxplot_pp_zero_plot_function(boxplot_pp_zero_data())
       })
       
       # Imputed
@@ -1242,19 +1054,35 @@ shinyServer(function(input, output) {
         t1 = input$anova_range[1]
         t2 = input$anova_range[2]
         df = pp_t_test_zero_function(full_data,factor,t1,t2)
+        df = df[order(df$Status),]
         
       })
       output$pp_t_table_zero_i = DT::renderDataTable({
         datatable(t(pp_t_test_zero_i()),rownames = T)
       })
-      output$boxplot_pp_zero_i = renderPlot({
+      
+      boxplot_pp_zero_data_i = reactive({
         full_data = i_pFEV_lf_r()
+        df_s = pp_t_test_zero_i()
         t1 = input$anova_range[1]
         t2 = input$anova_range[2]
         factor = input$global_factor
-        p = boxplot_pp_zero_function(full_data,factor,t1,t2)
-        print(p)
+        df = boxplot_pp_zero_data_function(full_data,factor,t1,t2,df_s)
+        #View(df)
+        df
       })
+      output$boxplot_pp_zero = renderPlot({
+        boxplot_pp_zero_plot_function(boxplot_pp_zero_data_i())
+      })
+      
+      # output$boxplot_pp_zero_i = renderPlot({
+      #   full_data = i_pFEV_lf_r()
+      #   t1 = input$anova_range[1]
+      #   t2 = input$anova_range[2]
+      #   factor = input$global_factor
+      #   p = boxplot_pp_zero_function(full_data,factor,t1,t2)
+      #   print(p)
+      # })
   #output$anova_table = renderDataTable(df_a())
   
 
@@ -1799,5 +1627,231 @@ shinyServer(function(input, output) {
     ggplot(pp_data, aes_string(x = eval(input$global_factor),y = 'value',col='treat')) +
       geom_boxplot()
   })
+  
+  #### Cluster Analysis ####
+  ##### CLUSTERING ###############
+  
+      #output$discrete_cluster_D_by_function = renderPrint({
+      discrete_cluster_D = reactive({
+        full_data = i_pFEV_wf
+        cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
+                                                input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+                                                input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+        cluster_data_list
+      })
+  
+
+  
+  
+        ### PLOT CLUSTERS ####
+            output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
+            
+            #output$D = renderText(print(str(discrete_cluster_D()$D)))
+            
+            output$discrete_cluster_plot = renderPlot({
+              D = discrete_cluster_D()$D
+              #plot(D,cex.lab = 0.5)
+              
+              #ggdendrogram(D)
+              #ggdend(D)
+              d_num = input$clutree_num
+              cols = (ggplotColours(d_num))
+              par(lwd = 5)
+              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+                plot()
+              
+            })
+            
+            output$discrete_x_table = renderDataTable(discrete_cluster_D()$x_cluster)
+            
+            discrete_cutree_line_plots = reactive({
+              data = discrete_cluster_D()$data
+              cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
+              data = cbind(data,full_fac_0[rownames(data),])
+              n_cols = eval(input$mix_clust_col_num)
+              max_n_cols = factor(max(as.numeric(n_cols)))
+              min_n_cols = factor(min(as.numeric(n_cols)))
+              m = which(colnames(i_pFEV_ts) == min_n_cols)
+              n = which(colnames(i_pFEV_ts) == max_n_cols)
+              sub_n_cols = colnames(i_pFEV_ts)[c(m:n)]
+              plot_data = i_pFEV_wf[rownames(data),]
+              plot_data$cluster = data$cluster
+              data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
+              p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+                
+                geom_line() +
+                #geom_point(aes(y = data),size = 3) +
+                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
+                theme(axis.text.x = element_text(size=14, angle=90)) +
+                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+                ggtitle("Clusters from imputer pFEV")
+              
+              
+              s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+                #geom_line() +
+                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+                
+                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
+                theme(axis.text.x = element_text(size=14, angle=90)) +
+                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+                ggtitle("Mean of clusters from imputed pFEV values")
+              
+              list(p = p,s = s)
+            })
+            output$discrete_cutree_line = renderPlot(discrete_cutree_line_plots()$p)
+            output$discrete_cutree_mean = renderPlot(discrete_cutree_line_plots()$s)
+            
+            output$mix_clu = renderPlot({
+              data = discrete_cluster_D()$o_data
+              weights = discrete_cluster_D()$weights
+              D = discrete_cluster_D()$D
+              mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
+            })
+  
+  
+  
+    ####### D1 Clustering ############
+            discrete_cluster_D_d1 = reactive({
+              full_data = i_pFEV_sm_d1_f
+              cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
+                                                      input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+                                                      input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+              cluster_data_list
+            })
+  
+ 
+            ### PLOT CLUSTERS ####
+            
+            output$discrete_cluster_plot_d1 = renderPlot({
+              D = discrete_cluster_D_d1()$D
+              #plot(D,cex.lab = 0.5)
+              d_num = input$clutree_num
+              cols = (ggplotColours(d_num))
+              par(lwd = 5)
+              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+                plot()
+            })
+            
+            output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
+            
+            output$discrete_x_table_d1 = renderDataTable({
+              discrete_cluster_D_d1()$x_cluster
+            })
+            
+            discrete_cutree_line_plots_d1 = reactive({
+              data = discrete_cluster_D_d1()$data
+              cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
+              data = cbind(data,full_fac_0[rownames(data),])
+              n_cols = eval(input$mix_clust_col_num)
+              max_n_cols = factor(max(as.numeric(n_cols)))
+              min_n_cols = factor(min(as.numeric(n_cols)))
+              m = which(colnames(i_pFEV_sm_d1) == min_n_cols)
+              n = which(colnames(i_pFEV_sm_d1) == max_n_cols)
+              sub_n_cols = colnames(i_pFEV_sm_d1)[c(m:n)]
+              #sub_n_cols
+              #print(sub_n_cols)
+              plot_data = i_pFEV_sm_d1_f[rownames(data),]
+              plot_data$cluster = data$cluster
+              data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
+              p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+                
+                geom_line() +
+                #geom_point(aes(y = data),size = 3) +
+                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
+                theme(axis.text.x = element_text(size=14, angle=90)) +
+                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+                ggtitle("Clusters from imputer pFEV")
+              
+              
+              s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+                #geom_line() +
+                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+                
+                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
+                theme(axis.text.x = element_text(size=14, angle=90)) +
+                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+                ggtitle("Mean of clusters from imputed pFEV values")
+              
+              list(p = p,s = s)
+            })
+            output$discrete_cutree_line_d1 = renderPlot(discrete_cutree_line_plots_d1()$p)
+            output$discrete_cutree_mean_d1 = renderPlot(discrete_cutree_line_plots_d1()$s)
+            
+            
+            output$mix_clu_d1 = renderPlot({
+              data = discrete_cluster_D_d1()$o_data
+              weights = discrete_cluster_D_d1()$weights
+              D = discrete_cluster_D_d1()$D
+              mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
+            })
+            
+            output$cluster_comparison = renderPlot({
+              ggplot(NULL) + 
+                stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=4,aes(x = variable, y = value,group=cluster,col = cluster)) +
+                stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=2,aes(x = variable, y = value,group=cluster_d1,col= cluster_d1)) 
+            })
+        
+    #### CLUSTER COMPOSITION TABLES #####
+    
+          cluster_analysis_total = reactive({
+            df = pFEV_wf_r()
+            df_tc = clust_comparison_total(df,'cluster')
+          })
+          output$cluster_analysis = renderDataTable(cluster_analysis_total())
+          output$cluster_analyis_selected = renderDataTable({
+            df = cluster_analysis_total()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+          })
+          
+          cluster_analysis_total_d1 = reactive({
+            df = pFEV_wf_r()
+            df_tc = clust_comparison_total(df,'cluster_d1')
+            df_tc
+          })
+          output$cluster_analysis_d1 = renderDataTable(cluster_analysis_total_d1())
+          output$cluster_analyis_selected_d1 = renderDataTable({
+            df = cluster_analysis_total_d1()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+          })
+          
+          cluster_analysis_within = reactive({
+            df = pFEV_wf_r()
+            df_tc = clust_comparison_within(df,'cluster')
+            df_tc
+          })
+          output$cluster_analysis_within_table = DT::renderDataTable({
+            datatable(cluster_analysis_within(),rownames = FALSE)
+            })
+          output$cluster_analysis_within_table_selected = DT::renderDataTable({
+            df = cluster_analysis_within()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+            datatable(df_selected,rownames = FALSE)
+          })
+          
+          cluster_analysis_within_d1 = reactive({
+            df = pFEV_wf_r()
+            df_tc = clust_comparison_within(df,'cluster_d1')
+            df_tc
+          })
+          output$cluster_analysis_within_d1_table = DT::renderDataTable({
+            datatable(cluster_analysis_within_d1(),rownames = FALSE)
+            })
+          output$cluster_analysis_within_table_selected_d1 = DT::renderDataTable({
+            df = cluster_analysis_within_d1()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+            datatable(df_selected,rownames = FALSE)
+          })
+          
+          
   
 })

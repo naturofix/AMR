@@ -348,7 +348,9 @@ shinyUI(fluidPage(
                                       plotOutput('distance_scatter'),
                                       plotOutput('distance_density'),
                                       plotOutput('distance_polygon'),
-                                      plotOutput('distance_polygon_neat')
+                                      plotOutput('distance_polygon_neat'),
+                                      dataTableOutput('distance_table'),
+                                      dataTableOutput('distance_model_table')
                              ))), # Imputed pFEV Data
                   tabPanel('Change Data (D1)',
                            tabsetPanel(
@@ -364,7 +366,9 @@ shinyUI(fluidPage(
                                       plotOutput('distance_scatter_d1'),
                                       plotOutput('distance_density_d1'),
                                       plotOutput('distance_polygon_d1'),
-                                      plotOutput('distance_polygon_neat_d1')
+                                      plotOutput('distance_polygon_neat_d1'),
+                                      dataTableOutput('distance_table_d1'),
+                                      dataTableOutput('distance_model_table_d1')
                                       ))),# change Data
                   tabPanel('Comparison',
                            HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),

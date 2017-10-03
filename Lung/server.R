@@ -1828,6 +1828,10 @@ shinyServer(function(input, output) {
         
             
             #### DISTANCE SCATTER PLOTS ####
+            
+            output$distance_table = renderDataTable(as.matrix(discrete_cluster_D()$data_dist))
+            output$distance_model_table = renderDataTable(distance_model())
+            
             distance_model = reactive({
               data_dist = discrete_cluster_D()$data_dist
               x = discrete_cluster_D()$x
@@ -1837,6 +1841,7 @@ shinyServer(function(input, output) {
               xy$model <- rownames(xy)
               xy
             })
+            
             output$distance_scatter = renderPlot({
               xy = distance_model()
               ggplot(xy, aes(x, y, colour=cluster)) + 
@@ -1868,6 +1873,9 @@ shinyServer(function(input, output) {
                 geom_polygon(data = hulls, alpha = 0.5)
               print(plot)
             })
+            
+            output$distance_table = renderDataTable(as.matrix(discrete_cluster_D()$data_dist))
+            output$distance_model_table = renderDataTable(distance_model())
             
             
             ## D1 ##
@@ -1911,6 +1919,10 @@ shinyServer(function(input, output) {
                 geom_polygon(data = hulls, alpha = 0.5)
               print(plot)
             })
+            
+            output$distance_table_d1 = renderDataTable(as.matrix(discrete_cluster_D_d1()$data_dist))
+            output$distance_model_table_d1 = renderDataTable(distance_model_d1())
+            
             
             output$cover_plot = renderPlot({
               xy = distance_model_d1()

@@ -13,6 +13,10 @@ library(DT)
 library(dendextend)
 #library(ggdendro)
 library(plyr)
+library(survival)
+library(ggfortify)
+library(survminer)
+
 
 
 si = sessionInfo()
@@ -47,8 +51,8 @@ if(g_sheet == T){
 #setdiff(colnames(clustering2),colnames(clustering))
 
 
-boss = read.csv('BOS.csv',header = F,sep=';') # read boss table, generate from scratch
-m_boss = melt(boss)
+#boss = read.csv('BOS.csv',header = F,sep=';') # read boss table, generate from scratch
+#m_boss = melt(boss)
 
 # colnames(m_boss)
 # colnames(clustering)
@@ -117,7 +121,16 @@ clust_date[,"DeathDate"]
 new_date = as.Date(clust_date[,"DeathDate"],'%d-%b-%Y')
 #new_date
 clust_date[,"DeathDate"] = new_date
+#### Not sure if these are actully reintegrated, but are applied below
+
 ##################################
+
+#### BOSS COLUMNS ####
+#bos_cols = c("BOS1mnth", "BOS2mnth", "BOS3mnth")
+
+boss_data = clustering[,bos_cols]
+boss_data_num = apply(boss_data, 2, function(x) as.numeric(as.character(x)))
+boss_data_num
 
 
 ####### PROCESS ###################
@@ -138,7 +151,7 @@ if(convert_factors==T){
 
 colnames(cluster_factor_con)
 
-full_fac = cbind(cluster_factor,cluster_factor_con,clust_date)
+full_fac = cbind(cluster_factor,cluster_factor_con)
 full_fac$MRN = clustering$MRN
 full_fac_colnames = colnames(full_fac)[order(match(colnames(full_fac),colnames(clustering)))]
 full_fac = full_fac[,full_fac_colnames] ### original factor columns 
@@ -146,22 +159,35 @@ full_fac = full_fac[,full_fac_colnames] ### original factor columns
 
 ### remove missing values from factor columsn #####
 num_fac = full_fac
+factor_NA_value = -2
 for(col in factor_columns_con){
   num_fac[,col] = as.numeric(factor(num_fac[,col]))
+  #num_fac[,col][is.na(num_fac_0[,col])] <- factor_NA_value
 }
 
 for(col in factor_columns){
   num_fac[,col] = as.numeric(num_fac[,col])
+  #num_fac[,col][is.na(num_fac_0[,col])] <- factor_NA_value
 }
 num_fac_0 = num_fac[,full_factor_columns]
-num_fac_0[is.na(num_fac_0)] <- -2
+factor_NA_value = -2
+num_fac_0[is.na(num_fac_0)] <- factor_NA_value
 
 # factor dataframe with missing values 02
 
 full_fac_0 = as.data.frame(apply(num_fac_0,2,function(x) factor(x)))
 
 
+##### CONSOLIDATE DATA #############
+
+full_fac = cbind(full_fac,clust_date,boss_data_num)
+full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num)
+
 ###################################################
+
+##### DATE COMPUTATIONS ####
+
+full_fac_0$survival_time = full_fac_0$DeathDate - full_fac_0$RxDate
 
 ########### NUMERIC COLUMN ###############
 
@@ -218,7 +244,7 @@ pFEV_wf_original = cbind(full_fac_0_original,pFEV_w_original)
 pFEV_lf_original = melt(pFEV_wf_original, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
 
 pFEV_lf = melt(pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
-pFEV_lf[,colnames(full_fac_0)] = apply(pFEV_lf[,colnames(full_fac_0)],2,function(x) factor(x))
+pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
 
 
  
@@ -236,7 +262,7 @@ rownames(i_pFEV_ts)
 
 i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
 i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
-pFEV_lf[,colnames(full_fac_0)] = apply(pFEV_lf[,colnames(full_fac_0)],2,function(x) factor(x))
+pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
 
 i_pFEV_lf$i = pFEV_lf$value
 i_pFEV_lf$data = pFEV_lf$value
@@ -425,4 +451,23 @@ after = colnames(pFEV_w)[c(25:73)]
 #   df
 #   lm_MRN = df
 # 
+# as.numeric(full_fac$DeathDate)
+# 
+# full_fac$time_diff = full_fac$RxDate - full_fac$DeathDate
+# 
+# full_fac$SurvObj = with(full_fac, Surv(time_diff,Status == 'dead'))
+# km.as.one <- survfit(SurvObj ~ 1, data = full_fac, conf.type = "log-log")
+# km.as.one
+# plot(km.as.one)
+# 
+# km.by.sex <- survfit(SurvObj ~ NewCTChange, data = full_fac, conf.type = "log-log")
+# plot(km.by.sex)
+
+#km.by.sex <- survfit(SurvObj ~ sex, data = lung, conf.type = "log-log")
+
+## Show object
+#km.as.one
+
+
+
 

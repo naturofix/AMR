@@ -1974,7 +1974,118 @@ shinyServer(function(input, output) {
             df_selected
             datatable(df_selected,rownames = FALSE)
           })
+ 
+########## SURVIVAL PLOTS ###########
           
+          output$cover_plot = renderPlot({
+            plot_data = pFEV_wf
+            plot_data$SurvObj = with(plot_data, Surv(survival_time,Status == '2'))
+            km.as.one <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
+            km.as.one
+            plot(km.as.one)
+          })
           
+          output$boss_3 = renderPlot({
+            
+            
+            plot_data = pFEV_wf
+            plot_data$SurvObj = with(plot_data, Surv(BOS1mnth,Status == '2'))
+            km.boss1 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
+            plot(km.boss1)
+            plot_data$SurvObj = with(plot_data, Surv(BOS2mnth,Status == '2'))
+            km.boss2 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
+            plot(km.boss2)
+            plot_data$SurvObj = with(plot_data, Surv(BOS3mnth,Status == '2'))
+            km.boss3 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
+            plot(km.boss3)
+            par(add = TRUE)
+            plot(km.boss1)
+            plot(km.boss2,add = TRUE)
+            
+          })
+          help(autoplot.survfit) 
+          output$cover_plot_2 = renderPlot({
+            plot_data = pFEV_wf
+            colnames(plot_data)
+             fit <- survfit(Surv(survival_time,Status == '2', data = plot_data))
+             fit <- survfit(Surv(survival_time) ~ NewCTChange, data = plot_data)
+             fit <- survfit(Surv(BOS1mnth) ~ NewCTChange, data = plot_data)
+             autoplot(fit)
+             fit <- survfit(Surv(BOS1mnth) ~ NewCTChange, data = plot_data)
+             autoplot(fit)
+             fit <- survfit(Surv(BOS3mnth) ~ NewCTChange, data = plot_data)
+              autoplot(fit,conf.int = FALSE,surv.geom = "line")
+          })
+          
+          output$survival_factor = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$survival_time) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line",surv.connect = FALSE) + ggtitle(paste('Survival Time',global_factor))
+          })
+          
+          output$boss_1_factor = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS1mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
+              ggtitle(paste('BOSS 1',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          
+          output$boss_2_factor = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS2mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
+              ggtitle(paste('BOSS 2',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          
+          output$boss_3_factor = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS3mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
+              ggtitle(paste('BOSS 3',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          output$BOS_plot = renderPlot({
+            plot_data = pFEV_wf
+            plot_data = pFEV_wf_r()
+            boss_data = plot_data[c('BOS1mnth','BOS2mnth','BOS3mnth')]
+            m_bos = melt(boss_data)
+            m_bos
+            
+            f1 <- survfit(Surv(value) ~ variable, data = m_bos)
+  
+            autoplot(f1,surv.geom = "line", surv.connect = FALSE) + 
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+              
+        
+              #ggsurvplot_list(f1,data = m_bos)
+          })
+
+
   
 })

@@ -9,7 +9,11 @@ shinyUI(fluidPage(
       tabPanel('Testing',
                tabsetPanel(
                  tabPanel('Plot',
-                          plotOutput('cover_plot')
+                          #plotOutput('cover_plot'),
+                          plotOutput('BOS_plot'),
+                          plotOutput('boss_1_factor'),
+                          plotOutput('boss_2_factor'),
+                          plotOutput('boss_3_factor')
                           ),
                  tabPanel('text',
                           textOutput('test_text_1')),

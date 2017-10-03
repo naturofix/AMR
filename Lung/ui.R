@@ -16,9 +16,15 @@ shinyUI(fluidPage(
                           plotOutput('boss_3_factor')
                           ),
                  tabPanel('text',
-                          textOutput('test_text_1')),
+                          textOutput('test_text_1')
+                          ),
                 tabPanel('table',
-                          dataTableOutput('test_table_1'))
+                        dataTableOutput('test_table_1'),
+                         dataTableOutput('test_table_2')
+                         ),
+                tabPanel('Cluster Column Test',
+                         dataTableOutput('cluster_test')
+                         )
                )),
       tabPanel("Data",
                
@@ -338,8 +344,9 @@ shinyUI(fluidPage(
                              tabPanel('Dendograms',
                                  plotOutput('mix_clu'),
                                  plotOutput('discrete_cluster_plot'),
-                                 dataTableOutput('cluster_analysis_within_table_selected'),
                                  dataTableOutput('discrete_x_table'),
+                                 
+                                 dataTableOutput('cluster_analysis_within_table_selected'),
                                  plotOutput('discrete_cutree_line'),
                                  plotOutput('discrete_cutree_mean'),
                                  htmlOutput('D_text')
@@ -357,8 +364,9 @@ shinyUI(fluidPage(
                              tabPanel('Dendograms',
                                          plotOutput('mix_clu_d1'),
                                          plotOutput('discrete_cluster_plot_d1'),
+                                          dataTableOutput('discrete_x_table_d1'),
+                                      
                                          dataTableOutput('cluster_analysis_within_table_selected_d1'),
-                                         dataTableOutput('discrete_x_table_d1'),
                                          plotOutput('discrete_cutree_line_d1'),
                                          plotOutput('discrete_cutree_mean_d1'),
                                          htmlOutput('D_d1_text')), #Dendrogram

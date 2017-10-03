@@ -278,7 +278,7 @@ i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
 
 time = as.numeric(colnames(i_pFEV_ts))
 
-i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na > 3,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
+i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
 colnames(i_pFEV_sm) = time
 
 i_pFEV_smf = cbind(full_fac_0[rownames(i_pFEV_sm),],i_pFEV_sm)

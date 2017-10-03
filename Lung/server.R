@@ -325,6 +325,186 @@ shinyServer(function(input, output) {
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     data
   })
+  
+  output$test_table_1 = renderDataTable(pFEV_lf_r())
+  output$test_table_2 = renderDataTable(i_pFEV_sm_d1_fl_r())
+  
+  output$cluster_test = renderDataTable({
+    test_list = list()
+    #rownames(pFEV_wf_r())
+    ###  pFEV_wf_r #####
+    if(!identical(pFEV_wf_r()$MRN, i_pFEV_wf_r()$MRN)){
+      test_list$i_pFEV_wf_r_row = FALSE
+    }else{
+      test_list$i_pFEV_wf_r_row = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster, i_pFEV_wf_r()$cluster)){
+      test_list$i_pFEV_wf_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_wf_r_cluster = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster_d1, i_pFEV_wf_r()$cluster_d1)){
+      test_list$i_pFEV_wf_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_wf_r_cluster_d1 = TRUE
+    }
+    ##### i_pFEV_smf_r ####
+    if(!identical(pFEV_wf_r()$MRN, i_pFEV_smf_r()$MRN)){
+      test_list$i_pFEV_smf_r_row = FALSE
+    }else{
+      test_list$i_pFEV_smf_r_row = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster, i_pFEV_smf_r()$cluster)){
+      test_list$i_pFEV_smf_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_smf_r_cluster = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster_d1, i_pFEV_smf_r()$cluster_d1)){
+      test_list$i_pFEV_smf_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_smf_r_cluster_d1 = TRUE
+    }
+    #### i_pFEV_sm_d1_f_r #####
+    if(!identical(pFEV_wf_r()$MRN, i_pFEV_sm_d1_f_r()$MRN)){
+      test_list$i_pFEV_sm_d1_f_r_row = FALSE
+    }else{
+      test_list$i_pFEV_sm_d1_f_r_row = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster, i_pFEV_sm_d1_f_r()$cluster)){
+      test_list$i_pFEV_sm_d1_f_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_sm_d1_f_r_cluster = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster_d1, i_pFEV_sm_d1_f_r()$cluster_d1)){
+      test_list$i_pFEV_sm_d1_f_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_sm_d1_f_r_cluster_d1 = TRUE
+    }
+    ###  i_pFEV_sm_d2_f_r #####
+    if(!identical(pFEV_wf_r()$MRN, i_pFEV_sm_d2_f_r()$MRN)){
+      test_list$i_pFEV_sm_d2_f_r_row = FALSE
+    }else{
+      test_list$i_pFEV_sm_d2_f_r_row = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster, i_pFEV_sm_d2_f_r()$cluster)){
+      test_list$i_pFEV_sm_d2_f_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_sm_d2_f_r_cluster = TRUE
+    }
+    if(!identical(pFEV_wf_r()$cluster_d1, i_pFEV_sm_d2_f_r()$cluster_d1)){
+      test_list$i_pFEV_sm_d2_f_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_sm_d2_f_r_cluster_d1 = TRUE
+    }
+    paste(test_list)
+    
+    ###  i_pFEV_lf_r #####
+    if(!identical(pFEV_lf_r()$MRN, i_pFEV_lf_r()$MRN)){
+      test_list$i_pFEV_lf_r_row = FALSE
+    }else{
+      test_list$i_pFEV_lf_r_row = TRUE
+    }
+    if(!identical(pFEV_lf_r()$cluster, i_pFEV_lf_r()$cluster)){
+      test_list$i_pFEV_lf_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_lf_r_cluster = TRUE
+    }
+    if(!identical(pFEV_lf_r()$cluster_d1, i_pFEV_lf_r()$cluster_d1)){
+      test_list$i_pFEV_lf_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_lf_r_cluster_d1 = TRUE
+    }
+    ##### i_pFEV_sm_lf_r ####
+    if(!identical(pFEV_lf_r()$MRN, i_pFEV_sm_lf_r()$MRN)){
+      test_list$i_pFEV_sm_lf_r_row = FALSE
+    }else{
+      test_list$i_pFEV_sm_lf_r_row = TRUE
+    }
+    if(!identical(pFEV_lf_r()$cluster, i_pFEV_sm_lf_r()$cluster)){
+      test_list$i_pFEV_sm_lf_r_cluster = FALSE
+    }else{
+      test_list$i_pFEV_sm_lf_r_cluster = TRUE
+    }
+    if(!identical(pFEV_lf_r()$cluster_d1, i_pFEV_sm_lf_r()$cluster_d1)){
+      test_list$i_pFEV_sm_lf_r_cluster_d1 = FALSE
+    }else{
+      test_list$i_pFEV_sm_lf_r_cluster_d1 = TRUE
+    }
+    #### i_pFEV_sm_d1_fl_r #####
+
+    if(identical(pFEV_lf_r()$MRN, i_pFEV_sm_d1_fl_r()$MRN)){
+      test_list$i_pFEV_sm_d1_fl_r_row = TRUE
+      if(!identical(pFEV_lf_r()$cluster, i_pFEV_sm_d1_fl_r()$cluster)){
+        test_list$i_pFEV_sm_d1_fl_r_cluster = FALSE
+      }else{
+        test_list$i_pFEV_sm_d1_fl_r_cluster = TRUE
+      }
+      if(!identical(pFEV_lf_r()$cluster_d1, i_pFEV_sm_d1_fl_r()$cluster_d1)){
+        test_list$i_pFEV_sm_d1_fl_r_cluster_d1 = FALSE
+      }else{
+        test_list$i_pFEV_sm_d1_fl_r_cluster_d1 = TRUE
+      }
+    }else{
+      l1 = c()
+      l2 = c()
+      for(entry in unique(pFEV_lf_r()$MRN)){
+        #print(entry)
+        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster','cluster_d1')][pFEV_lf_r()$MRN == entry,]))
+        l2 = c(l2,unique(i_pFEV_sm_d1_fl_r()[,c('cluster','cluster_d1')][i_pFEV_sm_d1_fl_r()$MRN == entry,]))
+      }
+      #print(identical(l1,l2))
+      #print('HIT')
+      if(identical(l1,l2)){
+        test_list$i_pFEV_sm_d1_fl_r_ENTRY_BY_ENTRY = TRUE
+      }else{
+        test_list$i_pFEV_sm_d1_fl_r_ENTRY_BY_ENTRY = FALSE
+      }
+      
+    }
+    ###  i_pFEV_sm_d2_fl_r #####
+    if(identical(pFEV_lf_r()$MRN, i_pFEV_sm_d2_fl_r()$MRN)){
+        test_list$i_pFEV_sm_d2_fl_r_row = TRUE
+  
+        if(!identical(pFEV_lf_r()$cluster, i_pFEV_sm_d2_fl_r()$cluster)){
+          test_list$i_pFEV_sm_d2_fl_r_cluster = FALSE
+        }else{
+          test_list$i_pFEV_sm_d2_fl_r_cluster = TRUE
+        }
+        if(!identical(pFEV_lf_r()$cluster_d1, i_pFEV_sm_d2_fl_r()$cluster_d1)){
+          test_list$i_pFEV_sm_d2_fl_r_cluster_d1 = FALSE
+        }else{
+          test_list$i_pFEV_sm_d2_fl_r_cluster_d1 = TRUE
+        }
+    }else{
+      l1 = c()
+      l2 = c()
+      for(entry in unique(pFEV_lf_r()$MRN)){
+        #print(entry)
+        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster','cluster_d1')][pFEV_lf_r()$MRN == entry,]))
+        l2 = c(l2,unique(i_pFEV_sm_d2_fl_r()[,c('cluster','cluster_d1')][i_pFEV_sm_d2_fl_r()$MRN == entry,]))
+      }
+      #print(identical(l1,l2))
+      #print('HIT')
+      if(identical(l1,l2)){
+        test_list$i_pFEV_sm_d2_fl_r_ENTRY_BY_ENTRY = TRUE
+      }else{
+        test_list$i_pFEV_sm_d2_fl_r_ENTRY_BY_ENTRY = FALSE
+      }
+    }
+    
+    if(!identical(pFEV_lf$MRN,i_pFEV_sm_d2_fl$Status)){
+      #print('hit')
+      test_list$error_test = FALSE
+    }else{
+      #print('no hit')
+      test_list$error_test = TRUE
+    }
+    df = data.frame(df = names(test_list), test = paste(test_list))
+    print(df)
+    df
+    #paste(test_list,collapse = '<br>')
+    #test_list
+  })
 
          
   #i_pFEV_wf_r = reactive(i_pFEV_wf[i_pFEV_wf$MRN %in% retained_patients(),])
@@ -543,12 +723,7 @@ shinyServer(function(input, output) {
   
   
   
-  output$d1_mix_heatmap = renderPlot({
-    #colnames(i_pFEV_sm_d1_mf)
-    #mix.heatmap(i_pFEV_sm_d1_mf[full_fac_0$pFEV_na > input$completeness,c(eval(input$mix_clust_col),pFEV_numeric_colnames_f)],rowmar = 10,D.variables = NULL,legend.mat = T)
-    mix.heatmap(i_pFEV_sm_d1_mf[i_pFEV_sm_d1_mf$pFEV_na > input$completeness,c(eval(input$change_mix_clust_col_fac),eval(input$change_mix_clust_col_num))],rowmar = 10,D.variables = NULL,legend.mat = T)
-    
-  })
+
   
 
   
@@ -1657,15 +1832,15 @@ shinyServer(function(input, output) {
       discrete_cluster_D()$weights
     })
     
-    output$test_table_1 = renderDataTable({
-      data_dist = discrete_cluster_D()$data_dist
-      x = discrete_cluster_D()$x
-      cm = cmdscale(data_dist)
-      xy <- data.frame(cm, factor(x))
-      names(xy) <- c("x", "y", "cluster")
-      xy$model <- rownames(xy)
-      xy
-    })
+    # output$test_table_1 = renderDataTable({
+    #   data_dist = discrete_cluster_D()$data_dist
+    #   x = discrete_cluster_D()$x
+    #   cm = cmdscale(data_dist)
+    #   xy <- data.frame(cm, factor(x))
+    #   names(xy) <- c("x", "y", "cluster")
+    #   xy$model <- rownames(xy)
+    #   xy
+    # })
     
     
 
@@ -1686,8 +1861,8 @@ shinyServer(function(input, output) {
               d_num = input$clutree_num
               cols = (ggplotColours(d_num))
               par(lwd = 5)
-              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-                plot()
+              #D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+                plot(D)
               
             })
             
@@ -1754,14 +1929,19 @@ shinyServer(function(input, output) {
  
             ### PLOT CLUSTERS ####
             
+            output$test_text_1 = renderPrint({
+              #discrete_cluster_D_d1()$D[1]
+              discrete_cluster_D_d1()$x[2]
+            })
+            
             output$discrete_cluster_plot_d1 = renderPlot({
               D = discrete_cluster_D_d1()$D
               #plot(D,cex.lab = 0.5)
               d_num = input$clutree_num
               cols = (ggplotColours(d_num))
               par(lwd = 5)
-              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-                plot()
+              #D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+              plot(D)
             })
             
             output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
@@ -1829,9 +2009,9 @@ shinyServer(function(input, output) {
             
             #### DISTANCE SCATTER PLOTS ####
             
-            output$distance_table = renderDataTable(as.matrix(discrete_cluster_D()$data_dist))
-            output$distance_model_table = renderDataTable(distance_model())
-            
+            #output$test_text_1 = renderPrint(discrete_cluster_D()$D)
+            #output$test_table_1 = renderDataTable(discrete_cluster_D()$D)
+     
             distance_model = reactive({
               data_dist = discrete_cluster_D()$data_dist
               x = discrete_cluster_D()$x
@@ -1962,14 +2142,49 @@ shinyServer(function(input, output) {
             df_tc = clust_comparison_within(df,'cluster')
             df_tc
           })
+          
+          # output$test_table_1 = DT::renderDataTable({
+          # 
+          #   df = cluster_analysis_within()
+          #   l = dim(df)[2]
+          #   df_3 = df
+          #   df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
+          #   df_3[is.na(df_3)] = 0
+          #   datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
+          #     background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
+          #     backgroundSize = '98% 88%',
+          #     backgroundRepeat = 'no-repeat',
+          #     backgroundPosition = 'center')
+          # })
+          
           output$cluster_analysis_within_table = DT::renderDataTable({
-            datatable(cluster_analysis_within(),rownames = FALSE)
+            df = cluster_analysis_within()
+            l = dim(df)[2]
+            df_3 = df
+            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
+            df_3[is.na(df_3)] = 0
+            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
+                                            background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
+                                            backgroundSize = '98% 88%',
+                                            backgroundRepeat = 'no-repeat',
+                                            backgroundPosition = 'center')
+            
             })
           output$cluster_analysis_within_table_selected = DT::renderDataTable({
             df = cluster_analysis_within()
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
-            df_selected
-            datatable(df_selected,rownames = FALSE)
+           
+            #datatable(df_selected,rownames = FALSE)
+            df = df_selected
+            l = dim(df)[2]
+            df_3 = df
+            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
+            df_3[is.na(df_3)] = 0
+            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
+                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
+                                                             backgroundSize = '98% 88%',
+                                                             backgroundRepeat = 'no-repeat',
+                                                             backgroundPosition = 'center')
           })
           
           cluster_analysis_within_d1 = reactive({
@@ -1978,13 +2193,33 @@ shinyServer(function(input, output) {
             df_tc
           })
           output$cluster_analysis_within_d1_table = DT::renderDataTable({
-            datatable(cluster_analysis_within_d1(),rownames = FALSE)
+            #datatable(cluster_analysis_within_d1(),rownames = FALSE)
+            df = cluster_analysis_within_d1()
+            l = dim(df)[2]
+            df_3 = df
+            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
+            df_3[is.na(df_3)] = 0
+            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
+                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
+                                                             backgroundSize = '98% 88%',
+                                                             backgroundRepeat = 'no-repeat',
+                                                             backgroundPosition = 'center')
             })
           output$cluster_analysis_within_table_selected_d1 = DT::renderDataTable({
             df = cluster_analysis_within_d1()
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
-            df_selected
-            datatable(df_selected,rownames = FALSE)
+            #df_selected
+            #datatable(df_selected,rownames = FALSE)
+            df = df_selected
+            l = dim(df)[2]
+            df_3 = df
+            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
+            df_3[is.na(df_3)] = 0
+            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
+                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
+                                                             backgroundSize = '98% 88%',
+                                                             backgroundRepeat = 'no-repeat',
+                                                             backgroundPosition = 'center')
           })
  
 ########## SURVIVAL PLOTS ###########

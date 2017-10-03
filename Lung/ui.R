@@ -9,11 +9,7 @@ shinyUI(fluidPage(
       tabPanel('Testing',
                tabsetPanel(
                  tabPanel('Plot',
-                          #plotOutput('cover_plot'),
-                          plotOutput('BOS_plot'),
-                          plotOutput('boss_1_factor'),
-                          plotOutput('boss_2_factor'),
-                          plotOutput('boss_3_factor')
+                          plotOutput('cover_plot')
                           ),
                  tabPanel('text',
                           textOutput('test_text_1')
@@ -412,6 +408,15 @@ shinyUI(fluidPage(
                 
              )
     ),
+
+    ####### BOSS #######
+    tabPanel('BOS',
+             plotOutput('BOS_plot'),
+             plotOutput('survival_factor'),
+             plotOutput('boss_1_factor'),
+             plotOutput('boss_2_factor'),
+             plotOutput('boss_3_factor')
+             ),
 
     ######### R SESSION INFO #########
           tabPanel('R Session Info',

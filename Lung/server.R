@@ -1852,7 +1852,7 @@ shinyServer(function(input, output) {
             
             #output$D = renderText(print(str(discrete_cluster_D()$D)))
             
-            output$discrete_cluster_plot = renderPlot({
+            output$discrete_cluster_plot_2 = renderPlot({
               D = discrete_cluster_D()$D
               #plot(D,cex.lab = 0.5)
               
@@ -1861,12 +1861,277 @@ shinyServer(function(input, output) {
               d_num = input$clutree_num
               cols = (ggplotColours(d_num))
               par(lwd = 5)
-              #D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-                plot(D)
+              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+                plot()
+            })
+            
+            output$discrete_cluster_plot_d1_2 = renderPlot({
+              D = discrete_cluster_D_d1()$D
+              #plot(D,cex.lab = 0.5)
+              
+              #ggdendrogram(D)
+              #ggdend(D)
+              d_num = input$clutree_num
+              cols = (ggplotColours(d_num))
+              par(lwd = 5)
+              D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+                plot()
+              
+              # 
+              # D = discrete_cluster_D_d1()$D
+              # #plot(D,cex.lab = 0.5)
+              # # d_num = input$clutree_num
+              # # cols = (ggplotColours(d_num))
+              # # par(lwd = 5)
+              # # #D %>% set("branches_k_color", value = cols, k = d_num) %>% 
+              # # plot(D)
+              # 
+              # d_num = input$clutree_num
+              # dend = D %>% set("branches_k_color", k=d_num) %>% set("branches_lwd", 1.2)
+              # 
+              # 
+              # #plot()
+              # ggd1 = as.ggdend(dend) 
+              # #ggd1 %>% set("branches_k_color", k=3)
+              # ggplot(ggd1) + ylim(-1, max(get_branches_heights(dend)) )
+              # 
+            })
+            
+            output$discrete_cluster_plot_3 = renderPlot({
+              D = discrete_cluster_D()$D
+              #hc <- hclust(data_dist)
+              #plot(hc)
+              #gg<-rect.hclust(hc,k=5)
+              dendr <- dendro_data(D, type="rectangle") 
+              
+              plot(D)
+              #gg<-rect.hclust(hc,k=d)
+              d_num = input$clutree_num
+              #gg<-rect.hclust(hc,k=d_num)
+              #g
+
+              
+              #df <- USArrests                       # really bad idea to muck up internal datasets
+              #labs <- paste("sta_", 1:50, sep = "") # new labels
+              #rownames(df) <- labs                  # set new row names
+              
+              cut <- d_num    # Number of clusters
+              hc <- D              # hierarchical clustering
+              dendr <- dendro_data(D, type = "rectangle") 
+              clust <- cutree(hc, k = cut)               # find 'cut' clusters
+              clust.df <- data.frame(label = names(clust), cluster = clust)
+              
+              # Split dendrogram into upper grey section and lower coloured section
+              height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+              cut.height <- mean(c(height[cut], height[cut-1]))
+              dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
+                                              dendr$segments$y > cut.height, 1, 2)
+              dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
+              
+              # Number the clusters
+              dendr$segments$cluster <- c(-1, diff(dendr$segments$line))
+              change <- which(dendr$segments$cluster == 1)
+              for (i in 1:cut) dendr$segments$cluster[change[i]] = i + 1
+              dendr$segments$cluster <-  ifelse(dendr$segments$line == 1, 1, 
+                                                ifelse(dendr$segments$cluster == 0, NA, dendr$segments$cluster))
+              dendr$segments$cluster <- na.locf(dendr$segments$cluster) 
+              
+              # Consistent numbering between segment$cluster and label$cluster
+              clust.df$label <- factor(clust.df$label, levels = levels(dendr$labels$label))
+              clust.df <- arrange(clust.df, label)
+              clust.df$cluster <- factor((clust.df$cluster), levels = unique(clust.df$cluster), labels = (1:cut) + 1)
+              dendr[["labels"]] <- merge(dendr[["labels"]], clust.df, by = "label")
+              
+              # Positions for cluster labels
+              n.rle <- rle(dendr$segments$cluster)
+              N <- cumsum(n.rle$lengths)
+              N <- N[seq(1, length(N), 2)] + 1
+              N.df <- dendr$segments[N, ]
+              N.df$cluster <- N.df$cluster - 1
+              
+              # Plot the dendrogram
+              ggplot() + 
+                geom_segment(data = segment(dendr), 
+                             aes(x=x, y=y, xend=xend, yend=yend, size=factor(line), colour=factor(cluster)), 
+                             lineend = "square", show.legend = FALSE) + 
+                scale_colour_manual(values = c("grey60", rainbow(cut))) +
+                scale_size_manual(values = c(.1, 1)) +
+                geom_text(data = N.df, aes(x = x, y = y, label = factor(cluster),  colour = factor(cluster + 1)), 
+                          hjust = 1.5, show.legend = FALSE) +
+                geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
+                          hjust = -0.2, size = 3, show.legend = FALSE) +
+                #scale_y_reverse(expand = c(0.2, 0)) + 
+                labs(x = NULL, y = NULL) +
+                #coord_flip() +
+                #coord_flip() +
+                ylim(-2, 5 )+
+                theme(axis.line.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      panel.background = element_rect(fill = "white"),
+                      panel.grid = element_blank())
+            
+              })
+            
+            clust_org_d1 = reactive({
+              D = discrete_cluster_D_d1()$D
+              dendr = discrete_cluster_D_d1()$dendr
+              clust = discrete_cluster_D_d1()$x
+              cut = 3
+              hc = D
+              #hc <- hclust(data_dist)
+              #plot(hc)
+              #gg<-rect.hclust(hc,k=5)
+              dendr <- dendro_data(D, type="rectangle") 
+              
+              #plot(D)
+              #gg<-rect.hclust(hc,k=d)
+              cut = input$clutree_num
+              #gg<-rect.hclust(hc,k=d_num)
+              #g
+              
+              
+              #df <- USArrests                       # really bad idea to muck up internal datasets
+              #labs <- paste("sta_", 1:50, sep = "") # new labels
+              #rownames(df) <- labs                  # set new row names
+              
+              #cut <- d_num    # Number of clusters
+              #hc <- D              # hierarchical clustering
+              #dendr <- dendro_data(D, type = "rectangle") 
+              clust <- cutree(hc, k = cut)               # find 'cut' clusters
+              clust.df <- data.frame(label = names(clust), cluster = clust)
+              
+              # Split dendrogram into upper grey section and lower coloured section
+              height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+              cut.height <- mean(c(height[cut], height[cut-1]))
+              dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
+                                              dendr$segments$y > cut.height, 1, 2)
+              dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
+              
+              # Number the clusters
+              dendr$segments$cluster <- c(-1, diff(dendr$segments$line))
+              change <- which(dendr$segments$cluster == 1)
+              for (i in 1:cut) dendr$segments$cluster[change[i]] = i + 1
+              dendr$segments$cluster <-  ifelse(dendr$segments$line == 1, 1, 
+                                                ifelse(dendr$segments$cluster == 0, NA, dendr$segments$cluster))
+              dendr$segments$cluster <- na.locf(dendr$segments$cluster) 
+              
+              # Consistent numbering between segment$cluster and label$cluster
+              clust.df$label <- factor(clust.df$label, levels = levels(dendr$labels$label))
+              clust.df <- arrange(clust.df, label)
+              clust.df$cluster <- factor((clust.df$cluster), levels = unique(clust.df$cluster), labels = (1:cut) + 1)
+              dendr[["labels"]] <- merge(dendr[["labels"]], clust.df, by = "label")
+              
+              # Positions for cluster labels
+              n.rle <- rle(dendr$segments$cluster)
+              N <- cumsum(n.rle$lengths)
+              N <- N[seq(1, length(N), 2)] + 1
+              N.df <- dendr$segments[N, ]
+              N.df$cluster <- N.df$cluster - 1
+              list(dendr = dendr, N.df = N.df)
+            })
+            
+          output$discrete_cluster_plot = renderPlot({
+              
+              D = discrete_cluster_D()$D
+              dendr <- dendro_data(D, type = "rectangle") 
+              print(x_cluster)
+              x_cluster = discrete_cluster_D()$x_cluster
+              print(x_cluster)
+              #dendr = discrete_cluster_D_d1()$dendr
+              dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
+              
+              dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
+              dc = as.data.frame(dendr$segments)
+              for(cl in unique(na.omit(dc$cluster))){
+                maxx = max(dc$x[dc$cluster == cl],na.rm=T)
+                minx = min(dc$x[dc$cluster == cl],na.rm=T)
+                dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
+              }
+              ggplot() +
+                geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 2)
+              
+            })  
+            
+          output$discrete_cluster_plot_d1 = renderPlot({
+            
+            D = discrete_cluster_D_d1()$D
+            dendr <- dendro_data(D, type = "rectangle") 
+            print(x_cluster)
+            x_cluster = discrete_cluster_D_d1()$x_cluster
+            print(x_cluster)
+            #dendr = discrete_cluster_D_d1()$dendr
+            dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
+
+            dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
+            dc = as.data.frame(dendr$segments)
+            for(cl in unique(na.omit(dc$cluster))){
+              maxx = max(dc$x[dc$cluster == cl],na.rm=T)
+              minx = min(dc$x[dc$cluster == cl],na.rm=T)
+              dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
+            }
+            ggplot() +
+              geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 2) +
+              geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
+                        hjust = -0.2, size = 3, show.legend = FALSE) +
+              theme(axis.line.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.title.y = element_blank(),
+                    panel.background = element_rect(fill = "white"),
+                    panel.grid = element_blank())
+          
+          })
+          
+
+          
+          output$discrete_cluster_plot_d1_2 = renderPlot({
+            dendr = clust_org_d1()$dendr
+            N.df = clust_org_d1()$N.df
+              # Plot the dendrogram
+            
+              #ggplot() +
+              #  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, size=factor(line), colour=factor(cluster)))
+            
+              ggplot() + 
+                geom_segment(data = segment(dendr), 
+                             aes(x=x, y=y, xend=xend, yend=yend, size=factor(line), colour=factor(cluster)), 
+                             lineend = "square", show.legend = FALSE) + 
+                scale_colour_manual(values = c("grey60", rainbow(cut))) +
+                scale_size_manual(values = c(.1, 1)) +
+                geom_text(data = N.df, aes(x = x, y = y, label = factor(cluster),  colour = factor(cluster + 1)), 
+                          hjust = 1.5, show.legend = FALSE) +
+                geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
+                          hjust = -0.2, size = 3, show.legend = FALSE) +
+                #scale_y_reverse(expand = c(0.2, 0)) + 
+                labs(x = NULL, y = NULL) +
+                #coord_flip() +
+                #coord_flip() +
+                #ylim(-2, 5 )+
+                theme(axis.line.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      panel.background = element_rect(fill = "white"),
+                      panel.grid = element_blank())
               
             })
             
-            output$discrete_x_table = renderDataTable(discrete_cluster_D()$x_cluster)
+            output$discrete_x_table = renderDataTable({
+              x_cluster = discrete_cluster_D()$x_cluster
+              x_cluster_table = data.frame(num = numeric(0),MRN = numeric(0))
+              for(entry in unique(x_cluster$cluster)){
+                line_list  = x_cluster[x_cluster$cluster == entry,'label']
+                line = paste(line_list,collapse = (', '))
+                line
+                x_cluster_table[entry,'num'] = length(line_list)
+                x_cluster_table[entry,'MRN'] = line
+              }
+              tx = as.data.frame(t(x_cluster_table))
+              tx
+
+              })
             
             discrete_cutree_line_plots = reactive({
               data = discrete_cluster_D()$data
@@ -1934,20 +2199,24 @@ shinyServer(function(input, output) {
               discrete_cluster_D_d1()$x[2]
             })
             
-            output$discrete_cluster_plot_d1 = renderPlot({
-              D = discrete_cluster_D_d1()$D
-              #plot(D,cex.lab = 0.5)
-              d_num = input$clutree_num
-              cols = (ggplotColours(d_num))
-              par(lwd = 5)
-              #D %>% set("branches_k_color", value = cols, k = d_num) %>% 
-              plot(D)
-            })
+
             
             output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
             
             output$discrete_x_table_d1 = renderDataTable({
-              discrete_cluster_D_d1()$x_cluster
+              #discrete_cluster_D_d1()$x_cluster
+              x_cluster = discrete_cluster_D_d1()$x_cluster
+              #x_cluster = clust_org_d1()$dendr$label
+              x_cluster_table = data.frame(num = numeric(0),MRN = numeric(0))
+              for(entry in unique(x_cluster$cluster)){
+                line_list  = x_cluster[x_cluster$cluster == entry,'label']
+                line = paste(line_list,collapse = (', '))
+                line
+                x_cluster_table[entry,'num'] = length(line_list)
+                x_cluster_table[entry,'MRN'] = line
+              }
+             t(x_cluster_table)
+            #})
             })
             
             discrete_cutree_line_plots_d1 = reactive({
@@ -2104,12 +2373,12 @@ shinyServer(function(input, output) {
             output$distance_model_table_d1 = renderDataTable(distance_model_d1())
             
             
-            output$cover_plot = renderPlot({
-              xy = distance_model_d1()
-              ggplot(xy, aes(x, y, colour=cluster)) + 
-                geom_point( size=3) +
-                geom_density2d(alpha=0.5)
-            })
+            # output$cover_plot = renderPlot({
+            #   xy = distance_model_d1()
+            #   ggplot(xy, aes(x, y, colour=cluster)) + 
+            #     geom_point( size=3) +
+            #     geom_density2d(alpha=0.5)
+            # })
             
             
     #### CLUSTER COMPOSITION TABLES #####
@@ -2224,14 +2493,6 @@ shinyServer(function(input, output) {
  
 ########## SURVIVAL PLOTS ###########
           
-          output$cover_plot = renderPlot({
-            plot_data = pFEV_wf
-            plot_data$SurvObj = with(plot_data, Surv(survival_time,Status == '2'))
-            km.as.one <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
-            km.as.one
-            plot(km.as.one)
-          })
-          
           output$boss_3 = renderPlot({
             
             
@@ -2269,10 +2530,10 @@ shinyServer(function(input, output) {
             global_factor = input$global_factor
             print(global_factor)
             colnames(plot_data)
-            fit <- survfit(Surv(plot_data$survival_time) ~ plot_data[,global_factor], data = plot_data)
+            fit <- survfit(Surv(plot_data$MonthsToEvent) ~ plot_data[,global_factor], data = plot_data)
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line",surv.connect = FALSE) + ggtitle(paste('Survival Time',global_factor))
+            autoplot(fit,surv.geom = "line",surv.connect = FALSE) + ggtitle(paste('MonthsToEvent by ',global_factor))
           })
           
           output$boss_1_factor = renderPlot({
@@ -2284,7 +2545,7 @@ shinyServer(function(input, output) {
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 1',global_factor)) +
+              ggtitle(paste('BOSS 1 by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
           })
@@ -2298,7 +2559,7 @@ shinyServer(function(input, output) {
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 2',global_factor)) +
+              ggtitle(paste('BOSS 2 by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
           })
@@ -2312,14 +2573,15 @@ shinyServer(function(input, output) {
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 3',global_factor)) +
+              ggtitle(paste('BOSS 3 by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
           })
           output$BOS_plot = renderPlot({
             plot_data = pFEV_wf
+            colnames(plot_data)
             plot_data = pFEV_wf_r()
-            boss_data = plot_data[c('BOS1mnth','BOS2mnth','BOS3mnth')]
+            boss_data = plot_data[c('MonthsToEvent','BOS1mnth','BOS2mnth','BOS3mnth')]
             m_bos = melt(boss_data)
             m_bos
             

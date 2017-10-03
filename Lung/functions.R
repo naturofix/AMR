@@ -762,8 +762,10 @@ boxplot_pp_ratio_plot_function = function(df_m){
 clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
                                num_w_1,num_col_list_1,num_w_2,num_col_list_2){
-  data = i_pFEV_wf[c(1:30),c(1:30)]
-  weights = rep(10,30)
+  data = i_pFEV_wf[r_list,c(30:50)]
+  rownames(data)
+  data = data[complete.cases(data),]
+  weights = rep(10,dim(data)[2])
   #d_num = 3
   clust_fac_col_list = c(fac_col_list_1,fac_col_list_2)
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
@@ -798,12 +800,18 @@ clustering_function = function(full_data,r_list,d_num,
   data_dist = dist.subjects(data,weights = weights)
   #d_scale = cmdscale(data_dist)
   D = dendro.subjects(data_dist,weights = weights)
-  x = cutree(D, k = d_num)
-  x_cluster = data.frame(MRN = numeric(0))
-  for(entry in unique(x)){
-    x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
-  }
-  data$cluster = factor(x) 
+  dendr <- dendro_data(D, type = "rectangle") 
+  x <- cutree(D, k = d_num)               # find 'cut' clusters
+  x_cluster <- data.frame(label = names(x), cluster = x)
+  
+  #x = cutree(D, k = d_num)
+  #x_cluster = data.frame(MRN = numeric(0))
+  #for(entry in unique(x)){
+  #  x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
+  #}
+  
+  data$cluster = factor(x_cluster$cluster[match(rownames(data),x_cluster$label)])
+  #data$cluster = factor(x) 
   result = list(data_dist = data_dist,D = D, o_data = o_data, data = data, x = x, x_cluster = x_cluster, weights = weights)
   return(result)
   #return(result)

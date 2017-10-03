@@ -16,6 +16,10 @@ library(plyr)
 library(survival)
 library(ggfortify)
 library(survminer)
+#library(ggplot2)
+library(ggdendro)
+#library(plyr)
+library(zoo)
 
 
 
@@ -83,6 +87,9 @@ numeric_columns = c("MonthsToEvent","YearsToEvent","CRP",
                     "BOS1mnth", "BOS2mnth", "BOS3mnth", 
                     "ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
 
+add_numeric_columns = c("MonthsToEvent","YearsToEvent","CRP",
+                        "FEV1Ratio")
+
 pFEV_cols = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
               ,"pFEV1_neg2", "pFEV1_neg1", "pFEV1_0", "pFEV1_pos1", "pFEV1_pos2", "pFEV1_pos3"     
               ,"pFEV1_pos4", "pFEV1_pos5", "pFEV1_pos6", "pFEV1_pos12", "pFEV1_pos18", "pFEV1_pos24"    
@@ -112,7 +119,7 @@ full_factor_columns = full_factor_columns[order(match(full_factor_columns,colnam
 
 
 
-#### correct Data columns ##########
+#### correct DATE columns ##########
 clust_date = clustering[,date_columns]
 clust_date[,"RxDate"]
 new_date = as.Date(clust_date[,"RxDate"],'%d-%b-%y')
@@ -180,15 +187,16 @@ full_fac_0 = as.data.frame(apply(num_fac_0,2,function(x) factor(x)))
 
 ##### CONSOLIDATE DATA #############
 
-full_fac = cbind(full_fac,clust_date,boss_data_num)
-full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num)
+#full_fac = cbind(full_fac,clust_date,boss_data_num)
+#full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num)
 
 ###################################################
 
 ##### DATE COMPUTATIONS ####
 
-full_fac_0$survival_time = full_fac_0$DeathDate - full_fac_0$RxDate
-
+#full_fac_0$survival_time = full_fac_0$DeathDate - full_fac_0$RxDate
+#full_fac_0$survival_time =  round((full_fac_0$DeathDate - full_fac_0$RxDate)/(365.25/12))
+#full_fac_0$survival_time
 ########### NUMERIC COLUMN ###############
 
 ## numric column ##
@@ -196,6 +204,21 @@ clust_num = clustering[,numeric_columns]
 for(num_col in numeric_columns){
   clust_num[,num_col] = as.numeric(clust_num[,num_col])
 }
+
+add_num = clustering[,add_numeric_columns]
+for(num_col in add_numeric_columns){
+  add_num[,num_col] = as.numeric(add_num[,num_col])
+}
+
+
+##### CONSOLIDATE DATA #############
+
+full_fac = cbind(full_fac,clust_date,boss_data_num,add_num)
+colnames(full_fac)
+full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num,add_num)
+colnames(full_fac_0)
+###################################################
+
 
 
 #############################################
@@ -237,8 +260,8 @@ pFEV_w_original = pFEV_w
 full_fac_0_original = full_fac_0
 excluded_patients_c = full_fac_0$MRN[full_fac_0$pFEV_na < completeness]
 excluded_patients_c = c(names(excluded_patients_c),patient_custom_exclude)
-
-
+r_list = patient_list[!patient_list %in% excluded_patients_c]
+r_list
 pFEV_wf = cbind(full_fac_0,pFEV_w)
 pFEV_wf_original = cbind(full_fac_0_original,pFEV_w_original)
 pFEV_lf_original = melt(pFEV_wf_original, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))

@@ -2036,7 +2036,7 @@ shinyServer(function(input, output) {
               
               D = discrete_cluster_D()$D
               dendr <- dendro_data(D, type = "rectangle") 
-              print(x_cluster)
+              #print(x_cluster)
               x_cluster = discrete_cluster_D()$x_cluster
               print(x_cluster)
               #dendr = discrete_cluster_D_d1()$dendr
@@ -2058,7 +2058,7 @@ shinyServer(function(input, output) {
             
             D = discrete_cluster_D_d1()$D
             dendr <- dendro_data(D, type = "rectangle") 
-            print(x_cluster)
+            #print(x_cluster)
             x_cluster = discrete_cluster_D_d1()$x_cluster
             print(x_cluster)
             #dendr = discrete_cluster_D_d1()$dendr
@@ -2373,12 +2373,12 @@ shinyServer(function(input, output) {
             output$distance_model_table_d1 = renderDataTable(distance_model_d1())
             
             
-            # output$cover_plot = renderPlot({
-            #   xy = distance_model_d1()
-            #   ggplot(xy, aes(x, y, colour=cluster)) + 
-            #     geom_point( size=3) +
-            #     geom_density2d(alpha=0.5)
-            # })
+            output$cover_plot = renderPlot({
+              xy = distance_model_d1()
+              ggplot(xy, aes(x, y, colour=cluster)) +
+                geom_point( size=3) +
+                geom_density2d(alpha=0.5)
+            })
             
             
     #### CLUSTER COMPOSITION TABLES #####

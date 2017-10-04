@@ -2,8 +2,13 @@ library(shiny)
 shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   fluidRow(
-    column(6,selectInput('global_factor','Factor to Separate by',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
-    column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
+    column(4,selectInput('global_factor','Factor to Separate by',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-6,0),width = 800)),
+    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=48,step = 1,value = c(0,6),width = 800)),
+    #column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
+    
+    column(12,
+    
     tabsetPanel(
     ############# DATA ##############
       tabPanel('Testing',
@@ -161,8 +166,8 @@ shinyUI(fluidPage(
                                                    HTML(paste0('T test are calculated on all pFEV values between the selected timepoints.')),
                                                    HTML(paste0('The timepoints can be adjusted using the Pre and Post Treatment Range Sliders ',textOutput('t_range_text'))),
                                                    
-                                                   column(6,sliderInput('pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
-                                                   column(6,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
+                                                   #column(6,sliderInput('pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
+                                                   #column(6,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
                                                    tabsetPanel(
                                                      tabPanel('Original Data',
                                                               plotOutput('boxplot_pp_ranges'),
@@ -283,8 +288,8 @@ shinyUI(fluidPage(
                                                             HTML(paste0('T test calculated on imputed smoothed first differential values (D1), (use with caution)')),
                                                             HTML(paste0('the timepoints can be adjusted using the Pre and Post Treatment Range Sliders ',textOutput('t_d1_text'))),
                                                             HTML(paste(textOutput('paired_t_d1'))),
-                                                            column(6,sliderInput('d1_pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
-                                                            column(6,sliderInput('d1_post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
+                                                            #column(6,sliderInput('d1_pre_range','Pre Treatment Range',min = -48,max=0,step = 1,value = c(-6,0),width = 800)),
+                                                            #column(6,sliderInput('d1_post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,6),width = 800)),
                                                             column(12,
                                                                    plotOutput('boxplot_pp_ranges_d1'),
 
@@ -415,22 +420,27 @@ shinyUI(fluidPage(
 
     ####### BOSS #######
     tabPanel('BOS',
-             column(6,sliderInput('boss_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
+             column(12,sliderInput('bos_range','Timecourse Range',min = -24,max=48,step = 1,value = c(-24,24),width = 800)),
              
              tabsetPanel(
+               
+               tabPanel('Line Plots',
+                        plotOutput('bos_plots'),
+                        plotOutput('bos1_factor_plot'),
+                        plotOutput('bos2_factor_plot'),
+                        plotOutput('bos3_factor_plot')
+                        #plotOutput('boss_3_factor_l')
+               ),
+               tabPanel('Tables',
+                        dataTableOutput('bos_df'),
+                        dataTableOutput('boss_factor_table')
+                        ),
                tabPanel('Confidence Intervals',
                  plotOutput('BOS_plot'),
                  plotOutput('survival_factor'),
                  plotOutput('boss_1_factor'),
                  plotOutput('boss_2_factor'),
                  plotOutput('boss_3_factor')
-               ),
-               tabPanel('Line Plots',
-                        plotOutput('BOS_plot_l'),
-                        plotOutput('survival_factor_l'),
-                        plotOutput('boss_1_factor_l'),
-                        plotOutput('boss_2_factor_l'),
-                        plotOutput('boss_3_factor_l')
                )
              )
                         
@@ -446,7 +456,7 @@ shinyUI(fluidPage(
                               )
 
   #### END #########
-
+)
   )#tabset
   )#fluidRow
   

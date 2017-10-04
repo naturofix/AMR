@@ -26,18 +26,18 @@ shinyServer(function(input, output) {
     #toBibtex(citation('dendextend'))
   })
   
-  output$t1 = renderText(input$anova_range[1])
-  output$t2 = renderText(input$anova_range[2])
+  output$t1 = renderText(input$pre_range[1])
+  output$t2 = renderText(input$post_range[2])
   output$t_range_text = renderText(paste('(',input$pre_range[1],' to ',input$pre_range[2],') vs (',input$post_range[1],' to ',input$post_range[2],')'))
   
-  output$t_ratio_text = renderText(paste('log2(pFEV at zero point / pFEV at ',input$anova_range[1],') vs log2(pFEV at ',input$anova_range[2],' / pFEV zero point)'))
-  output$t_pFEV_text = renderText(paste('(',input$anova_range[1],' to -1 ) vs ( 1 to ',input$anova_range[2],')'))
-  output$t_pFEV_zero_text = renderText(paste('pre p value (',input$anova_range[1],' vs 0 ), post p value ( 0 vs ',input$anova_range[2],')'))
+  output$t_ratio_text = renderText(paste('log2(pFEV at zero point / pFEV at ',input$pre_range[1],') vs log2(pFEV at ',input$post_range[2],' / pFEV zero point)'))
+  output$t_pFEV_text = renderText(paste('(',input$pre_range[1],' to -1 ) vs ( 1 to ',input$post_range[2],')'))
+  output$t_pFEV_zero_text = renderText(paste('pre p value (',input$pre_range[1],' vs 0 ), post p value ( 0 vs ',input$post_range[2],')'))
   
-  output$slope_pFEV_text = renderText(paste('(',input$anova_range[1],' to 0 ) vs ( 0 to ',input$anova_range[2],')'))
+  output$slope_pFEV_text = renderText(paste('(',input$pre_range[1],' to 0 ) vs ( 0 to ',input$post_range[2],')'))
   
-  output$t_d1_text = renderText(paste('(',input$d1_pre_range[1],' to ',input$d1_pre_range[2],') vs (',input$d1_post_range[1],' to ',input$d1_post_range[2],')'))
-  output$slope_d1_text = renderText(paste('(',input$anova_range[1],' to 0 ) vs ( 0 to ',input$anova_range[2],')'))
+  output$t_d1_text = renderText(paste('(',input$pre_range[1],' to ',input$pre_range[2],') vs (',input$post_range[1],' to ',input$post_range[2],')'))
+  output$slope_d1_text = renderText(paste('(',input$pre_range[1],' to 0 ) vs ( 0 to ',input$post_range[2],')'))
   
   ########## DATA TABLES #####################
   
@@ -661,7 +661,7 @@ shinyServer(function(input, output) {
   
   i_mrn_sub_pFEV_sm_d1 = reactive({
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     
     i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$MRN %in% input$change_mrn_select & i_pFEV_sm_d1_fl_r()$variable %in% cols,]
@@ -686,7 +686,7 @@ shinyServer(function(input, output) {
   
   output$boxplot_i_pFEV_sm_d1 = renderPlot({
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     summary_data =  i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
     i_data = i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% pFEV_numeric_colnames_f,]
@@ -705,7 +705,7 @@ shinyServer(function(input, output) {
   
   output$boxplot_i_pFEV_sm_d1_mean = renderPlot({
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     summary_data =  i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
     ggplot(NULL) +
@@ -731,7 +731,7 @@ shinyServer(function(input, output) {
   
   i_mrn_sub_pFEV_sm_d2 = reactive({
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     i_pFEV_sm_d2_fl_r()[i_pFEV_sm_d2_fl_r()$MRN %in% input$change_mrn_select & i_pFEV_sm_d2_fl_r()$variable %in% cols,]
   })
@@ -751,7 +751,7 @@ shinyServer(function(input, output) {
   })
   
   output$boxplot_i_pFEV_sm_d2 = renderPlot({
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     summary_data =  i_pFEV_sm_d2_fl_r()[i_pFEV_sm_d2_fl_r()$variable %in% cols,]
     i_data = i_pFEV_sm_d2_fl_r()[i_pFEV_sm_d2_fl_r()$variable %in% pFEV_numeric_colnames_f,]
     ggplot(NULL) +
@@ -769,7 +769,7 @@ shinyServer(function(input, output) {
   
   output$boxplot_i_pFEV_sm_d2_mean = renderPlot({
 
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
 
     summary_data =  i_pFEV_sm_d2_fl_r()[i_pFEV_sm_d2_fl_r()$variable %in% cols,]
     ggplot(NULL) +
@@ -798,7 +798,7 @@ shinyServer(function(input, output) {
                 factor = 'MRN'
                 factor = input$global_factor
                 cols = c(-6:6)
-                cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+                cols = factor(c(input$pre_range[1]:input$post_range[2]))
                 cols
                 #full_data=pFEV_lf[pFEV_lf$variable %in% cols,]
                 function_data = pFEV_lf_r()
@@ -811,7 +811,7 @@ shinyServer(function(input, output) {
               factor = input$global_factor
               full_data = pFEV_lf_r()
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% cols,]
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -825,7 +825,7 @@ shinyServer(function(input, output) {
             output$boxplot_anova_before_factor = renderPlot({
               factor = input$global_factor
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% before & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -839,7 +839,7 @@ shinyServer(function(input, output) {
             output$boxplot_anova_after_factor = renderPlot({
               factor = input$global_factor
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% after & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -858,7 +858,7 @@ shinyServer(function(input, output) {
               factor = 'MRN'
               factor = input$global_factor
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               #full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% cols,]
               function_data = i_pFEV_lf_r()
@@ -871,7 +871,7 @@ shinyServer(function(input, output) {
               factor = input$global_factor
               function_data = i_pFEV_lf_r()
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=function_data[function_data$variable %in% cols,]
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -887,7 +887,7 @@ shinyServer(function(input, output) {
               
               factor = input$global_factor
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=function_data[function_data$variable %in% before & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -903,7 +903,7 @@ shinyServer(function(input, output) {
               
               factor = input$global_factor
               cols = c(-6:6)
-              cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+              cols = factor(c(input$pre_range[1]:input$post_range[2]))
               cols
               full_data=function_data[function_data$variable %in% after & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
@@ -923,7 +923,7 @@ shinyServer(function(input, output) {
             factor = 'MRN'
         
             cols = c(-6:6)
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
             df = lm_sample_function(function_data,factor,cols,df)
             
@@ -968,7 +968,7 @@ shinyServer(function(input, output) {
             factor = 'MRN'
             
             cols = c(-6:6)
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
             df = lm_sample_function(function_data,factor,cols,df)
           })
@@ -994,16 +994,16 @@ shinyServer(function(input, output) {
           pp_t_test = reactive({
               full_data = pFEV_lf_r()
               factor = input$global_factor
-              t1 = input$anova_range[1]
-              t2 = input$anova_range[2]
+              t1 = input$pre_range[1]
+              t2 = input$post_range[2]
               df = pp_t_test_function(full_data,factor,t1,t2)
               df = df[order(df$Status),]
             })
           output$pp_t_table = renderDataTable(t(pp_t_test()))
           output$boxplot_pp = renderPlot({
             full_data = pFEV_lf_r()
-            t1 = input$anova_range[1]
-            t2 = input$anova_range[2]
+            t1 = input$pre_range[1]
+            t2 = input$post_range[2]
             global_factor = input$global_factor
             p = boxplot_pp_function(full_data,t1,t2,global_factor)
             print(p)
@@ -1014,8 +1014,8 @@ shinyServer(function(input, output) {
                   pp_t_test_i = reactive({
                     full_data = i_pFEV_lf_r()
                     factor = input$global_factor
-                    t1 = input$anova_range[1]
-                    t2 = input$anova_range[2]
+                    t1 = input$pre_range[1]
+                    t2 = input$post_range[2]
                     df = pp_t_test_function(full_data,factor,t1,t2)
                   })
                   
@@ -1023,8 +1023,8 @@ shinyServer(function(input, output) {
                   
                   output$boxplot_pp_i = renderPlot({
                     full_data = i_pFEV_lf_r()
-                    t1 = input$anova_range[1]
-                    t2 = input$anova_range[2]
+                    t1 = input$pre_range[1]
+                    t2 = input$post_range[2]
                     global_factor = input$global_factor
                     p = boxplot_pp_function(full_data,t1,t2,global_factor)
                     print(p)
@@ -1093,8 +1093,8 @@ shinyServer(function(input, output) {
       ### Ratio  FULL #### 
         pp_t_test_ratio_full = reactive({
           full_data = pFEV_lf_r()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           df = pp_t_test_ratio_full_function(full_data,t1,t2)
           df = df[order(df$Status),]
           df
@@ -1103,16 +1103,16 @@ shinyServer(function(input, output) {
         output$pp_t_table_ratio_full = renderDataTable(t(pp_t_test_ratio_full()))
         output$boxplot_pp_ratio_full = renderPlot({
           full_data = pFEV_lf_r()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           p = boxplot_pp_ratio_full_function(full_data,t1,t2)
           print(p)
         })
         
         pp_t_test_ratio_full_i = reactive({
           full_data = i_pFEV_lf_r()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           df = pp_t_test_ratio_full_function(full_data,t1,t2)
           df = df[order(df$Status),]
           df
@@ -1120,8 +1120,8 @@ shinyServer(function(input, output) {
         output$pp_t_table_ratio_full_i = renderDataTable(t(pp_t_test_ratio_full_i()))
         output$boxplot_pp_ratio_full_i = renderPlot({
           full_data = i_pFEV_lf_r()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           p = boxplot_pp_ratio_full_function(full_data,t1,t2)
           print(p)
         })
@@ -1130,8 +1130,8 @@ shinyServer(function(input, output) {
         pp_t_test_ratio = reactive({
           full_data = pFEV_lf_r()
           factor = input$global_factor
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           df = pp_t_test_ratio_function(full_data,factor,t1,t2)
           df_s = df[order(df$Status),]
           #View(df_s)
@@ -1145,8 +1145,8 @@ shinyServer(function(input, output) {
         boxplot_pp_ratio_data = reactive({
           full_data = pFEV_lf_r()
           df_s = pp_t_test_ratio()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           global_factor = input$global_factor
           df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
           #View(df)
@@ -1160,8 +1160,8 @@ shinyServer(function(input, output) {
         pp_t_test_ratio_i = reactive({
           full_data = i_pFEV_lf_r()
           factor = input$global_factor
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           df = pp_t_test_ratio_function(full_data,factor,t1,t2)
           df_s = df[order(df$Status),]
           #View(df_s)
@@ -1175,8 +1175,8 @@ shinyServer(function(input, output) {
         boxplot_pp_ratio_data = reactive({
           full_data = i_pFEV_lf_r()
           df_s = pp_t_test_ratio_i()
-          t1 = input$anova_range[1]
-          t2 = input$anova_range[2]
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
           global_factor = input$global_factor
           df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
           #View(df)
@@ -1196,8 +1196,8 @@ shinyServer(function(input, output) {
         factor = input$global_factor
         t1 = -6
         t2 = 6
-        t1 = input$anova_range[1]
-        t2 = input$anova_range[2]
+        t1 = input$pre_range[1]
+        t2 = input$post_range[2]
         df = pp_t_test_zero_function(full_data,factor,t1,t2)
         df_s = df[order(df$Status),]
         #View(df_s)
@@ -1210,8 +1210,8 @@ shinyServer(function(input, output) {
       boxplot_pp_zero_data = reactive({
         full_data = pFEV_lf_r()
         df_s = pp_t_test_zero()
-        t1 = input$anova_range[1]
-        t2 = input$anova_range[2]
+        t1 = input$pre_range[1]
+        t2 = input$post_range[2]
         factor = input$global_factor
         df = boxplot_pp_zero_data_function(full_data,factor,t1,t2,df_s)
         #View(df)
@@ -1226,8 +1226,8 @@ shinyServer(function(input, output) {
       pp_t_test_zero_i = reactive({
         full_data = i_pFEV_lf_r()
         factor = input$global_factor
-        t1 = input$anova_range[1]
-        t2 = input$anova_range[2]
+        t1 = input$pre_range[1]
+        t2 = input$post_range[2]
         df = pp_t_test_zero_function(full_data,factor,t1,t2)
         df = df[order(df$Status),]
         
@@ -1239,8 +1239,8 @@ shinyServer(function(input, output) {
       boxplot_pp_zero_data_i = reactive({
         full_data = i_pFEV_lf_r()
         df_s = pp_t_test_zero_i()
-        t1 = input$anova_range[1]
-        t2 = input$anova_range[2]
+        t1 = input$pre_range[1]
+        t2 = input$post_range[2]
         factor = input$global_factor
         df = boxplot_pp_zero_data_function(full_data,factor,t1,t2,df_s)
         #View(df)
@@ -1252,8 +1252,8 @@ shinyServer(function(input, output) {
       
       # output$boxplot_pp_zero_i = renderPlot({
       #   full_data = i_pFEV_lf_r()
-      #   t1 = input$anova_range[1]
-      #   t2 = input$anova_range[2]
+      #   t1 = input$pre_range[1]
+      #   t2 = input$post_range[2]
       #   factor = input$global_factor
       #   p = boxplot_pp_zero_function(full_data,factor,t1,t2)
       #   print(p)
@@ -1269,7 +1269,7 @@ shinyServer(function(input, output) {
     #### LM ANOVA ####
           df_lm_d1 = reactive({
             factor = input$global_factor
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             function_data=i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
             df = lm_function(function_data,factor,cols)
             df
@@ -1280,7 +1280,7 @@ shinyServer(function(input, output) {
             factor = input$global_factor
             full_data = i_pFEV_sm_d1_fl_r()
             cols = c(-6:6)
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
             full_data=i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
             ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1295,7 +1295,7 @@ shinyServer(function(input, output) {
           output$boxplot_anova_before_factor_d1 = renderPlot({
             factor = input$global_factor
             cols = c(-6:6)
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
             full_data=i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% before & i_pFEV_sm_d1_fl_r()$variable %in% cols,] 
             ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1309,7 +1309,7 @@ shinyServer(function(input, output) {
           output$boxplot_anova_after_factor_d1 = renderPlot({
             factor = input$global_factor
             cols = c(-6:6)
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
             full_data=i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% after & i_pFEV_sm_d1_fl_r()$variable %in% cols,] 
             ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1324,7 +1324,7 @@ shinyServer(function(input, output) {
           df_lm_sample_d1 = reactive({
             df = i_pFEV_sm_d1_f_r()
             factor = 'MRN'
-            cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+            cols = factor(c(input$pre_range[1]:input$post_range[2]))
             function_data=i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
             df = lm_sample_function(function_data,factor,cols,df)
             df
@@ -1354,16 +1354,16 @@ shinyServer(function(input, output) {
           pp_t_test_d1 = reactive({
             full_data = i_pFEV_sm_d1_fl_r()
             factor = input$global_factor
-            t1 = input$anova_range[1]
-            t2 = input$anova_range[2]
+            t1 = input$pre_range[1]
+            t2 = input$post_range[2]
             df = pp_t_test_function(full_data,factor,t1,t2)
             df
           })
           output$pp_t_table_d1 = renderDataTable(t(pp_t_test_d1()))
           output$boxplot_pp_d1 = renderPlot({
             full_data = i_pFEV_sm_d1_fl_r()
-            t1 = input$anova_range[1]
-            t2 = input$anova_range[2]
+            t1 = input$pre_range[1]
+            t2 = input$post_range[2]
             global_factor = input$global_factor
             p = boxplot_pp_function(full_data,t1,t2,global_factor)
             p
@@ -1372,20 +1372,20 @@ shinyServer(function(input, output) {
           pp_t_test_ranges_d1 = reactive({
             full_data = i_pFEV_sm_d1_fl_r()
             factor = input$global_factor
-            pre1 = input$d1_pre_range[1]
-            pre2 = input$d1_pre_range[2]
-            post1 = input$d1_post_range[1]
-            post2 = input$d1_post_range[2]
+            pre1 = input$pre_range[1]
+            pre2 = input$pre_range[2]
+            post1 = input$post_range[1]
+            post2 = input$post_range[2]
             df = pp_t_test_range_function(full_data,factor,pre1,pre2,post1,post2)
           })
           output$pp_t_table_ranges_d1 = renderDataTable(t(pp_t_test_ranges_d1()))
           # output$boxplot_pp_ranges_d1 = renderPlot({
           #   full_data = i_pFEV_sm_d1_fl_r()
           #   df = pp_t_test_ranges_d1()
-          #   pre1 = input$d1_pre_range[1]
-          #   pre2 = input$d1_pre_range[2]
-          #   post1 = input$d1_post_range[1]
-          #   post2 = input$d1_post_range[2]
+          #   pre1 = input$pre_range[1]
+          #   pre2 = input$pre_range[2]
+          #   post1 = input$post_range[1]
+          #   post2 = input$post_range[2]
           #   global_factor = input$global_factor
           #   p = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor,df)
           #   print(p)
@@ -1419,7 +1419,7 @@ shinyServer(function(input, output) {
     factor = 'MRN'
     factor = input$global_factor
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     full_data=i_pFEV_sm_d2_fl[i_pFEV_sm_d2_fl$variable %in% cols,]
     dim(full_data)
@@ -1536,7 +1536,7 @@ shinyServer(function(input, output) {
     factor = input$global_factor
     full_data = i_pFEV_sm_d2_fl
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     full_data=i_pFEV_sm_d2_fl[i_pFEV_sm_d2_fl$variable %in% cols,]
     ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1551,7 +1551,7 @@ shinyServer(function(input, output) {
   output$boxplot_anova_before_factor_d2 = renderPlot({
     factor = input$global_factor
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     full_data=i_pFEV_sm_d2_fl[i_pFEV_sm_d2_fl$variable %in% before & i_pFEV_sm_d2_fl$variable %in% cols,] 
     ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1565,7 +1565,7 @@ shinyServer(function(input, output) {
   output$boxplot_anova_after_factor_d2 = renderPlot({
     factor = input$global_factor
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     full_data=i_pFEV_sm_d2_fl[i_pFEV_sm_d2_fl$variable %in% after & i_pFEV_sm_d2_fl$variable %in% cols,] 
     ggplot(full_data, aes(x = variable, y = value)) + 
@@ -1583,7 +1583,7 @@ shinyServer(function(input, output) {
     factor = 'MRN'
     #factor = input$global_factor
     cols = c(-6:6)
-    cols = factor(c(input$anova_range[1]:input$anova_range[2]))
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
     cols
     full_data=i_pFEV_sm_d2_fl[i_pFEV_sm_d2_fl$variable %in% cols,]
     #df = full_data
@@ -1753,8 +1753,8 @@ shinyServer(function(input, output) {
     factor = input$global_factor
     t1 = -6
     t2 = 6
-    t1 = input$anova_range[1]
-    t2 = input$anova_range[2]
+    t1 = input$pre_range[1]
+    t2 = input$post_range[2]
     col1 = factor(c(t1:-1))
     col1
     col2 = factor(c(1:t2))
@@ -1786,8 +1786,8 @@ shinyServer(function(input, output) {
     full_data = i_pFEV_sm_d2_fl
     t1 = -6
     t2 = 6
-    t1 = input$anova_range[1]
-    t2 = input$anova_range[2]
+    t1 = input$pre_range[1]
+    t2 = input$post_range[2]
     col1 = factor(c(t1:-1))
     col1
     col2 = factor(c(1:t2))
@@ -2456,6 +2456,107 @@ shinyServer(function(input, output) {
  
 ########## SURVIVAL PLOTS ###########
 
+          output$cover_plot = renderPlot({
+            full_data = i_pFEV_wf_r()
+            bos_df = BOS_function(full_data,F)
+            BOSS_plot(bos_df)
+            BOSS_plot_smooth(bos_df)
+            #BOSS_plot_per(bos_df)
+            #BOSS_plot_smooth_per(bos_df)
+          })
+          
+          bos_df = reactive({
+            full_data = i_pFEV_wf_r()
+            bos_df = BOS_function(full_data)
+            bos_df
+          })
+          
+          output$bos_df = renderDataTable(bos_df())
+          
+          output$bos_plots = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            bos_df_data = bos_df()
+            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free")]
+            bos_data
+            m_bos = melt(bos_data,id.var = 'time')
+            ggplot(m_bos,aes(x = time,y=value,col=variable)) + 
+              geom_smooth() +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0)+
+              xlim(x1,x2)
+            
+          })
+          
+          bos_factor = reactive({
+            full_data = i_pFEV_wf_r()
+            #global_factor = 'Status'
+            global_factor = input$global_factor
+            factor_entry = unique(na.omit(full_data[,global_factor]))
+            factor_entry
+            df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+            for(entry in factor_entry){
+              function_data = full_data[full_data[,global_factor] == entry,]
+              bos_df = BOS_function(function_data)
+              bos_df$Factor = global_factor
+              bos_df$Status = entry
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free')])
+            }
+            #View(df)
+            m_bos = melt(df,id.vars= c('Factor','Status','time'))
+            m_bos
+          })
+          
+          output$boss_factor_table = renderDataTable(boss_factor())
+          
+          output$bos1_factor_plot = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            m_bos3 = m_bos[m_bos$variable == 'BOS1_free',]
+            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+              geom_smooth() +
+              ggtitle(paste('BOS1 free by', global_factor)) +
+              guides(col=guide_legend(title=global_factor)) +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0) +
+              xlim(x1,x2)
+
+          })
+          output$bos2_factor_plot = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            m_bos3 = m_bos[m_bos$variable == 'BOS2_free',]
+            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+              geom_smooth() +
+              ggtitle(paste('BOS2 free by', global_factor)) +
+              guides(col=guide_legend(title=global_factor)) +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0) +
+              xlim(x1,x2)
+
+          })
+          output$bos3_factor_plot = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            m_bos3 = m_bos[m_bos$variable == 'BOS3_free',]
+            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+              guides(col=guide_legend(title=global_factor)) +
+              geom_smooth() +
+              ggtitle(paste('BOS3 free by', global_factor)) +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0) +
+              xlim(x1,x2)
+
+          })
+          
+
+          
           
           output$survival_factor = renderPlot({
             plot_data = pFEV_wf_r()
@@ -2529,43 +2630,84 @@ shinyServer(function(input, output) {
           
           #### LINE ###
           
+          BOS_all = reactive({
+            plot_data = pFEV_wf
+            global_factor = 'Status'
+            x1 = -24
+            x2 = 24
+            colnames(plot_data)
+            plot_data = pFEV_wf_r()
+            boss_data = plot_data[c('MonthsToEvent', "BOS 3 free survival", 'BOS1mnth','BOS2mnth','BOS3mnth')]
+            m_bos = melt(boss_data)
+            m_bos
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            sfit <- survfit(Surv(value) ~ variable, data = m_bos, type="kaplan-meier", conf.type="log")
+            sdiff = survdiff(Surv(value) ~ variable, data = m_bos)
+            list(sfit = sfit,sdiff = sdiff)
+          })
+          
+          output$BOS_all_summary = renderText({
+            print('test')
+            paste(summary(BOS_all()$sfit[1]))
+          })
+          
+          output$BOS_plot_l = renderPlot({
+            sfit = BOS_all()$sfit
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            
+            autoplot(sfit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
+              geom_vline(aes(xintercept =  0)) +
+              xlim(x1,x2)
+          })
+          
           output$survival_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
             print(global_factor)
             colnames(plot_data)
-            fit <- survfit(Surv(plot_data$MonthsToEvent) ~ plot_data[,global_factor], data = plot_data)
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            fit <- survfit(Surv(plot_data$MonthsToEvent) ~ plot_data[,global_factor], data = plot_data, type="kaplan-meier", conf.type="log")
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line",surv.connect = FALSE,conf.int = FALSE) + ggtitle(paste('MonthsToEvent by ',global_factor))
+            autoplot(fit,surv.geom = "line",surv.connect = FALSE,conf.int = FALSE) + 
+              ggtitle(paste('Survival by ',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(x1,x2)
           })
           
-          output$boss_1_factor_l = renderPlot({
+          output$boss_3_free_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
             print(global_factor)
             colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS1mnth) ~ plot_data[,global_factor], data = plot_data)
+            x1 = input$bos_range[1]
+            x2 = input$bos_range[2]
+            fit <- survfit(Surv(plot_data[,"BOS 3 free survival"]) ~ plot_data[,global_factor], data = plot_data, type="kaplan-meier", conf.type="log")
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
-              ggtitle(paste('BOSS 1 by',global_factor)) +
+              ggtitle(paste('BOS 3 free survival by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
+              xlim(x1,x2)
           })
           
           output$boss_2_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
             print(global_factor)
-            colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS2mnth) ~ plot_data[,global_factor], data = plot_data)
+            colnames(plot_data)           
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            fit <- survfit(Surv(plot_data$BOS2mnth) ~ plot_data[,global_factor], data = plot_data, type="kaplan-meier", conf.type="log")
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
               ggtitle(paste('BOSS 2 by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
+              xlim(x1,x2)
           })
           
           output$boss_3_factor_l = renderPlot({
@@ -2573,31 +2715,17 @@ shinyServer(function(input, output) {
             global_factor = input$global_factor
             print(global_factor)
             colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS3mnth) ~ plot_data[,global_factor], data = plot_data)
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            fit <- survfit(Surv(plot_data$BOS3mnth) ~ plot_data[,global_factor], data = plot_data, type="kaplan-meier", conf.type="log")
             
             #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
             autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
               ggtitle(paste('BOSS 3 by',global_factor)) +
               geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
+              xlim(x1,x2)
           })
-          output$BOS_plot_l = renderPlot({
-            plot_data = pFEV_wf
-            colnames(plot_data)
-            plot_data = pFEV_wf_r()
-            boss_data = plot_data[c('MonthsToEvent','BOS1mnth','BOS2mnth','BOS3mnth')]
-            m_bos = melt(boss_data)
-            m_bos
-            
-            f1 <- survfit(Surv(value) ~ variable, data = m_bos)
-            
-            autoplot(f1,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
-              geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
-            
-            
-            #ggsurvplot_list(f1,data = m_bos)
-          })
+          
 
 ######## TEST ###########
           output$test_plot = renderPlot({

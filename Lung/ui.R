@@ -8,8 +8,12 @@ shinyUI(fluidPage(
     ############# DATA ##############
       tabPanel('Testing',
                tabsetPanel(
-                 tabPanel('Plot',
+                 tabPanel('Cover Plot',
                           plotOutput('cover_plot')
+                          ),
+                 tabPanel('Plot',
+                          HTML(paste('takes time to generate, please wait ...')),
+                          plotOutput('test_plot')
                           ),
                  tabPanel('text',
                           textOutput('test_text_1')
@@ -411,12 +415,29 @@ shinyUI(fluidPage(
 
     ####### BOSS #######
     tabPanel('BOS',
-             plotOutput('BOS_plot'),
-             plotOutput('survival_factor'),
-             plotOutput('boss_1_factor'),
-             plotOutput('boss_2_factor'),
-             plotOutput('boss_3_factor')
-             ),
+             column(6,sliderInput('boss_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
+             
+             tabsetPanel(
+               tabPanel('Confidence Intervals',
+                 plotOutput('BOS_plot'),
+                 plotOutput('survival_factor'),
+                 plotOutput('boss_1_factor'),
+                 plotOutput('boss_2_factor'),
+                 plotOutput('boss_3_factor')
+               ),
+               tabPanel('Line Plots',
+                        plotOutput('BOS_plot_l'),
+                        plotOutput('survival_factor_l'),
+                        plotOutput('boss_1_factor_l'),
+                        plotOutput('boss_2_factor_l'),
+                        plotOutput('boss_3_factor_l')
+               )
+             )
+                        
+                 
+                 
+                 
+             ), # BOSS
 
     ######### R SESSION INFO #########
           tabPanel('R Session Info',

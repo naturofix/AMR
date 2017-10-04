@@ -43,7 +43,7 @@ if(g_sheet == T){
   sheet_list
   clustering = as.data.frame(gs_read(ss=gs, ws= "For clustering"))
   colnames(clustering)
-  #saveRDS(file = 'clustering3.rds',object = clustering)
+  saveRDS(file = 'clustering3.rds',object = clustering)
   #clustering2 = clustering
 }else{
   clustering = readRDS('clustering2.rds')

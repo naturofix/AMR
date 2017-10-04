@@ -1809,7 +1809,7 @@ shinyServer(function(input, output) {
       #output$discrete_cluster_D_by_function = renderPrint({
   
       cluster_weight = reactive({
-        full_data = i_pFEV_wf
+        full_data = i_pFEV_wf_r()
         weights = clustering_weight_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -1832,15 +1832,7 @@ shinyServer(function(input, output) {
       discrete_cluster_D()$weights
     })
     
-    # output$test_table_1 = renderDataTable({
-    #   data_dist = discrete_cluster_D()$data_dist
-    #   x = discrete_cluster_D()$x
-    #   cm = cmdscale(data_dist)
-    #   xy <- data.frame(cm, factor(x))
-    #   names(xy) <- c("x", "y", "cluster")
-    #   xy$model <- rownames(xy)
-    #   xy
-    # })
+
     
     
 
@@ -2463,38 +2455,7 @@ shinyServer(function(input, output) {
           })
  
 ########## SURVIVAL PLOTS ###########
-          
-          output$boss_3 = renderPlot({
-            
-            
-            plot_data = pFEV_wf
-            plot_data$SurvObj = with(plot_data, Surv(BOS1mnth,Status == '2'))
-            km.boss1 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
-            plot(km.boss1)
-            plot_data$SurvObj = with(plot_data, Surv(BOS2mnth,Status == '2'))
-            km.boss2 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
-            plot(km.boss2)
-            plot_data$SurvObj = with(plot_data, Surv(BOS3mnth,Status == '2'))
-            km.boss3 <- survfit(SurvObj ~ 1, data = plot_data, conf.type = "log-log")
-            plot(km.boss3)
-            par(add = TRUE)
-            plot(km.boss1)
-            plot(km.boss2,add = TRUE)
-            
-          })
-          help(autoplot.survfit) 
-          output$cover_plot_2 = renderPlot({
-            plot_data = pFEV_wf
-            colnames(plot_data)
-             fit <- survfit(Surv(survival_time,Status == '2', data = plot_data))
-             fit <- survfit(Surv(survival_time) ~ NewCTChange, data = plot_data)
-             fit <- survfit(Surv(BOS1mnth) ~ NewCTChange, data = plot_data)
-             autoplot(fit)
-             fit <- survfit(Surv(BOS1mnth) ~ NewCTChange, data = plot_data)
-             autoplot(fit)
-             fit <- survfit(Surv(BOS3mnth) ~ NewCTChange, data = plot_data)
-              autoplot(fit,conf.int = FALSE,surv.geom = "line")
-          })
+
           
           output$survival_factor = renderPlot({
             plot_data = pFEV_wf_r()
@@ -2557,7 +2518,7 @@ shinyServer(function(input, output) {
             m_bos
             
             f1 <- survfit(Surv(value) ~ variable, data = m_bos)
-  
+            ggkm(f1)
             autoplot(f1,surv.geom = "line", surv.connect = FALSE) + 
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
@@ -2565,7 +2526,89 @@ shinyServer(function(input, output) {
         
               #ggsurvplot_list(f1,data = m_bos)
           })
+          
+          #### LINE ###
+          
+          output$survival_factor_l = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$MonthsToEvent) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line",surv.connect = FALSE,conf.int = FALSE) + ggtitle(paste('MonthsToEvent by ',global_factor))
+          })
+          
+          output$boss_1_factor_l = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS1mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
+              ggtitle(paste('BOSS 1 by',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          
+          output$boss_2_factor_l = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS2mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
+              ggtitle(paste('BOSS 2 by',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          
+          output$boss_3_factor_l = renderPlot({
+            plot_data = pFEV_wf_r()
+            global_factor = input$global_factor
+            print(global_factor)
+            colnames(plot_data)
+            fit <- survfit(Surv(plot_data$BOS3mnth) ~ plot_data[,global_factor], data = plot_data)
+            
+            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
+            autoplot(fit,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
+              ggtitle(paste('BOSS 3 by',global_factor)) +
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+          })
+          output$BOS_plot_l = renderPlot({
+            plot_data = pFEV_wf
+            colnames(plot_data)
+            plot_data = pFEV_wf_r()
+            boss_data = plot_data[c('MonthsToEvent','BOS1mnth','BOS2mnth','BOS3mnth')]
+            m_bos = melt(boss_data)
+            m_bos
+            
+            f1 <- survfit(Surv(value) ~ variable, data = m_bos)
+            
+            autoplot(f1,surv.geom = "line", surv.connect = FALSE,conf.int = FALSE) + 
+              geom_vline(aes(xintercept =  0)) +
+              xlim(-25,50)
+            
+            
+            #ggsurvplot_list(f1,data = m_bos)
+          })
 
-
+######## TEST ###########
+          output$test_plot = renderPlot({
+            data = t(discrete_cluster_D_d1()$o_data)
+            library(pvclust)
+            result <- pvclust(data, method.dist="euclidian", method.hclust="average", nboot=1000)
+            plot(result)
+            #pvrect(result, alpha=0.95)
+            #seplot(result)
+            #seplot(result, identify=TRUE)
+          })
   
+        ################## END ##########          
 })

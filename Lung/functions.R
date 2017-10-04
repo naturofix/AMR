@@ -873,3 +873,44 @@ clust_comparison_within = function(df,clust_col){
   df_tc
   return(df_tc)
 }
+
+dendrogram_plot_function = function(dendr,x_cluster,cut){
+  dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
+  
+  ## identify all the line above cluster to remove the colours
+  height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+  cut.height <- mean(c(height[cut], height[cut-1]))
+  dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
+                                  dendr$segments$y > cut.height, 1, 2)
+  dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
+  
+  
+  dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
+  dc = as.data.frame(dendr$segments)
+  for(cl in unique(na.omit(dc$cluster))){
+    maxx = max(dc$x[dc$cluster == cl],na.rm=T)
+    minx = min(dc$x[dc$cluster == cl],na.rm=T)
+    dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
+  }
+  
+  dc$cluster[dc$line == 1] = NA
+  clusters = factor(unique(na.omit(dc$cluster)))
+  clusters = clusters[order(clusters)]
+  
+  p = ggplot() +
+    geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) +
+    geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
+              hjust = 1,angle = 90, size = 3, show.legend = F) +
+    scale_y_continuous(expand = c(.2, 0))+
+    scale_color_discrete(breaks = clusters) +
+    theme(axis.line.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          panel.background = element_rect(fill = "white"),
+          panel.grid = element_blank()
+          
+    )
+  return(p)
+}

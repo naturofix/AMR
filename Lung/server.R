@@ -2036,53 +2036,23 @@ shinyServer(function(input, output) {
               
               D = discrete_cluster_D()$D
               dendr <- dendro_data(D, type = "rectangle") 
-              #print(x_cluster)
               x_cluster = discrete_cluster_D()$x_cluster
-              print(x_cluster)
-              #dendr = discrete_cluster_D_d1()$dendr
-              dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
+              cut = input$clutree_num
+              p = dendrogram_plot_function(dendr,x_cluster,cut)
+              print(p)
               
-              dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
-              dc = as.data.frame(dendr$segments)
-              for(cl in unique(na.omit(dc$cluster))){
-                maxx = max(dc$x[dc$cluster == cl],na.rm=T)
-                minx = min(dc$x[dc$cluster == cl],na.rm=T)
-                dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
-              }
-              ggplot() +
-                geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 2)
-              
+
             })  
-            
+          
           output$discrete_cluster_plot_d1 = renderPlot({
             
             D = discrete_cluster_D_d1()$D
             dendr <- dendro_data(D, type = "rectangle") 
-            #print(x_cluster)
             x_cluster = discrete_cluster_D_d1()$x_cluster
-            print(x_cluster)
-            #dendr = discrete_cluster_D_d1()$dendr
-            dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
-
-            dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
-            dc = as.data.frame(dendr$segments)
-            for(cl in unique(na.omit(dc$cluster))){
-              maxx = max(dc$x[dc$cluster == cl],na.rm=T)
-              minx = min(dc$x[dc$cluster == cl],na.rm=T)
-              dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
-            }
-            ggplot() +
-              geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 2) +
-              geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
-                        hjust = -0.2, size = 3, show.legend = FALSE) +
-              theme(axis.line.y = element_blank(),
-                    axis.ticks.y = element_blank(),
-                    axis.text.y = element_blank(),
-                    axis.title.y = element_blank(),
-                    panel.background = element_rect(fill = "white"),
-                    panel.grid = element_blank())
-          
-          })
+            cut = input$clutree_num
+            p = dendrogram_plot_function(dendr,x_cluster,cut)
+            print(p)
+               })
           
 
           
@@ -2105,16 +2075,17 @@ shinyServer(function(input, output) {
                 geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
                           hjust = -0.2, size = 3, show.legend = FALSE) +
                 #scale_y_reverse(expand = c(0.2, 0)) + 
-                labs(x = NULL, y = NULL) +
+                labs(x = NULL, y = NULL)
                 #coord_flip() +
                 #coord_flip() +
                 #ylim(-2, 5 )+
-                theme(axis.line.y = element_blank(),
-                      axis.ticks.y = element_blank(),
-                      axis.text.y = element_blank(),
-                      axis.title.y = element_blank(),
-                      panel.background = element_rect(fill = "white"),
-                      panel.grid = element_blank())
+                
+                # theme(axis.line.y = element_blank(),
+                #       axis.ticks.y = element_blank(),
+                #       axis.text.y = element_blank(),
+                #       axis.title.y = element_blank(),
+                #       panel.background = element_rect(fill = "white"),
+                #       panel.grid = element_blank())
               
             })
             

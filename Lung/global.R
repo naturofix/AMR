@@ -43,13 +43,13 @@ if(g_sheet == T){
   sheet_list
   clustering = as.data.frame(gs_read(ss=gs, ws= "For clustering"))
   colnames(clustering)
-  saveRDS(file = 'clustering3.rds',object = clustering)
+  #saveRDS(file = 'clustering3.rds',object = clustering)
   #clustering2 = clustering
 }else{
-  clustering = readRDS('clustering2.rds')
+  clustering = readRDS('clustering3.rds')
 }
 
-#colnames(clustering)
+colnames(clustering)
 #colnames(clustering2)
 #setdiff(colnames(clustering),colnames(clustering2))
 #setdiff(colnames(clustering2),colnames(clustering))
@@ -72,14 +72,20 @@ dup = duplicated(clustering[,1])
 dups = clustering[duplicated(clustering[,1]),1]
 row_names = clustering[,1]
 row_names[dup] = paste(row_names[dup],'a',sep='_') 
+row_names
+length(row_names)
+
+clustering = clustering[!is.na(row_names),]
+dim(clustering)
+row_names = row_names[!is.na(row_names)]
 rownames(clustering) = row_names
 clustering$MRN = row_names
-
-
+length(row_names)
+dim(clustering)
 
 ########### SEPARATE COLUMS by name #########################
 colnames(clustering)
-numeric_columns = c("MonthsToEvent","YearsToEvent","CRP",
+numeric_columns = c("MonthsToEvent","YearsToDeath","CRP",
                     "FEV1Ratio","pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
                     ,"pFEV1_neg2", "pFEV1_neg1", "pFEV1_0", "pFEV1_pos1", "pFEV1_pos2", "pFEV1_pos3"     
                     ,"pFEV1_pos4", "pFEV1_pos5", "pFEV1_pos6", "pFEV1_pos12", "pFEV1_pos18", "pFEV1_pos24"    
@@ -87,7 +93,7 @@ numeric_columns = c("MonthsToEvent","YearsToEvent","CRP",
                     "BOS1mnth", "BOS2mnth", "BOS3mnth", 
                     "ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
 
-add_numeric_columns = c("MonthsToEvent","YearsToEvent","CRP",
+add_numeric_columns = c("MonthsToEvent","YearsToDeath","BOS 3 free survival","CRP",
                         "FEV1Ratio")
 
 pFEV_cols = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
@@ -105,9 +111,9 @@ numeric_select_columns = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_ne
 
 factor_columns = c("AltDxScore","DSA_HLAScore","HLAType","HLAStrength","BiopsyScore",
                    "SignOfInfection","NewCTChange","AGrade","BGrade","PathScore","ViralPCR",
-                   "BactCulture","Methylpred","IVAbx" )
+                   "BactCulture","Methylpred","IVAbx")
 #factor_columns_con = c("Status" , "DaysSinceOnset", "Obstructive")
-factor_columns_con = c("Status" , "DaysSinceOnset", "Obst_post")
+factor_columns_con = c("Status" , "DaysSinceOnset", "Obst_post","BOS3orDeath")
 
 date_columns = c("RxDate","DeathDate")
 

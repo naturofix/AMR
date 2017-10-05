@@ -31,9 +31,8 @@ source('defaults.R')
 
 
 
-
 ############ UPLOAD DATA ####################
-g_sheet = F # decided is data is to be read from google sheets or not
+g_sheet = T # decided is data is to be read from google sheets or not
 if(g_sheet == T){
   googlesheets::gs_auth(token = 'shiny_app_token.rds')
   
@@ -43,10 +42,10 @@ if(g_sheet == T){
   sheet_list
   clustering = as.data.frame(gs_read(ss=gs, ws= "For clustering"))
   colnames(clustering)
-  #saveRDS(file = 'clustering3.rds',object = clustering)
+  saveRDS(file = 'clustering4.rds',object = clustering)
   #clustering2 = clustering
 }else{
-  clustering = readRDS('clustering3.rds')
+  clustering = readRDS('clustering4.rds')
 }
 
 colnames(clustering)
@@ -93,7 +92,7 @@ numeric_columns = c("MonthsToEvent","YearsToDeath","CRP",
                     "BOS1mnth", "BOS2mnth", "BOS3mnth", 
                     "ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
 
-add_numeric_columns = c("MonthsToEvent","YearsToDeath","BOS 3 free survival","CRP",
+add_numeric_columns = c("MonthsToEvent","YearsToDeath",'MonthSinceRx',"BOS 3 free survival","CRP",
                         "FEV1Ratio")
 
 pFEV_cols = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     

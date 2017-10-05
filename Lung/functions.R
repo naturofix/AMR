@@ -1001,45 +1001,100 @@ BOS_function_pFEV = function(full_data,imputed = F){
 }
 
 
-BOS_function = function(full_data,imputed = F){
+
+BOS_function = function(full_data,imputed = T){
+  imputed = T
+  full_data = full_fac_0
   BOS1 = 0.8
   BOS2 = 0.66
   BOS3 = 0.5
+  end_time = 50
+  MRN = full_data$MRN
   d_date = full_data$MonthsToEvent
+  #d_date[is.na(d_date)] = 50
+  rx = full_data$MonthSinceRx
+  status = full_data$Status
   BOS1_date = full_data$BOS1mnth
   BOS2_date = full_data$BOS2mnth
-  BOS3_data = full_data$BOS3mnth
-  data = full_data[,pFEV_numeric_colnames_f]
+  BOS3_date = full_data$BOS3mnth
+  
+  BOS1_date[is.na(BOS1_date)] = end_time
+  BOS2_date[is.na(BOS2_date)] = end_time
+  BOS3_date[is.na(BOS3_date)] = end_time
+  
+  full_data$BOS2mnth = BOS2_date
+  
+  BOS3_surv_date = full_data$`BOS 3 free survival`
+  time = seq(-12,48,1)
+  max_time = max(time)
+  bos_df = data.frame(time = time)
+  
+  data = full_data[,factor(time)]
   
   total_pFEV = unlist(apply(data,2,function(x) length(na.omit(x))))
   total_pFEV
-  bos_df = data.frame(column = colnames(data),time = pFEV_numeric_colnames_n)
-  bos_df$Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(d_date[d_date < x]))))
+   
+  #bos_df$Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(d_date[x < BOS1_date & x > d_date & status == 2]))))
+  
+  #bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(d_date[status == '2' & x > d_date & is.na(BOS1_date)]))))
+  d_date
+  bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
+  bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
+  bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
+  bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_surv_date[BOS3_surv_date < x]))))
+  
+  
+  bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS1_date]))))
+  bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS2_date]))))
+  bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS3_date]))))
+  
+  bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS1_date]))))
+  bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS2_date]))))
+  bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS3_date]))))
+
+  bos_df = mutate(bos_df, 
+                  BOS_1_num_diff = c(0,diff(BOS1_num)),
+                  BOS_2_num_diff = c(0,diff(BOS2_num)),
+                  BOS_3_num_diff = c(0,diff(BOS3_num))
+  )
+  bos_df = mutate(bos_df, 
+                  BOS_1_Dead_diff = c(0,diff(BOS1_Dead)),
+                  BOS_2_Dead_diff = c(0,diff(BOS2_Dead)),
+                  BOS_3_Dead_diff = c(0,diff(BOS3_Dead))
+  )
+  bos_df = mutate(bos_df, 
+                  BOS_1_Censor_diff = c(0,diff(BOS1_Censor)),
+                  BOS_2_Censor_diff = c(0,diff(BOS2_Censor)),
+                  BOS_3_Censor_diff = c(0,diff(BOS3_Censor))
+  )
+  
+  bos_df = mutate(bos_df, 
+                    BOS1_risk = dim(full_data)[1] - c(0,BOS1_num[-length(BOS1_num)]) - c(0,BOS1_Dead[-length(BOS1_Dead)]) - c(0,BOS1_Censor[-length(BOS1_Censor)]),
+                    BOS2_risk = dim(full_data)[1] - c(0,BOS2_num[-length(BOS2_num)]) - c(0,BOS2_Dead[-length(BOS2_Dead)]) - c(0,BOS2_Censor[-length(BOS2_Censor)]),
+                    BOS3_risk = dim(full_data)[1] - c(0,BOS3_num[-length(BOS3_num)]) - c(0,BOS3_Dead[-length(BOS3_Dead)]) - c(0,BOS3_Censor[-length(BOS3_Censor)])
+                                                    
+                                    )
+  
+  unlist(lapply(bos_df$time, function(x) length(na.omit(rx[rx < x & status == 1]))))
+  
   bos_df$Dead_diff = c(bos_df$Dead[1],diff(bos_df$Dead))
-  bos_df$total_pFEV = total_pFEV
   
-  bos_df$total = total_pFEV
+  bos_df$total_pFEV = total_pFEV 
+
+  bos_df$total = total_pFEV - bos_df$Dead
+
+  #bos_df$total = total_pFEV + bos_df$Dead
   
-  bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[BOS1_date < x]))))
-  bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[BOS2_date < x]))))
-  bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[BOS3_date < x]))))
+
   
-  
-  #bos_df$BOS1_num = apply(data,2,function(x) length(na.omit(x[x > BOS1])))
-  #bos_df$BOS2_num = apply(data,2,function(x) length(na.omit(x[x > BOS2])))
-  #bos_df$BOS3_num = apply(data,2,function(x) length(na.omit(x[x > BOS3])))
-  
-  #bos_df$BOS1_num_l = apply(data,2,function(x) length(na.omit(x[x < BOS1])))
-  #bos_df$BOS2_num_l = apply(data,2,function(x) length(na.omit(x[x < BOS2])))
-  #bos_df$BOS3_num_l = apply(data,2,function(x) length(na.omit(x[x < BOS3])))
-  
-  #bos_df = mutate(bos_df, BOS3_num = BOS2_num + Dead)
+  bos_df = mutate(bos_df, BOS1_risk = total - c(0,BOS1_num[-length(BOS1_num)]))
   
   bos_df = mutate(bos_df,
                   BOS1_per = BOS1_num/total*100,
                   BOS2_per = BOS2_num/total*100,
                   BOS3_per = BOS3_num/total*100,
-                  Dead_per = DEAD/total*100
+                  BOS3_surv_per = BOS3_surv_num/total*100,
+                  Dead_per = Dead/total*100
                   #Surv_diff = c(0,diff(total_pFEV))
   )
   
@@ -1048,23 +1103,31 @@ BOS_function = function(full_data,imputed = F){
                   BOS1_diff = c(BOS1_num[1],diff(BOS1_num)),
                   BOS2_diff = c(BOS2_num[1],diff(BOS2_num)),
                   BOS3_diff = c(BOS3_num[1],diff(BOS3_num)),
-                  DEAD_diff = c(DEAD_num[1],diff(DEAD_num))
+                  BOS3_surv_diff = c(BOS3_surv_num[1],diff(BOS3_surv_num)),
+                  Dead_diff = c(Dead[1],diff(Dead))
                   
                   #Surv_diff = c(0,diff(total_pFEV))
   )
   
-  
-  bos_df = mutate(bos_df,
-                  BOS1_prog = BOS1_diff + DEAD_diff,
-                  BOS2_prog = BOS2_diff + DEAD_diff,
-                  BOS3_prog = BOS3_diff + DEAD_diff
-  )
+
+    bos_df = mutate(bos_df,
+                    BOS1_prog = BOS1_diff,
+                    BOS2_prog = BOS2_diff,
+                    BOS3_prog = BOS3_diff,
+                    BOS3_surv_prog = BOS3_diff,
+                    Dead_prog = Dead_diff
+    )
+
+                  
   
   
   bos_df = mutate(bos_df,
                   BOS1_prog_per = BOS1_prog/total*100,
                   BOS2_prog_per = BOS2_prog/total*100,
-                  BOS3_prog_per = BOS3_prog/total*100
+                  BOS3_prog_per = BOS3_prog/total*100,
+                  BOS3_surv_prog_per = BOS3_surv_prog/total*100,
+                  Dead_prog_per = Dead_prog/total*100
+                  
   )
   
   b = c()
@@ -1091,6 +1154,22 @@ BOS_function = function(full_data,imputed = F){
   }
   bos_df$BOS3_free = b
   
+  b = c()
+  t = 100
+  for(entry in bos_df$BOS3_surv_prog_per){
+    t = t-entry
+    b = c(b,t)
+  }
+  bos_df$BOS3_surv_free = b
+  
+  b = c()
+  t = 100
+  for(entry in bos_df$Dead_prog_per){
+    t = t-entry
+    b = c(b,t)
+  }
+  bos_df$Survive = b
+  BOSS_plot_per(bos_df)
   return(bos_df)
 }
 
@@ -1138,4 +1217,29 @@ BOSS_plot_smooth_per = function(bos_df){
 }
 
 
+BOS_factor_plot = function(m_bos,col_name,global_factor,x1,x2){
+  m_bos3 = m_bos[m_bos$variable == col_name,]
+  p = ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+    guides(col=guide_legend(title=global_factor)) +
+    geom_vline(xintercept = 0) +
+    geom_hline(yintercept = 0) +
+    geom_line() +
+    ggtitle(paste(col_name,'by', global_factor)) +
+
+    xlim(x1,x2)
+  return(p)
+}
+
+BOS_factor_plot_smooth = function(m_bos,col_name,global_factor,x1,x2){
+  m_bos3 = m_bos[m_bos$variable == col_name,]
+  p = ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+    guides(col=guide_legend(title=global_factor)) +
+    geom_vline(xintercept = 0) +
+    geom_hline(yintercept = 0) +
+    geom_smooth() +
+    ggtitle(paste(col_name,'by', global_factor)) +
+
+    xlim(x1,x2)
+  return(p)
+}
 

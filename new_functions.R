@@ -14,9 +14,10 @@ BOS_function = function(full_data,imputed = F){
   bos_df = data.frame(column = colnames(data),time = pFEV_numeric_colnames_n)
   bos_df$Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(d_date[d_date < x]))))
   bos_df$Dead_diff = c(bos_df$Dead[1],diff(bos_df$Dead))
-  bos_df$total_pFEV = total_pFEV  
   
-  bos_df$total = total_pFEV + bos_df$Dead
+  bos_df$total_pFEV = total_pFEV  
+  bos_df$total = total_pFEV
+  #bos_df$total = total_pFEV + bos_df$Dead
   
   bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[BOS1_date < x]))))
   bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[BOS2_date < x]))))

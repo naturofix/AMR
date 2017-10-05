@@ -2474,20 +2474,34 @@ shinyServer(function(input, output) {
             full_data = i_pFEV_wf_r()
             bos_df = BOS_function(full_data,F)
             BOSS_plot(bos_df)
-            BOSS_plot_smooth(bos_df)
-            #BOSS_plot_per(bos_df)
-            #BOSS_plot_smooth_per(bos_df)
           })
           
           bos_df = reactive({
+            full_data = i_pFEV_wf
             full_data = i_pFEV_wf_r()
-            bos_df = BOS_function(full_data)
+            bos_df = BOS_function(full_data,T)
             bos_df
           })
           
           output$bos_df = renderDataTable(bos_df())
           
           output$bos_plots = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            bos_df_data = bos_df
+            bos_df_data = bos_df()
+            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'BOS3_surv_free','Survive')]
+            bos_data
+            m_bos = melt(bos_data,id.var = 'time')
+            ggplot(m_bos,aes(x = time,y=value,col=variable)) + 
+              geom_line() +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0)+
+              xlim(x1,x2)
+            
+          })
+          
+          output$bos_plots_smooth = renderPlot({
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
             bos_df_data = bos_df()
@@ -2528,14 +2542,10 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            m_bos3 = m_bos[m_bos$variable == 'BOS1_free',]
-            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
-              geom_smooth() +
-              ggtitle(paste('BOS1 free by', global_factor)) +
-              guides(col=guide_legend(title=global_factor)) +
-              geom_vline(xintercept = 0) +
-              geom_hline(yintercept = 0) +
-              xlim(x1,x2)
+            col_name = 'BOS1_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+
 
           })
           output$bos2_factor_plot = renderPlot({
@@ -2543,14 +2553,9 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            m_bos3 = m_bos[m_bos$variable == 'BOS2_free',]
-            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
-              geom_smooth() +
-              ggtitle(paste('BOS2 free by', global_factor)) +
-              guides(col=guide_legend(title=global_factor)) +
-              geom_vline(xintercept = 0) +
-              geom_hline(yintercept = 0) +
-              xlim(x1,x2)
+            col_name = 'BOS2_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
 
           })
           output$bos3_factor_plot = renderPlot({
@@ -2558,16 +2563,46 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            m_bos3 = m_bos[m_bos$variable == 'BOS3_free',]
-            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
-              guides(col=guide_legend(title=global_factor)) +
-              geom_smooth() +
-              ggtitle(paste('BOS3 free by', global_factor)) +
-              geom_vline(xintercept = 0) +
-              geom_hline(yintercept = 0) +
-              xlim(x1,x2)
+            col_name = 'BOS3_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
 
           })
+          
+          output$bos1_factor_plot_smooth = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            col_name = 'BOS1_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+            
+          })
+          output$bos2_factor_plot_smooth = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            col_name = 'BOS2_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          output$bos3_factor_plot_smooth = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            col_name = 'BOS3_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          
+          
+          
           bos_factor_d1 = reactive({
             full_data = i_pFEV_wf_r()
             #global_factor = 'Status'
@@ -2594,17 +2629,10 @@ shinyServer(function(input, output) {
             global_factor = input$global_factor
             global_factor = 'cluster_d1'
             m_bos = bos_factor_d1()
-            m_bos3 = m_bos[m_bos$variable == 'BOS3_free',]
-            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
-              guides(col=guide_legend(title=global_factor)) +
-              geom_smooth() +
-              ggtitle(paste('BOS3 free by', global_factor)) +
-              geom_vline(xintercept = 0) +
-              geom_hline(yintercept = 0) +
-              xlim(x1,x2)
-            
+            col_name = 'BOS2_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
           })
-          
 
           
           
@@ -2660,6 +2688,10 @@ shinyServer(function(input, output) {
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
           })
+
+          
+############ AUTOPLOT ################## MESS #########          
+          
           output$BOS_plot = renderPlot({
             plot_data = pFEV_wf
             colnames(plot_data)

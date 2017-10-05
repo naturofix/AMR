@@ -438,12 +438,11 @@ shinyUI(fluidPage(
                         dataTableOutput('bos_df'),
                         dataTableOutput('boss_factor_table')
                         ),
-               tabPanel('Confidence Intervals',
-                 plotOutput('BOS_plot'),
-                 plotOutput('survival_factor'),
-                 plotOutput('boss_1_factor'),
-                 plotOutput('boss_2_factor'),
-                 plotOutput('boss_3_factor')
+               tabPanel('Smooth',
+                        plotOutput('bos_plots_smooth'),
+                        plotOutput('bos1_factor_plot_smooth'),
+                        plotOutput('bos2_factor_plot_smooth'),
+                        plotOutput('bos3_factor_plot_smooth')
                )
              )
                         

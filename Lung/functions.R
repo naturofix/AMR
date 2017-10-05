@@ -7,7 +7,85 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15){
   if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
   hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
 }
-  
+
+########### PLOTS############
+
+line_plot_function = function(plot_data,title,input){
+  ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
+    geom_vline(xintercept = 0) +
+    geom_line(aes_string(col = input$global_factor)) +
+    geom_point(aes_string(col = input$global_factor)) +
+    stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
+    
+    theme(axis.text.x = element_text(size=8, angle=90)) +
+    xlim(input$pre_range[1],input$post_range[2]) +
+    ggtitle(title)
+}
+
+mean_line_plot_function = function(plot_data,title,input){
+  ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
+    geom_vline(xintercept = 0) +
+    #geom_line(aes_string(col = input$global_factor)) +
+    #geom_point(aes_string(col = input$global_factor)) +
+    stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
+    
+    theme(axis.text.x = element_text(size=8, angle=90)) +
+    xlim(input$pre_range[1],input$post_range[2]) +
+    ggtitle(title)
+}
+
+D_line_plot_function = function(plot_data,title,input){
+  ggplot(plot_data, aes(x = time, y = value,col = MRN)) +
+    geom_line(aes(group = MRN)) +
+    geom_vline(xintercept = 0) +
+    theme(axis.text.x = element_text(size=8, angle=90)) +
+    theme(legend.position="none") +
+    xlim(input$pre_range[1],input$post_range[2]) +
+    ggtitle(title)
+}
+
+boxplot_function = function(full_data,title,input){
+  cols = factor(c(input$pre_range[1]:input$post_range[2]))
+  plot_data = full_data[full_data$variable %in% cols,]
+  scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
+  ggplot(plot_data, aes(x = variable, y = value)) + 
+    
+    geom_boxplot(aes_string(col = input$global_factor)) +
+    stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
+    theme(axis.text.x = element_text(size=14, angle=90)) + 
+    scale_x_discrete(breaks = scale_cols) +
+    #geom_vline(aes(xintercept = which(levels(plot_data$variable) == '0'))) +
+    
+    ggtitle(title)
+}
+
+boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
+  plot_data = full_data[full_data$variable %in% cols,]
+  scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
+  ggplot(plot_data, aes(x = variable, y = value)) + 
+    
+    geom_boxplot(aes_string(col = global_factor)) +
+    stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
+    theme(axis.text.x = element_text(size=14, angle=90)) + 
+    scale_x_discrete(breaks = scale_cols) +
+    ggtitle(title)
+}
+
+boxplot_i_summary_function = function(full_data,title,input){
+  cols = factor(c(input$pre_range[1]:input$post_range[2]))
+  summary_data = full_data[full_data$variable %in% cols,]
+  plot_data = summary_data[summary_data$variable %in% pFEV_numeric_colnames_f,]
+  ggplot(NULL) +
+    stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+    geom_vline(aes(xintercept = which(levels(summary_data$variable) %in% '0'))) +
+    geom_boxplot(data = plot_data, aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
+    stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+    theme(axis.text.x = element_text(size=14, angle=90)) +
+    scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+    ggtitle(title)
+}
+
+
 lm_function = function(function_data,factor,cols){
   df = data.frame(Factor = numeric(), Status = numeric(0))
   full_data=function_data[function_data$variable %in% cols,]

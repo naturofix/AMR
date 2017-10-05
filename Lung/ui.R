@@ -3,8 +3,8 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   fluidRow(
     column(4,selectInput('global_factor','Factor to Separate by',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
-    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-6,0),width = 800)),
-    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=48,step = 1,value = c(0,6),width = 800)),
+    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-12,0),width = 800)),
+    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=48,step = 1,value = c(0,12),width = 800)),
     #column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
     
     column(12,
@@ -245,7 +245,7 @@ shinyUI(fluidPage(
                     tabsetPanel(
                         ########## LINE ##########
                          tabPanel('smooth',
-                                  selectInput('change_mrn_select','MRN',patient_list,multiple = T,selected = patient_list,width = 800),
+                                  #selectInput('change_mrn_select','MRN',patient_list,multiple = T,selected = patient_list,width = 800),
                                   plotOutput('i_pFEV_sm_line'),
                                   plotOutput('boxplot_i_pFEV_sm')
                                 ),
@@ -344,17 +344,25 @@ shinyUI(fluidPage(
                 
                 tabsetPanel(
                   ###### CLUSTERING #########
-                  tabPanel('Imputed pFEV Data',
+                  tabPanel('pFEV Data',
+                           radioButtons("cluster_imputed", 'Select Data',
+                                        choiceNames = list('Original',
+                                          "Imputed"
+                                        ),
+                                        choiceValues = list(
+                                          "original", "imputed"
+                                        ),inline = T,selected = 'imputed'),
                            tabsetPanel(
                              tabPanel('Dendograms',
+                                plotOutput('discrete_cluster_plot'),  
                                  plotOutput('mix_clu'),
-                                 plotOutput('discrete_cluster_plot'),
-                                 dataTableOutput('discrete_x_table'),
-                                 
                                  dataTableOutput('cluster_analysis_within_table_selected'),
-
-                                 plotOutput('discrete_cutree_line'),
-                                 plotOutput('discrete_cutree_mean'),
+                                 plotOutput('boxplot_pFEV_cluster'),
+                                 plotOutput('boxplot_pFEV_cluster_full'),
+                                 plotOutput('bos3_surv_factor_plot_cluster'),
+                                 #plotOutput('discrete_cutree_line'),
+                                 #plotOutput('discrete_cutree_mean'),
+                                dataTableOutput('discrete_x_table'),
                                  htmlOutput('D_text')
                              ),
                              tabPanel('ScatterPlots',
@@ -365,18 +373,22 @@ shinyUI(fluidPage(
                                       dataTableOutput('distance_table'),
                                       dataTableOutput('distance_model_table')
                              ))), # Imputed pFEV Data
+           
                   tabPanel('Change Data (D1)',
                            tabsetPanel(
                              tabPanel('Dendograms',
-                                         plotOutput('mix_clu_d1'),
-                                         plotOutput('discrete_cluster_plot_d1'),
-                                          dataTableOutput('discrete_x_table_d1'),
-                                      
-                                         dataTableOutput('cluster_analysis_within_table_selected_d1'),
-                                        plotOutput("bos3_factor_plot_cluster_d1"),
+                                        plotOutput('discrete_cluster_plot_d1'),
+                                        plotOutput('mix_clu_d1'),
+                                        dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                                        #plotOutput("bos3_factor_plot_cluster_d1"),
                                         plotOutput('boxplot_pFEV_cluster_d1'),
-                                         plotOutput('discrete_cutree_line_d1'),
-                                         plotOutput('discrete_cutree_mean_d1'),
+                                        plotOutput('boxplot_pFEV_cluster_d1_full'),
+                                        plotOutput('bos3_surv_factor_plot_cluster_d1'),
+                                      
+                                         #plotOutput('discrete_cutree_line_d1'),
+                                         #plotOutput('discrete_cutree_mean_d1'),
+                                        dataTableOutput('discrete_x_table_d1'),
+                                      
                                          htmlOutput('D_d1_text')), #Dendrogram
                              tabPanel('ScatterPlot',
                                       plotOutput('distance_scatter_d1'),

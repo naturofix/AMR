@@ -250,6 +250,8 @@ shinyServer(function(input, output) {
   pFEV_lf_r = reactive({
     w_data = pFEV_wf_r()
     data = melt(w_data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w))
+    data$time = as.numeric(as.character(data$variable))
+    
     data
   })
   
@@ -268,6 +270,8 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$time = as.numeric(as.character(data$variable))
+    
     data
   })
   
@@ -286,6 +290,8 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$time = as.numeric(as.character(data$variable))
+    
     data
   })
 
@@ -305,6 +311,8 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$time = as.numeric(as.character(data$variable))
+    
     data
   })
   
@@ -323,11 +331,13 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$time = as.numeric(as.character(data$variable))
+    
     data
   })
   
-  output$test_table_1 = renderDataTable(pFEV_lf_r())
-  output$test_table_2 = renderDataTable(i_pFEV_sm_d1_fl_r())
+  # output$test_table_1 = renderDataTable(pFEV_lf_r())
+  # output$test_table_2 = renderDataTable(i_pFEV_sm_d1_fl_r())
   
   output$cluster_test = renderDataTable({
     test_list = list()
@@ -519,79 +529,68 @@ shinyServer(function(input, output) {
   ########### LINE PLOT ############
   
   output$line_pFEV = renderPlot({
-    r_data = pFEV_lf_r()[pFEV_lf_r()$MRN %in% input$mrn_select,]
-    
-    ggplot(r_data, aes(x = variable, y = value,col = MRN,group = MRN)) + 
-      geom_vline(aes(xintercept = which(levels(r_data$variable) %in% '0'))) +
-      
-      geom_line(aes(x = variable, y = value,col = MRN,group = MRN)) +
-      geom_point() +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      theme(axis.text.x = element_text(size=8, angle=90)) +
-      theme(legend.position="none") + 
-      #scale_x_discrete(names = pFEV_numeric_colnames,breaks = pFEV_numeric_colnames) + 
-      ggtitle(paste('pFEV values for ',length(unique(r_data$MRN))," Patients"))
+    r_data = pFEV_lf_r()
+    title = paste('pFEV values for ',length(unique(r_data$MRN))," Patients")
+    line_plot_function(r_data,title,input)
+
   })
   
   output$line_i_pFEV = renderPlot({
-    i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% i_pFEV_lf$MRN,]
-    #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% i_pFEV_sm_lf$MRN[1],]
-    i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
-    #sm_data = i_pFEV_sm_lf_r()[i_pFEV_sm_lf_r()$MRN %in% input$mrn_select,]
-    
-    ggplot(NULL) + 
-      #geom_vline(i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
-      
-      geom_line(data = i_data, aes(x = variable, y = value,col = MRN, group = MRN))+
-      geom_point(data = i_data, aes(x = variable, y = data,col = MRN,group = MRN)) +
-      #geom_line(data = sm_data, aes(x = variable, y = value,col = MRN, group = MRN))+
-      
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      theme(axis.text.x = element_text(size=8, angle=90)) +
-      theme(legend.position="none") +
-      ggtitle(paste('Imputed pFEV values for ',length(unique(i_data$MRN))," Patients"))
+    r_data = i_pFEV_lf_r()
+    title = paste('Imputed pFEV values for ',length(unique(r_data$MRN))," Patients")
+    line_plot_function(r_data,title,input)
   })
   
   ################ pFEV BOXPLOTS #######################
   output$boxplot_pFEV = renderPlot({
-    plot_data = pFEV_lf_r()
-    ggplot(plot_data, aes(x = variable, y = value)) + 
-      geom_vline(aes(xintercept = which(levels(plot_data$variable) %in% '0'))) +
-      
-      geom_boxplot(aes_string(col = input$global_factor)) +
-      stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
-      theme(axis.text.x = element_text(size=14, angle=90)) + 
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      ggtitle(paste('pFEV values for ',length(unique(plot_data$MRN))," Patients"))
+    full_data = pFEV_lf_r()
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    boxplot_function(full_data,title,input)
+  })
+  
+  output$boxplot_pFEV_cluster = renderPlot({
+    full_data = pFEV_lf_r()
+    global_factor = 'cluster'
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+  
+    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+  })
+  
+  output$boxplot_pFEV_cluster_full = renderPlot({
+    full_data = pFEV_lf_r()
+    global_factor = 'cluster'
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
+
+    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
   })
   
   output$boxplot_pFEV_cluster_d1 = renderPlot({
-    plot_data = pFEV_lf_r()
+    full_data = pFEV_lf_r()
     global_factor = 'cluster_d1'
-    ggplot(plot_data, aes(x = variable, y = value)) + 
-      geom_vline(aes(xintercept = which(levels(plot_data$variable) %in% '0'))) +
-      
-      geom_boxplot(aes_string(col = global_factor)) +
-      stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
-      theme(axis.text.x = element_text(size=14, angle=90)) + 
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      ggtitle(paste('pFEV values for ',length(unique(plot_data$MRN))," Patients"))
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+    
+    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+    
   })
+  
+  output$boxplot_pFEV_cluster_d1_full = renderPlot({
+    full_data = pFEV_lf_r()
+    global_factor = 'cluster_d1'
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
+    
+    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+  })
+  
   output$boxplot_i_pFEV = renderPlot({
-    plot_data = i_pFEV_lf_r()[i_pFEV_lf_r()$variable %in% pFEV_numeric_colnames_f,]
-    summary_data = i_pFEV_lf_r()
-    ggplot(NULL) +
-      
-      stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
-      geom_vline(aes(xintercept = which(levels(i_pFEV_lf_r()$variable) %in% '0'))) +
-      
-      geom_boxplot(data = plot_data, aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
-      stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
-      theme(axis.text.x = element_text(size=14, angle=90)) +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      ggtitle(paste('Imputed pFEV values for ',length(unique(plot_data$MRN))," Patients"))
+    
+    full_data = i_pFEV_lf_r()
+    title = paste('Imputed pFEV values for ',length(unique(full_data$MRN))," Patients")
+    boxplot_i_summary_function(full_data,title,input)
+
   })
   
   output$boxplot_pFEV_mean = renderPlot({
@@ -630,71 +629,27 @@ shinyServer(function(input, output) {
 ################# CHANGE #########################
     ############# line plot ###################
   
-  i_mrn_sub_pFEV_sm = reactive({
-    i_pFEV_sm_lf_r()[i_pFEV_sm_lf_r()$MRN %in% input$change_mrn_select,]
-  })
-  
   output$i_pFEV_sm_line = renderPlot({
-    r_data = i_mrn_sub_pFEV_sm()
-    r_data = i_pFEV_sm_lf_r()[i_pFEV_sm_lf_r()$MRN %in% input$change_mrn_select,]
+    r_data = i_pFEV_sm_lf_r()
+    title = paste("IMPUTED SMOOTH")
+    line_plot_function(r_data,title,input)
 
-    #data = pFEV
-    ggplot(r_data, aes(x = variable, y = value,col = MRN)) + 
-      geom_line(aes(group = MRN)) +
-      geom_vline(aes(xintercept = which(levels(r_data$variable) %in% '0'))) +
-      
-      #geom_point() +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      theme(axis.text.x = element_text(size=8, angle=90)) +
-      theme(legend.position="none") + 
-      #scale_x_discrete(names = pFEV_numeric_colnames,breaks = pFEV_numeric_colnames) + 
-      ggtitle("IMPUTED SMOOTH")
   })
   
   ############# boxplot ####################
   output$boxplot_i_pFEV_sm = renderPlot({
-    i_data = i_pFEV_sm_lf_r()
-    ggplot(NULL) +
-      
-      stat_summary(data = i_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
-      geom_vline(aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
-      
-      #geom_boxplot(data = i_pFEV_sm_lf[i_pFEV_lf$variable %in% pFEV_numeric_colnames_f & full_fac_0$pFEV_na > input$change_completeness,], aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
-      #stat_summary(data = i_pFEV_sm_lf[full_fac_0$pFEV_na > input$change_completeness,], fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
-      theme(axis.text.x = element_text(size=14, angle=90)) +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      ggtitle("Imputed Smoothed Mean")
+    r_data = i_pFEV_sm_lf_r()
+    title = paste("IMPUTED SMOOTH MEAN")
+    mean_line_plot_function(r_data,title,input)
   })
   
   ############ D1 ##################
   
-  
-  
-  i_mrn_sub_pFEV_sm_d1 = reactive({
-    cols = c(-6:6)
-    cols = factor(c(input$pre_range[1]:input$post_range[2]))
-    cols
-    
-    i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$MRN %in% input$change_mrn_select & i_pFEV_sm_d1_fl_r()$variable %in% cols,]
-  })
-  
   output$i_pFEV_sm_d1_line = renderPlot({
-    r_data = i_mrn_sub_pFEV_sm_d1()
-    #data = pFEV
-    ggplot(r_data, aes(x = variable, y = value,col = MRN)) + 
-
-      geom_line(aes(group = MRN)) +
-      geom_vline(aes(xintercept = which(levels(r_data$variable) %in% '0'))) +
-      
-      #geom_point() +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      theme(axis.text.x = element_text(size=8, angle=90)) +
-      theme(legend.position="none") + 
-      #scale_x_discrete(names = pFEV_numeric_colnames,breaks = pFEV_numeric_colnames) + 
-      ggtitle("IMPUTED SMOOTH D1")
+    r_data = i_pFEV_sm_d1_fl_r()
+    title = "IMPUTED SMOOTH D1"
+    D_line_plot_function(r_data,title,input)
+    
   })
   
   output$boxplot_i_pFEV_sm_d1 = renderPlot({
@@ -750,17 +705,20 @@ shinyServer(function(input, output) {
   })
   
   output$i_pFEV_sm_d2_line = renderPlot({
-    r_data = i_mrn_sub_pFEV_sm_d2()
-    #data = pFEV
-    ggplot(r_data, aes(x = variable, y = value,col = MRN)) + 
-      geom_line(aes(group = MRN)) +
-      #geom_point() +
-      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-      
-      theme(axis.text.x = element_text(size=8, angle=90)) +
-      theme(legend.position="none") + 
-      #scale_x_discrete(names = pFEV_numeric_colnames,breaks = pFEV_numeric_colnames) + 
-      ggtitle("IMPUTED SMOOTHED D2")
+    r_data = i_pFEV_sm_d2_fl_r()
+    title = "IMPUTED SMOOTH D2"
+    D_line_plot_function(r_data,title,input)
+    # r_data = i_mrn_sub_pFEV_sm_d2()
+    # #data = pFEV
+    # ggplot(r_data, aes(x = variable, y = value,col = MRN)) + 
+    #   geom_line(aes(group = MRN)) +
+    #   #geom_point() +
+    #   scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+    #   
+    #   theme(axis.text.x = element_text(size=8, angle=90)) +
+    #   theme(legend.position="none") + 
+    #   #scale_x_discrete(names = pFEV_numeric_colnames,breaks = pFEV_numeric_colnames) + 
+    #   ggtitle("IMPUTED SMOOTHED D2")
   })
   
   output$boxplot_i_pFEV_sm_d2 = renderPlot({
@@ -954,26 +912,7 @@ shinyServer(function(input, output) {
           
           slope_boxplot_data = reactive(slope_boxplot_data_function(df_lm_sample(),df_slope(),input$global_factor))
           output$slope_boxplot = renderPlot(slope_boxplot_function(slope_boxplot_data(),input$global_factor))
-          #output$slope_table_i = renderDataTable((slope_boxplot_data_i()))
           output$slope_table = renderDataTable(t(df_slope()))
-          
-          # output$slope_table = renderDataTable({
-          #   df = df_slope()
-          #   t(df)
-          #   })
-          
-          #output$slope_table = renderDataTable(df_slope()[,c("Factor","Status","T_p_value")])
-          # output$slope_boxplot = renderPlot({
-          #   #data = df_sample
-          #   data = df_lm_sample()
-          #   slope_cols = c("slope_Pre","slope_Post")
-          #   data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = slope_cols)
-          #   
-          #   ggplot(data = data_l)+
-          #     geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor))
-          # })
-          
-          # imputed
           
           df_lm_sample_i = reactive({
             function_data = i_pFEV_lf_r()
@@ -1351,18 +1290,8 @@ shinyServer(function(input, output) {
             df
           })
           output$slope_table_d1 = renderDataTable(t(df_slope_d1()))
-          output$slope_boxplot_d1 = renderPlot({
-            #data = df_sample
-            data = df_lm_sample_d1()
-            df = df_slope_d1()
-            data$significant = factor(df$significant[match(data[,input$global_factor],df$Status)])
-            slope_cols = c("slope_Pre","slope_Post")
-            data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1','significant'), measure.vars = slope_cols)
-            ggplot(data = data_l)+
-              geom_boxplot(aes_string(col = 'variable',y='value',x = input$global_factor,fill = 'significant')) +
-              #scale_fill_brewer(col = c('white','blanchedalmond'))
-              scale_fill_manual(values = c("white", "blanchedalmond"))
-          })
+          slope_boxplot_data_d1 = reactive(slope_boxplot_data_function(df_lm_sample_d1(),df_slope_d1(),input$global_factor))
+          output$slope_boxplot_d1 = renderPlot(slope_boxplot_function(slope_boxplot_data_d1(),input$global_factor))
     ### T test #####
           pp_t_test_d1 = reactive({
             full_data = i_pFEV_sm_d1_fl_r()
@@ -1821,19 +1750,23 @@ shinyServer(function(input, output) {
   
       #output$discrete_cluster_D_by_function = renderPrint({
   
-      cluster_weight = reactive({
-        full_data = i_pFEV_wf_r()
-        weights = clustering_weight_function(full_data,retained_patients(),input$clutree_num,
-                                                input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
-                                                input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
-        
-        test = 'broken'
-        return(test)
-        })
-  
-  
+      # cluster_weight = reactive({
+      #   full_data = i_pFEV_wf_r()
+      #   weights = clustering_weight_function(full_data,retained_patients(),input$clutree_num,
+      #                                           input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+      #                                           input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+      #   
+      #   test = 'broken'
+      #   return(test)
+      #   })
+      # 
+      # 
       discrete_cluster_D = reactive({
-        full_data = i_pFEV_wf
+        if(input$cluster_imputed == 'original'){
+          full_data = pFEV_wf
+        }else{
+          full_data = i_pFEV_wf
+        }
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -1841,14 +1774,7 @@ shinyServer(function(input, output) {
         cluster_data_list
       })
   
-    output$test_text_1 = renderPrint({
-      discrete_cluster_D()$weights
-    })
     
-
-    
-    
-
 
   
   
@@ -2579,6 +2505,28 @@ shinyServer(function(input, output) {
             
           })
           
+          output$bos3_surv_factor_plot_cluster = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = 'cluster'
+            m_bos = bos_factor()
+            col_name = 'BOS3_surv_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          
+          output$bos3_surv_factor_plot_cluster = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = 'cluster_d1'
+            m_bos = bos_factor()
+            col_name = 'BOS3_surv_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          
           output$bos1_factor_plot_smooth = renderPlot({
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
@@ -2621,12 +2569,38 @@ shinyServer(function(input, output) {
             
           })
           
-          
-          
-          bos_factor_d1 = reactive({
+          bos_factor_cluster = reactive({
             full_data = i_pFEV_wf_r()
             #global_factor = 'Status'
-            global_factor = input$global_factor
+            global_factor = 'cluster'
+            factor_entry = unique(na.omit(full_data[,global_factor]))
+            factor_entry
+            df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+            for(entry in factor_entry){
+              function_data = full_data[full_data[,global_factor] == entry,]
+              bos_df = BOS_function(function_data)
+              bos_df$Factor = global_factor
+              bos_df$Status = entry
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
+            }
+            #View(df)
+            m_bos = melt(df,id.vars= c('Factor','Status','time'))
+            m_bos
+          })
+          output$bos3_surv_factor_plot_cluster = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = 'cluster'
+            m_bos = bos_factor_cluster()
+            col_name = 'BOS3_surv_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          
+          bos_factor_cluster_d1 = reactive({
+            full_data = i_pFEV_wf_r()
+            #global_factor = 'Status'
             global_factor = 'cluster_d1'
             factor_entry = unique(na.omit(full_data[,global_factor]))
             factor_entry
@@ -2636,24 +2610,25 @@ shinyServer(function(input, output) {
               bos_df = BOS_function(function_data)
               bos_df$Factor = global_factor
               bos_df$Status = entry
-              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free')])
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
             }
             #View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
             m_bos
           })
           
-          output$bos3_factor_plot_cluster_d1 = renderPlot({
+          output$bos3_surv_factor_plot_cluster_d1 = renderPlot({
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
             global_factor = 'cluster_d1'
-            m_bos = bos_factor_d1()
-            col_name = 'BOS2_free'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            m_bos = bos_factor()
+            col_name = 'BOS3_surv_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
             print(p)
+            
           })
-
+          
+          
           
           
           output$survival_factor = renderPlot({

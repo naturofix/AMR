@@ -272,6 +272,7 @@ pFEV_wf_original = cbind(full_fac_0_original,pFEV_w_original)
 pFEV_lf_original = melt(pFEV_wf_original, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
 
 pFEV_lf = melt(pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
 pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
 
 
@@ -290,6 +291,8 @@ rownames(i_pFEV_ts)
 
 i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
 i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
+
 pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
 
 i_pFEV_lf$i = pFEV_lf$value
@@ -311,6 +314,7 @@ colnames(i_pFEV_sm) = time
 
 i_pFEV_smf = cbind(full_fac_0[rownames(i_pFEV_sm),],i_pFEV_sm)
 i_pFEV_sm_lf = melt(i_pFEV_smf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+i_pFEV_sm_lf$time = as.numeric(as.character(i_pFEV_sm_lf$variable))
 
 
 
@@ -331,6 +335,7 @@ i_pFEV_sm_d1_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
 
 i_pFEV_sm_d1_f = cbind(full_fac_0[rownames(i_pFEV_sm_d1),],i_pFEV_sm_d1)
 i_pFEV_sm_d1_fl = melt(i_pFEV_sm_d1_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d1))
+i_pFEV_sm_d1_fl$time = as.numeric(as.character(i_pFEV_sm_d1_fl$variable))
 
 
 ################## D2 #######################
@@ -351,6 +356,7 @@ i_pFEV_sm_d2_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
 
 i_pFEV_sm_d2_f = cbind(full_fac_0[rownames(i_pFEV_sm_d2),],i_pFEV_sm_d2)
 i_pFEV_sm_d2_fl = melt(i_pFEV_sm_d2_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d2))
+i_pFEV_sm_d2_fl$time = as.numeric(as.character(i_pFEV_sm_d2_fl$variable))
 
 
 before = colnames(pFEV_w)[c(1:25)]

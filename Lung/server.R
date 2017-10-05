@@ -2472,14 +2472,14 @@ shinyServer(function(input, output) {
           output$cover_plot = renderPlot({
             full_data = i_pFEV_wf
             full_data = i_pFEV_wf_r()
-            bos_df = BOS_function(full_data,F)
+            bos_df = BOS_function(full_data)
             BOSS_plot(bos_df)
           })
           
           bos_df = reactive({
-            full_data = i_pFEV_wf
-            full_data = i_pFEV_wf_r()
-            bos_df = BOS_function(full_data,T)
+            full_data = pFEV_wf
+            full_data = pFEV_wf_r()
+            bos_df = BOS_function(full_data)
             bos_df
           })
           
@@ -2490,7 +2490,7 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             bos_df_data = bos_df
             bos_df_data = bos_df()
-            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'BOS3_surv_free','Survive')]
+            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'BOS3_surv_free')]
             bos_data
             m_bos = melt(bos_data,id.var = 'time')
             ggplot(m_bos,aes(x = time,y=value,col=variable)) + 
@@ -2528,14 +2528,14 @@ shinyServer(function(input, output) {
               bos_df = BOS_function(function_data)
               bos_df$Factor = global_factor
               bos_df$Status = entry
-              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free')])
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
             }
             #View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
             m_bos
           })
           
-          output$boss_factor_table = renderDataTable(boss_factor())
+          output$boss_factor_table = renderDataTable(bos_factor())
           
           output$bos1_factor_plot = renderPlot({
             x1 = as.numeric(input$bos_range[1])
@@ -2568,6 +2568,16 @@ shinyServer(function(input, output) {
             print(p)
 
           })
+          output$bos3_surv_factor_plot = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            col_name = 'BOS3_surv_free'
+            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
           
           output$bos1_factor_plot_smooth = renderPlot({
             x1 = as.numeric(input$bos_range[1])
@@ -2596,6 +2606,16 @@ shinyServer(function(input, output) {
             global_factor = input$global_factor
             m_bos = bos_factor()
             col_name = 'BOS3_free'
+            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+            print(p)
+            
+          })
+          output$bos3_factor_plot_smooth = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            m_bos = bos_factor()
+            col_name = 'BOS3_surv_free'
             p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
             print(p)
             

@@ -82,7 +82,7 @@ shinyUI(fluidPage(
                     ######## LINE PLOTS ###########
                     tabPanel('Line Plot',
                              
-                             selectInput('mrn_select','MRN',patient_list,multiple = T,selected = patient_list, width = 800),
+                             #selectInput('mrn_select','MRN',patient_list,multiple = T,selected = patient_list, width = 800),
                              column(12,plotOutput('line_pFEV')),
                              column(12,plotOutput('line_i_pFEV'))
                              ),
@@ -431,7 +431,8 @@ shinyUI(fluidPage(
                         plotOutput('bos_plots'),
                         plotOutput('bos1_factor_plot'),
                         plotOutput('bos2_factor_plot'),
-                        plotOutput('bos3_factor_plot')
+                        plotOutput('bos3_factor_plot'),
+                        plotOutput('bos3_surv_factor_plot')
                         #plotOutput('boss_3_factor_l')
                ),
                tabPanel('Tables',
@@ -442,7 +443,8 @@ shinyUI(fluidPage(
                         plotOutput('bos_plots_smooth'),
                         plotOutput('bos1_factor_plot_smooth'),
                         plotOutput('bos2_factor_plot_smooth'),
-                        plotOutput('bos3_factor_plot_smooth')
+                        plotOutput('bos3_factor_plot_smooth'),
+                        plotOutput('bos3_surv_factor_plot_smooth')
                )
              )
                         

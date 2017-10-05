@@ -565,6 +565,19 @@ shinyServer(function(input, output) {
       scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
       ggtitle(paste('pFEV values for ',length(unique(plot_data$MRN))," Patients"))
   })
+  
+  output$boxplot_pFEV_cluster_d1 = renderPlot({
+    plot_data = pFEV_lf_r()
+    global_factor = 'cluster_d1'
+    ggplot(plot_data, aes(x = variable, y = value)) + 
+      geom_vline(aes(xintercept = which(levels(plot_data$variable) %in% '0'))) +
+      
+      geom_boxplot(aes_string(col = global_factor)) +
+      stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
+      theme(axis.text.x = element_text(size=14, angle=90)) + 
+      scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+      ggtitle(paste('pFEV values for ',length(unique(plot_data$MRN))," Patients"))
+  })
   output$boxplot_i_pFEV = renderPlot({
     plot_data = i_pFEV_lf_r()[i_pFEV_lf_r()$variable %in% pFEV_numeric_colnames_f,]
     summary_data = i_pFEV_lf_r()
@@ -2457,6 +2470,7 @@ shinyServer(function(input, output) {
 ########## SURVIVAL PLOTS ###########
 
           output$cover_plot = renderPlot({
+            full_data = i_pFEV_wf
             full_data = i_pFEV_wf_r()
             bos_df = BOS_function(full_data,F)
             BOSS_plot(bos_df)
@@ -2553,6 +2567,42 @@ shinyServer(function(input, output) {
               geom_hline(yintercept = 0) +
               xlim(x1,x2)
 
+          })
+          bos_factor_d1 = reactive({
+            full_data = i_pFEV_wf_r()
+            #global_factor = 'Status'
+            global_factor = input$global_factor
+            global_factor = 'cluster_d1'
+            factor_entry = unique(na.omit(full_data[,global_factor]))
+            factor_entry
+            df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+            for(entry in factor_entry){
+              function_data = full_data[full_data[,global_factor] == entry,]
+              bos_df = BOS_function(function_data)
+              bos_df$Factor = global_factor
+              bos_df$Status = entry
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free')])
+            }
+            #View(df)
+            m_bos = melt(df,id.vars= c('Factor','Status','time'))
+            m_bos
+          })
+          
+          output$bos3_factor_plot_cluster_d1 = renderPlot({
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            global_factor = 'cluster_d1'
+            m_bos = bos_factor_d1()
+            m_bos3 = m_bos[m_bos$variable == 'BOS3_free',]
+            ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+              guides(col=guide_legend(title=global_factor)) +
+              geom_smooth() +
+              ggtitle(paste('BOS3 free by', global_factor)) +
+              geom_vline(xintercept = 0) +
+              geom_hline(yintercept = 0) +
+              xlim(x1,x2)
+            
           })
           
 
@@ -2727,16 +2777,19 @@ shinyServer(function(input, output) {
           })
           
 
-######## TEST ###########
-          output$test_plot = renderPlot({
-            data = t(discrete_cluster_D_d1()$o_data)
-            library(pvclust)
-            result <- pvclust(data, method.dist="euclidian", method.hclust="average", nboot=1000)
-            plot(result)
-            #pvrect(result, alpha=0.95)
-            #seplot(result)
-            #seplot(result, identify=TRUE)
-          })
-  
-        ################## END ##########          
+          
+# 
+# ######## TEST ###########
+#           output$test_plot = renderPlot({
+#             data = t(discrete_cluster_D_d1()$o_data)
+#             library(pvclust)
+#             result <- pvclust(data, method.dist="euclidian", method.hclust="average", nboot=1000)
+#             plot(result)
+#             #pvrect(result, alpha=0.95)
+#             #seplot(result)
+#             #seplot(result, identify=TRUE)
+#           })
+#   
+#         ################## END ##########          
+# })
 })

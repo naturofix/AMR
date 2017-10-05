@@ -352,6 +352,7 @@ shinyUI(fluidPage(
                                  dataTableOutput('discrete_x_table'),
                                  
                                  dataTableOutput('cluster_analysis_within_table_selected'),
+
                                  plotOutput('discrete_cutree_line'),
                                  plotOutput('discrete_cutree_mean'),
                                  htmlOutput('D_text')
@@ -372,6 +373,8 @@ shinyUI(fluidPage(
                                           dataTableOutput('discrete_x_table_d1'),
                                       
                                          dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                                        plotOutput("bos3_factor_plot_cluster_d1"),
+                                        plotOutput('boxplot_pFEV_cluster_d1'),
                                          plotOutput('discrete_cutree_line_d1'),
                                          plotOutput('discrete_cutree_mean_d1'),
                                          htmlOutput('D_d1_text')), #Dendrogram

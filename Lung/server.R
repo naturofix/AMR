@@ -232,6 +232,15 @@ shinyServer(function(input, output) {
 
   ############# ISOLATE DATA FRAME AFTER REMOVING INCORRECT DATA ###########
   
+  status_r = reactive({
+    if(input$status_radio == '0'){
+      s = c('1','2')
+    }else{
+      s = input$status_radio
+    }
+    print(s)
+    
+  })
   
   pFEV_wf_r = reactive({
     o_data = pFEV_wf
@@ -245,7 +254,9 @@ shinyServer(function(input, output) {
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
+    data = data[data$Status %in% status_r(),]
     data
+    
     })
   pFEV_lf_r = reactive({
     w_data = pFEV_wf_r()
@@ -261,6 +272,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -271,6 +283,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -281,6 +294,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -291,6 +305,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -302,6 +317,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -312,6 +328,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -322,6 +339,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -332,6 +350,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
+    data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -2397,7 +2416,7 @@ shinyServer(function(input, output) {
 
           output$cover_plot = renderPlot({
             full_data = i_pFEV_wf
-            full_data = i_pFEV_wf_r()
+            full_data = pFEV_wf_r()
             bos_df = BOS_function(full_data)
             BOSS_plot(bos_df)
           })
@@ -2443,7 +2462,7 @@ shinyServer(function(input, output) {
           })
           
           bos_factor = reactive({
-            full_data = i_pFEV_wf_r()
+            full_data = pFEV_wf_r()
             #global_factor = 'Status'
             global_factor = input$global_factor
             factor_entry = unique(na.omit(full_data[,global_factor]))
@@ -2570,7 +2589,7 @@ shinyServer(function(input, output) {
           })
           
           bos_factor_cluster = reactive({
-            full_data = i_pFEV_wf_r()
+            full_data = pFEV_wf_r()
             #global_factor = 'Status'
             global_factor = 'cluster'
             factor_entry = unique(na.omit(full_data[,global_factor]))
@@ -2599,7 +2618,7 @@ shinyServer(function(input, output) {
           })
           
           bos_factor_cluster_d1 = reactive({
-            full_data = i_pFEV_wf_r()
+            full_data = pFEV_wf_r()
             #global_factor = 'Status'
             global_factor = 'cluster_d1'
             factor_entry = unique(na.omit(full_data[,global_factor]))
@@ -2621,7 +2640,7 @@ shinyServer(function(input, output) {
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
             global_factor = 'cluster_d1'
-            m_bos = bos_factor()
+            m_bos = bos_factor_cluster_d1()
             col_name = 'BOS3_surv_free'
             p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
             print(p)
@@ -2629,60 +2648,7 @@ shinyServer(function(input, output) {
           })
           
           
-          
-          
-          output$survival_factor = renderPlot({
-            plot_data = pFEV_wf_r()
-            global_factor = input$global_factor
-            print(global_factor)
-            colnames(plot_data)
-            fit <- survfit(Surv(plot_data$MonthsToEvent) ~ plot_data[,global_factor], data = plot_data)
-            
-            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line",surv.connect = FALSE) + ggtitle(paste('MonthsToEvent by ',global_factor))
-          })
-          
-          output$boss_1_factor = renderPlot({
-            plot_data = pFEV_wf_r()
-            global_factor = input$global_factor
-            print(global_factor)
-            colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS1mnth) ~ plot_data[,global_factor], data = plot_data)
-            
-            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 1 by',global_factor)) +
-              geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
-          })
-          
-          output$boss_2_factor = renderPlot({
-            plot_data = pFEV_wf_r()
-            global_factor = input$global_factor
-            print(global_factor)
-            colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS2mnth) ~ plot_data[,global_factor], data = plot_data)
-            
-            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 2 by',global_factor)) +
-              geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
-          })
-          
-          output$boss_3_factor = renderPlot({
-            plot_data = pFEV_wf_r()
-            global_factor = input$global_factor
-            print(global_factor)
-            colnames(plot_data)
-            fit <- survfit(Surv(plot_data$BOS3mnth) ~ plot_data[,global_factor], data = plot_data)
-            
-            #fit <- survfit(Surv(BOS1mnth) ~ as.character(global_factor), data = plot_data)
-            autoplot(fit,surv.geom = "line", surv.connect = FALSE) + 
-              ggtitle(paste('BOSS 3 by',global_factor)) +
-              geom_vline(aes(xintercept =  0)) +
-              xlim(-25,50)
-          })
+
 
           
 ############ AUTOPLOT ################## MESS #########          

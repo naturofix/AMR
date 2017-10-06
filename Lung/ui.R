@@ -99,7 +99,13 @@ shinyUI(fluidPage(
                              column(6,
                                     plotOutput('boxplot_i_pFEV_mean'))
                              
-                             ),    
+                             ),
+                    tabPanel('Interaction',
+                             HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor. Can be used to determine survival bias")),
+                             column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
+                             
+                             plotOutput('interaction_plot')
+                             ),
                     
 
                     # ##### BOSS #######
@@ -261,7 +267,10 @@ shinyUI(fluidPage(
                                             column(12,
                                                    plotOutput('i_pFEV_sm_d1_line'),
                                                    plotOutput('boxplot_i_pFEV_sm_d1'),
-                                                   plotOutput('boxplot_i_pFEV_sm_d1_mean')
+                                                   plotOutput('boxplot_i_pFEV_sm_d1_mean'),
+                                                   plotOutput('i_pFEV_sm_d1_line_ri'),
+                                                   plotOutput('boxplot_i_pFEV_sm_d1_ri'),
+                                                   plotOutput('boxplot_i_pFEV_sm_d1_mean_ri')
                                                    )
                                             #column(6,plotOutput('boxplot_i_change'))
                                             ),
@@ -349,12 +358,8 @@ shinyUI(fluidPage(
                   ###### CLUSTERING #########
                   tabPanel('pFEV Data',
                            radioButtons("cluster_imputed", 'Select Data',
-                                        choiceNames = list('Original',
-                                          "Imputed"
-                                        ),
-                                        choiceValues = list(
-                                          "original", "imputed"
-                                        ),inline = T,selected = 'imputed'),
+                                        choiceNames = list('Original',"Imputed"),
+                                        choiceValues = list("original", "imputed"),inline = T,selected = 'imputed'),
                            tabsetPanel(
                              tabPanel('Dendograms',
                                 plotOutput('discrete_cluster_plot'),  
@@ -380,6 +385,9 @@ shinyUI(fluidPage(
                   tabPanel('Change Data (D1)',
                            tabsetPanel(
                              tabPanel('Dendograms',
+                                      radioButtons("cluster_change_imputed", 'Select Data',
+                                                   choiceNames = list('Imputed',"Removed"),
+                                                   choiceValues = list("imputed", "removed"),inline = T,selected = 'imputed'),
                                         plotOutput('discrete_cluster_plot_d1'),
                                         plotOutput('mix_clu_d1'),
                                         dataTableOutput('cluster_analysis_within_table_selected_d1'),

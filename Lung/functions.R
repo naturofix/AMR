@@ -71,6 +71,20 @@ boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
     ggtitle(title)
 }
 
+mean_bias_line_plot_function = function(full_data,title,global_factor,bias_col,cols,input){
+  plot_data = full_data[full_data$variable %in% cols,]
+  scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
+  ggplot(plot_data, aes(x = variable, y = value)) + 
+    
+    #geom_boxplot(aes_string(col = global_factor)) +
+    geom_line(aes(group=cluster,col = cluster))
+    #stat_summary(fun.y=mean,geom="line",aes_string(group=global_factor,col = global_factor,size = bias_col)) +
+    #theme(axis.text.x = element_text(size=14, angle=90)) + 
+    #scale_x_discrete(breaks = scale_cols) +
+    ggtitle(title)
+}
+
+
 boxplot_i_summary_function = function(full_data,title,input){
   cols = factor(c(input$pre_range[1]:input$post_range[2]))
   summary_data = full_data[full_data$variable %in% cols,]

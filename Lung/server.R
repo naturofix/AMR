@@ -4,7 +4,12 @@
 
 shinyServer(function(input, output) {
   
-
+  output$cover_plot = renderPlot({
+    xy = distance_model_d1()
+    ggplot(xy, aes(x, y, colour=cluster)) +
+      geom_point( size=3) +
+      geom_density2d(alpha=0.5)
+  })
   
 
   ########## TEXT OUTPUTS ##################
@@ -255,9 +260,16 @@ shinyServer(function(input, output) {
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
     data = data[data$Status %in% status_r(),]
+
     data
     
     })
+  pFEV_wf_c = reactive({
+    o_data = pFEV_wf
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    data
+  })
+  
   pFEV_lf_r = reactive({
     w_data = pFEV_wf_r()
     data = melt(w_data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w))
@@ -276,6 +288,13 @@ shinyServer(function(input, output) {
     
     data
   })
+  
+  i_pFEV_wf_c = reactive({
+    o_data = i_pFEV_wf
+    data = o_data[o_data$MRN %in% retained_patients(),]
+  })
+  
+  
   i_pFEV_lf_r = reactive({
     o_data = i_pFEV_lf
     m_data = pFEV_lf_r()
@@ -311,6 +330,11 @@ shinyServer(function(input, output) {
   })
 
   
+  i_pFEV_sm_d1_f_c = reactive({
+    o_data = i_pFEV_sm_d1_f
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    data
+  })
   i_pFEV_sm_d1_f_r = reactive({
     o_data = i_pFEV_sm_d1_f
     m_data = pFEV_wf_r()
@@ -318,7 +342,6 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     data = data[data$Status %in% status_r(),]
-    
     data
   })
   i_pFEV_sm_d1_fl_r = reactive({
@@ -332,6 +355,44 @@ shinyServer(function(input, output) {
     
     data
   })
+  
+  
+  
+  i_pFEV_sm_d1_f_c_ir = reactive({
+    o_data = i_pFEV_sm_d1_f_c()
+    m_data = pFEV_wf_c()
+    d1_cols = p_cols[p_cols %in% colnames(o_data)]
+    for(col_name in d1_cols){
+      o_data[which(is.na(m_data[,col_name])),col_name] = NA
+    }
+    o_data
+  })
+  i_pFEV_sm_d1_f_c_ir_r = reactive({
+    o_data = i_pFEV_sm_d1_f_c_ir()
+    m_data = discrete_cluster_D()$data
+    m_data$MRN = rownames(m_data)
+    m_data_d1 = discrete_cluster_D_d1()$data
+    m_data_d1$MRN = rownames(m_data_d1)
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
+    
+    #data$cluster = discrete_cluster_D()$data$cluster
+    #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
+    data = data[data$Status %in% status_r(),]
+    
+    data
+    
+  })
+  i_pFEV_sm_d1_fl_c_ir_r = reactive({
+    w_data = i_pFEV_sm_d1_f_c_ir_r()
+    data = melt(w_data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w)[-2])
+    data$time = as.numeric(as.character(data$variable))
+    data
+  })
+  
+  
+  
   
   i_pFEV_sm_d2_f_r = reactive({
     o_data = i_pFEV_sm_d2_f
@@ -585,6 +646,33 @@ shinyServer(function(input, output) {
     boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
   })
   
+  output$interaction_plot = renderPlot({
+    full_data = pFEV_lf_r()
+    global_factor = 'cluster'
+    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
+    bias_col = 'Status'
+    plot_data = full_data[full_data$variable %in% cols,]
+    scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
+    global_factor = input$global_factor
+    interactors = input$interactors
+    print(interactors)
+    interactor_list = c(global_factor,interactors)
+    interactor_list = paste(c(global_factor,interactors),collapse = ', ')
+    print(interactor_list)
+    #interactors = paste(c(global_factor,interactors),collapse=(','))
+    print(interactor_list)
+    #plot_data = full_data[,cols]
+    height_var = 600
+    ggplot(plot_data, aes(x = variable, y = value)) + 
+      #geom_boxplot(aes_string((col=paste0("interaction(", paste0(interactor_list, collapse =  ", "), ")"))))
+      stat_summary(data = plot_data,fun.y=mean,geom="line",
+                   aes_string(group=paste0("interaction(", paste0(interactor_list, collapse =  ", "), ")"),
+                              col=paste0("interaction(", paste0(interactor_list,collapse =  ", "), ")"))) + 
+      facet_grid(as.formula(paste(global_factor, '~','.')))
+
+  },height = 1600)
+  
   output$boxplot_pFEV_cluster_d1 = renderPlot({
     full_data = pFEV_lf_r()
     global_factor = 'cluster_d1'
@@ -654,6 +742,7 @@ shinyServer(function(input, output) {
     line_plot_function(r_data,title,input)
 
   })
+
   
   ############# boxplot ####################
   output$boxplot_i_pFEV_sm = renderPlot({
@@ -661,6 +750,7 @@ shinyServer(function(input, output) {
     title = paste("IMPUTED SMOOTH MEAN")
     mean_line_plot_function(r_data,title,input)
   })
+
   
   ############ D1 ##################
   
@@ -678,7 +768,7 @@ shinyServer(function(input, output) {
     summary_data =  i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% cols,]
     i_data = i_pFEV_sm_d1_fl_r()[i_pFEV_sm_d1_fl_r()$variable %in% pFEV_numeric_colnames_f,]
     ggplot(NULL) +
-      stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+      #stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
       geom_vline(data = i_data, aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
       
       geom_boxplot(data = i_data, aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
@@ -706,6 +796,57 @@ shinyServer(function(input, output) {
       ylim(-0.1,0.1)+
       
       ggtitle("Imputed Smoothed D1 Mean")
+  })
+  
+  output$i_pFEV_sm_d1_line_ri = renderPlot({
+    r_data = i_pFEV_sm_d1_fl_c_ir_r()
+    title = "IMPUTED SMOOTH D1 REMOVED MISSING"
+    D_line_plot_function(r_data,title,input)
+    
+  })
+  
+  output$boxplot_i_pFEV_sm_d1_ri = renderPlot({
+    cols = c(-6:6)
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
+    cols
+    
+    summary_data =  i_pFEV_sm_d1_fl_c_ir_r()[i_pFEV_sm_d1_fl_c_ir_r()$variable %in% cols,]
+    i_data = i_pFEV_sm_d1_fl_c_ir_r()[i_pFEV_sm_d1_fl_c_ir_r()$variable %in% pFEV_numeric_colnames_f,]
+    col_breaks = unlist(pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols])
+    print(col_breaks)
+    col_break_order = unlist(col_breaks[order(as.numeric(as.character(col_breaks)))])
+    print(col_break_order)
+
+    ggplot(NULL) +
+      #stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+      #geom_vline(data = i_data, aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+      
+      geom_boxplot(data = i_data, aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
+      #stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+      #theme(axis.text.x = element_text(size=14, angle=90)) +
+      #scale_x_discrete(breaks = col_break_order) +
+      #ylim(-0.1,0.1)+
+      
+      ggtitle("Imputed Smoothed D1 boxplot REMOVED MISSING")
+  })
+  
+  output$boxplot_i_pFEV_sm_d1_mean_ri = renderPlot({
+    cols = c(-6:6)
+    cols = factor(c(input$pre_range[1]:input$post_range[2]))
+    cols
+    print(cols)
+    summary_data =  i_pFEV_sm_d1_fl_c_ir_r()[i_pFEV_sm_d1_fl_c_ir_r()$variable %in% cols,]
+    ggplot(NULL) +
+      stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+      #geom_vline(aes(xintercept = which(levels(i_pFEV_sm_lf$variable) %in% '0'))) +
+      
+      #geom_boxplot(data = i_pFEV_sm_d1_fl_r()[i_pFEV_lf$variable %in% pFEV_numeric_colnames_f & full_fac_0$pFEV_na > input$change_completeness,], aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
+      #stat_summary(data = i_pFEV_sm_d1_fl_r()[full_fac_0$pFEV_na > input$change_completeness,], fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
+      theme(axis.text.x = element_text(size=14, angle=90)) +
+      scale_x_discrete(breaks = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]) +
+      ylim(-0.1,0.1)+
+      
+      ggtitle("Imputed Smoothed D1 Mean REMOVED MISSING")
   })
   
   
@@ -1782,9 +1923,9 @@ shinyServer(function(input, output) {
       # 
       discrete_cluster_D = reactive({
         if(input$cluster_imputed == 'original'){
-          full_data = pFEV_wf
+          full_data = pFEV_wf_c()
         }else{
-          full_data = i_pFEV_wf
+          full_data = i_pFEV_wf_c()
         }
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
@@ -2104,8 +2245,17 @@ shinyServer(function(input, output) {
   
   
     ####### D1 Clustering ############
+            
             discrete_cluster_D_d1 = reactive({
-              full_data = i_pFEV_sm_d1_f
+              if(input$cluster_change_imputed == 'imputed'){
+                full_data = i_pFEV_sm_d1_f_c()
+              }else{
+                full_data = i_pFEV_sm_d1_f_c_ir()
+              }
+              
+              
+            #discrete_cluster_D_d1 = reactive({
+             # full_data = i_pFEV_sm_d1_f
               cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                       input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                       input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -2294,12 +2444,7 @@ shinyServer(function(input, output) {
             output$distance_model_table_d1 = renderDataTable(distance_model_d1())
             
             
-            output$cover_plot = renderPlot({
-              xy = distance_model_d1()
-              ggplot(xy, aes(x, y, colour=cluster)) +
-                geom_point( size=3) +
-                geom_density2d(alpha=0.5)
-            })
+
             
             
     #### CLUSTER COMPOSITION TABLES #####
@@ -2414,12 +2559,7 @@ shinyServer(function(input, output) {
  
 ########## SURVIVAL PLOTS ###########
 
-          output$cover_plot = renderPlot({
-            full_data = i_pFEV_wf
-            full_data = pFEV_wf_r()
-            bos_df = BOS_function(full_data)
-            BOSS_plot(bos_df)
-          })
+  
           
           bos_df = reactive({
             full_data = pFEV_wf

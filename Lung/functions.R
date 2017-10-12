@@ -22,6 +22,21 @@ line_plot_function = function(plot_data,title,input){
     ggtitle(title)
 }
 
+smooth_line_plot_function = function(plot_data,title,input){
+  global_factor = 'Status'
+  global_factor = input$global_factor
+  ggplot(plot_data, aes_string(x = 'time', y = 'value',group = global_factor, col = global_factor )) + 
+    geom_vline(xintercept = 0) +
+    geom_smooth() +
+    geom_point() +
+    #stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
+    
+    theme(axis.text.x = element_text(size=8, angle=90)) +
+    #xlim(input$pre_range[1],input$post_range[2]) +
+    ggtitle(title)
+}
+
+
 mean_line_plot_function = function(plot_data,title,input){
   ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
     geom_vline(xintercept = 0) +
@@ -50,7 +65,7 @@ boxplot_function = function(full_data,title,input){
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
   ggplot(plot_data, aes(x = variable, y = value)) + 
     
-    geom_boxplot(aes_string(col = input$global_factor)) +
+    geom_violin(aes_string(col = input$global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
     theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
@@ -64,7 +79,7 @@ boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
   ggplot(plot_data, aes(x = variable, y = value)) + 
     
-    geom_boxplot(aes_string(col = global_factor)) +
+    geom_violin(aes_string(col = global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
     theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
@@ -282,6 +297,17 @@ slope_function = function(full_data,factor,cols){
   return(df)
 }
 
+slope_fit_plot_function = function(data,cols,x_label,input){
+  global_factor = input$global_factor
+  plot_data = data[data$variable %in% cols,]
+  ggplot(NULL, aes_string(x = 'variable', y = 'value', group = global_factor,col=global_factor)) + 
+    
+    stat_summary(data = plot_data, fun.data=mean_cl_normal) +
+    geom_smooth(data = plot_data,  method = 'lm',se = F) + 
+    labs(x = x_label)
+  
+}
+
 slope_boxplot_data_function = function(data,df,global_factor){
   slope_cols = c("slope_Pre","slope_Post")
   data$significant = factor(df$significant[match(data[,global_factor],df$Status)])
@@ -294,9 +320,10 @@ slope_boxplot_function = function(data,global_factor){
   if(!(0 %in% data$significant)){
     sig_col = c("blanchedalmond")
   }
+  sig_col = c('white','gray73')
   
   ggplot(data)+
-    geom_boxplot(aes_string(col = 'variable',y='value',x = global_factor,fill='significant')) +
+    geom_boxplot(aes_string(col = global_factor,y='value',x = global_factor,fill='variable')) +
     scale_fill_manual(values = sig_col)
   
 }
@@ -927,13 +954,19 @@ clust_comparison_total = function(df,clust_col){
         df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
         df_c["Status",paste(factor_name,j,sep='_')] = j
         df_c["Data",paste(factor_name,j,sep='_')] = clust_col
-        df_c[i,paste(factor_name,j,sep='_')] = per
+        df_c[i,paste(factor_name,j,sep='_')] = as.numeric(per)
       }
     }
   }
   df_tc = as.data.frame(t(df_c))
-  df_tc = df_tc[,c('Factor','Status',num_clusters)]
-  return(df_tc)
+  data = df_tc[,c('Factor','Status',num_clusters)] # colnames used in chisq function, do not change
+  data = data[c(2:dim(data)[1]),]
+  col_range = c(3:dim(data)[2])
+  data[,col_range] = apply(data[,col_range], 2, function (x) as.numeric(as.character(x)))
+  data$sum = apply(data[,col_range], 1, function(x) round(sum(x),0)) 
+  data$p.value = apply(data[,col_range], 1, function(x) signif(chisq.test(x)$p.value,3)) 
+  data = data[order(data$Factor,data$Status),]
+  return(data)
 }
 
 clust_comparison_within = function(df,clust_col){
@@ -961,9 +994,86 @@ clust_comparison_within = function(df,clust_col){
   }
 
   df_tc = as.data.frame(t(df_c))
-  df_tc = df_tc[,c('Factor','Status',num_clusters)]
-  df_tc
-  return(df_tc)
+  data = df_tc[,c('Factor','Status',num_clusters)] # DBC --- colnames used in chisq functions
+  data = data[c(2:dim(data)[1]),]
+  data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
+  data = data[order(data$Factor,data$Status),]
+  
+  return(data)
+}
+
+
+chisq_total = function(full_data,input){
+    cluster_list = c(3:(2+input$clutree_num)) #set by the table in 
+    full_test_data = full_data[,cluster_list]
+    full_test_data[is.na(full_test_data)] = 0
+    chisq_result = chisq.test(full_test_data)
+    chi_df = tidy(chisq_result)
+    chi_df$Factor = 'All'
+    
+    for(selected_factor in unique(full_data$Factor)){
+      sub_data = full_data[full_data$Factor == selected_factor,]
+      test_data = sub_data[,cluster_list]
+      
+      #print(test_data)
+      
+      chisq_result = tidy(chisq.test(test_data))
+      chisq_result$Factor = selected_factor
+      
+      chi_df = rbind(chi_df,chisq_result)
+    }
+    chi_df$Cluster = paste(colnames(test_data),collapse=', ')
+    chi_df = chi_df[,c('Factor','Cluster',colnames(chi_df[c(1:(length(colnames(chi_df))-2))]))]
+    chi_df$p.value = signif(chi_df$p.value,3)
+    chi_df$statistic = signif(chi_df$statistic,3)
+    
+    chi_df
+    return(chi_df)
+}
+
+
+chisq_within = function(data,input){
+  cluster_list = input$cluster_select_clusters
+  factor_list = unique(data$Factor)
+
+  
+  full_test_data = data[,cluster_list]
+  full_test_data[is.na(full_test_data)] = 0
+  full_test_data = t(full_test_data)
+  
+  chisq_result = chisq.test(full_test_data)
+  chi_df = tidy(chisq_result)
+  chi_df$Cluster = 'All'
+  chi_df$Factor = 'All'
+  print(chi_df)
+  
+  for(selected_factor in factor_list){
+    sub_data = data[data$Factor == selected_factor,]
+    test_data = t(sub_data[,cluster_list])
+    test_data[is.na(test_data)] = 0
+    chisq_result = tidy(chisq.test(test_data))
+    chisq_result$Cluster = paste(cluster_list,collapse = ', ')
+    chisq_result$Factor = selected_factor
+    
+    chi_df = rbind(chi_df,chisq_result)
+  }
+  
+  chi_df = chi_df[,c('Cluster','Factor',colnames(chi_df[c(1:(length(colnames(chi_df))-2))]))]
+  chi_df$p.value = signif(chi_df$p.value,3)
+  chi_df$statistic = signif(chi_df$statistic,3)
+  
+  chi_df
+  return(chi_df)
+}
+
+proportion_table_formating = function(df_3,col_range,colour){
+  df_3[,col_range] = apply(df_3[,col_range],2,function(x) as.numeric(x))
+  df_3[is.na(df_3)] = 0
+  datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,col_range]),
+                                                   background = styleColorBar(range(df_3[,col_range]), colour),
+                                                   backgroundSize = '98% 88%',
+                                                   backgroundRepeat = 'no-repeat',
+                                                   backgroundPosition = 'center')
 }
 
 dendrogram_plot_function = function(dendr,x_cluster,cut){
@@ -1093,8 +1203,133 @@ BOS_function_pFEV = function(full_data,imputed = F){
 }
 
 
+BOS_test_function = function(time,rx_date,bos_date,death_date,status){
+  #bos_status = 0
+  #print(rx_date)
+  if(time >= bos_date){
+    bos_status = 3
+  }else{
+    if(status == '2'){
+      if(death_date > time & !is.na(death_date)){
+        bos_status = 1
+      }else{
+        bos_status =  2
+      }
+    }
+    if(status == '1'){
+      
+      if(rx_date > time & !is.na(rx_date)){
+        bos_status = 1
+      }else{
+        bos_status = 0
+      }
+    }
+  }
+  return(bos_status)
+}
+
+BOS_surv_test_function = function(time,rx_date,bos_date,death_date,status){
+  bos_data = min(bos_date,rx_date)
+  bos_status = 0
+  if(rx_date < time){
+    bos_status = 0
+  }else{
+    bos_status = BOS_test_function(time,rx_date,bos_date,death_date,status)
+  }
+  return(bos_status)
+}
+
+
+
+
+BOS_patient_function = function(full_data){
+  #full_data = pFEV_wf
+  
+  BOS1 = 0.8
+  BOS2 = 0.66
+  BOS3 = 0.5
+  end_time = 50
+  MRN = full_data$MRN
+  #print(str(MRN))
+  d_date = full_data$MonthsToEvent
+  #print(str(d_date))
+  rx = full_data$MonthSinceRx
+  #print(str(rx))
+  status = full_data$Status
+  #print(str(status))
+   BOS1_date = full_data$BOS1mnth
+   BOS2_date = full_data$BOS2mnth
+   BOS3_date = full_data$BOS3mnth
+   BOS3_surv_date = full_data$`BOS 3 free survival`
+
+  BOS1_date[is.na(BOS1_date)] = end_time
+  BOS2_date[is.na(BOS2_date)] = end_time
+  BOS3_date[is.na(BOS3_date)] = end_time
+  BOS3_surv_date[is.na(BOS3_surv_date)] = end_time
+
+  full_data$BOS1_date = BOS1_date
+  full_data$BOS2_date = BOS2_date
+  full_data$BOS3_date = BOS3_date
+  full_data$BOS3_surv_date = BOS3_surv_date
+
+
+  time = seq(-24,48,1)
+  #str(time)
+  bos_df = data.frame(time = time)
+  rx_i = grep('MonthSinceRx', colnames(full_data))
+  BOS1_date_i = grep('BOS1_date', colnames(full_data))
+  BOS2_date_i = grep('BOS2_date', colnames(full_data))
+  BOS3_date_i = grep('BOS3_date', colnames(full_data))
+  BOS3_surv_date_i = grep('BOS1_surv_date', colnames(full_data))
+  d_date_i = grep('MonthsToEvent', colnames(full_data))
+  status_i = grep('Status', colnames(full_data))
+  patient_status_df = data.frame(time = numeric(0))
+  #print(rx_i)
+  for(t in time){
+    #print(t)
+    #row_data = full_data[1,]
+    #print(row_data)
+    #print(row_data[rx_i]) 
+    status_1 = 0
+    status_2 = 0
+    status_3 = 0
+    status_4 = 0
+    patient_status_df[paste(t,MRN,sep='_'),'time'] = t
+    patient_status_df[paste(t,MRN,sep='_'),'MRN'] = MRN
+    status_1 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS1_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_2 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS2_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_3 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS3_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_4 = unlist(apply(full_data,1, function(x) BOS_surv_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS3_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    patient_status_df[paste(t,MRN,sep='_'),'BOS1_free'] = status_1
+    patient_status_df[paste(t,MRN,sep='_'),'BOS2_free'] = status_2
+    patient_status_df[paste(t,MRN,sep='_'),'BOS3_free'] = status_3
+    patient_status_df[paste(t,MRN,sep='_'),'BOS3_surv_free'] = status_4
+  }
+  hit = 0
+  no_hit = 1
+  patient_status_df$BOS1[patient_status_df$BOS1_free == 3] = hit
+  patient_status_df$BOS1[!patient_status_df$BOS1_free == 3] = no_hit
+  patient_status_df$BOS2[patient_status_df$BOS2_free == 3] = hit
+  patient_status_df$BOS2[!patient_status_df$BOS2_free == 3] = no_hit
+  patient_status_df$BOS3[patient_status_df$BOS3_free == 3] = hit
+  patient_status_df$BOS3[!patient_status_df$BOS3_free == 3] = no_hit
+  return(patient_status_df)
+}
+  
+  #head(patient_status_df,50)  
+    
+
+  
+  #colnames(patient_status_df)
+  #head(patient_status_df,56)
+  #patient_status_df[patient_status_df$MRN == 5931655,]
+  #tail(patient_status_df)
+
+
 
 BOS_function = function(full_data){
+  #full_data = pFEV_wf
+  
   BOS1 = 0.8
   BOS2 = 0.66
   BOS3 = 0.5
@@ -1113,24 +1348,30 @@ BOS_function = function(full_data){
   BOS3_date[is.na(BOS3_date)] = end_time
   BOS3_surv_date[is.na(BOS3_surv_date)] = end_time
   
+  full_data$BOS1_date = BOS1_date
+  full_data$BOS2_date = BOS2_date
+  full_data$BOS3_date = BOS3_date
+  full_data$BOS3_surv_date = BOS3_surv_date
+  
+  
   time = seq(-24,48,1)
   bos_df = data.frame(time = time)
-
+  
   bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
   bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
   bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
   bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_surv_date[x >= BOS3_surv_date]))))
   
-  bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS1_date]))))
-  bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS2_date]))))
-  bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS3_date]))))
-  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date < x & !is.na(d_date) & x < BOS3_surv_date]))))
+  bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS1_date]))))
+  bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS2_date]))))
+  bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_surv_date]))))
   
   
-  bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS1_date]))))
-  bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS2_date]))))
-  bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS3_date]))))
-  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx < x & !is.na(rx) & x < BOS3_surv_date]))))
+  bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS1_date]))))
+  bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS2_date]))))
+  bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_surv_date]))))
   
 
   bos_df = mutate(bos_df, 
@@ -1283,4 +1524,55 @@ BOS_factor_plot_smooth = function(m_bos,col_name,global_factor,x1,x2){
     xlim(x1,x2)
   return(p)
 }
+
+
+pairwise_manova_function = function(data,m_factor){
+  df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
+  if(dim(data)[1] > 1){
+    
+  factor_list = paste(unlist(unique(data[,m_factor])))
+  factor_list = factor_list[order(factor_list)]
+  factor_list
+  num = length(factor_list)
+  if(num > 1){
+    cmd = paste('res.man = manova(cbind(time,value) ~ ',m_factor,', data = data)')
+    eval(parse(text = cmd))
+    df = tidy(res.man)
+    if(num > 2){
+      df$comparison = 'All'
+      nums = lapply(factor_list, function(x) length(na.omit(data$value[data[,m_factor] == x])))
+      df$numbers = paste(nums, collapse = ', ')
+      for(i in c(1:num)){
+        i_entry = factor_list[i]
+        for(j in c(1:num)){
+          j_entry = factor_list[j]
+          if(i < j){
+            m_data = data[data[,m_factor] %in% c(i_entry,j_entry),]
+            df_n = df_b
+            df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
+            cmd = paste('df_n = tidy(manova(cbind(time,value) ~ ',m_factor,', data = m_data))')
+            
+            try(eval(parse(text = cmd)))
+              df_n$comparison = paste(i_entry,'vs',j_entry)
+              df_n$numbers = paste(length(m_data$value[m_data[,m_factor] == i_entry & !is.na(m_data$value)]),'vs',length(m_data$value[m_data[,m_factor] == j_entry  & !is.na(m_data$value)]))
+              df = rbind(df,df_n)
+
+            
+          }
+        }
+      }
+      
+      
+    }else{
+      df$comparison = paste(factor_list[1],'vs',factor_list[2])
+      df$numbers = paste(length(data$value[data[,m_factor] == factor_list[1]  & !is.na(data$value)]),'vs',length(data$value[data[,m_factor] == factor_list[2]  & !is.na(data$value)]))
+
+    }
+    df$p.value = signif(df$p.value,3)
+
+    return(df)
+  }
+  }
+}
+
 

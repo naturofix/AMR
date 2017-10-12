@@ -12,28 +12,60 @@ shinyUI(fluidPage(
     
     column(12,
     
-    tabsetPanel(
-    ############# DATA ##############
+    tabsetPanel(selected = 'Clustering',
+    ############# TESTING ##############
       tabPanel('Testing',
                tabsetPanel(
+                 tabPanel('text',
+                          verbatimTextOutput('test_text_1'),
+                          verbatimTextOutput('test_text_2'),
+                          verbatimTextOutput('test_text_3')
+                 ),
+                 tabPanel('More Stats',
+                          column(3,selectInput('binary_factor','Binary Factor',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+                          column(3,selectInput('add_factor','Additional Factors',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'HLAType')),
+                          column(12,
+                          tabsetPanel(
+                            tabPanel('Discrete Variables',
+                                     plotOutput('mosaic_xt'),
+                                     verbatimTextOutput('chisq_xt'),
+                                     verbatimTextOutput('fishe_xt')
+                                      
+                                      
+                                      ),
+                 tabPanel('Logistic Regression',
+                                   column(12,
+                                          plotOutput('lg_scatter'),
+                                          verbatimTextOutput('logistic_regression_text'),
+                                          dataTableOutput('logistic_regression_table'),
+                                          plotOutput('logistic_regression_p_hist')
+                                   )
+                 )
+                          )
+                                   
+                          )         
+                          
+                 ),
                  tabPanel('Cover Plot',
                           plotOutput('cover_plot')
                           ),
                  tabPanel('Plot',
                           HTML(paste('takes time to generate, please wait ...')),
-                          plotOutput('test_plot')
+                          plotOutput('test_plot_1'),
+                          plotOutput('test_plot_2')
                           ),
-                 tabPanel('text',
-                          textOutput('test_text_1')
-                          ),
+  
                 tabPanel('table',
                         dataTableOutput('test_table_1'),
-                         dataTableOutput('test_table_2')
+                        dataTableOutput('test_table_2'),
+                        dataTableOutput('test_table_3')
                          ),
                 tabPanel('Cluster Column Test',
                          dataTableOutput('cluster_test')
                          )
                )),
+    
+    #### DATA TABLES ####
       tabPanel("Data",
                
         tabsetPanel(
@@ -87,6 +119,8 @@ shinyUI(fluidPage(
                              
                              #selectInput('mrn_select','MRN',patient_list,multiple = T,selected = patient_list, width = 800),
                              column(12,plotOutput('line_pFEV')),
+                             column(12,plotOutput('smooth_line_pFEV')),
+                             
                              column(12,plotOutput('line_i_pFEV'))
                              ),
                     ######## BOXPLOTS ##########
@@ -101,7 +135,7 @@ shinyUI(fluidPage(
                              
                              ),
                     tabPanel('Interaction',
-                             HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor. Can be used to determine survival bias")),
+                             HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor.")),
                              column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
                              
                              plotOutput('interaction_plot')
@@ -119,8 +153,10 @@ shinyUI(fluidPage(
                     ############## STAT ################
                     tabPanel('Stats',
                              column(12,
-                                    #selectInput('anova_factor','Factor to Separate by',full_factor_columns,multiple = F,selected = 'Status'),
+                                    #selectInput('anova_factor','Factor to Separate by',full_factor_columns,multiple = F,selected = 'Status'),                        tabsetPan
                                   tabsetPanel(
+                                    tabPanel('Pre Treatment vs Post Treatment',
+                                             tabsetPanel(
   
                                   
                                       
@@ -141,19 +177,29 @@ shinyUI(fluidPage(
                                                        column(6,plotOutput('boxplot_anova_after_factor_i'))
                                                        )
                                                 )),
+
                                               ############ SLOPE #################
                                               tabPanel('Slope',
                                                        HTML(paste0('T test calculated on pFEV slopes for each patient. Slopes are calculated from a linear regression of all points between two timepoints. The timepoints can be adjusted using the Timecourse Range slider ',textOutput('slope_pFEV_text'))),
                                                        tabsetPanel(
                                                          tabPanel('Original Data',
+                                                          column(6,plotOutput('slope_fit_pFEV_pre_plot')),
+                                                          column(6,plotOutput('slope_fit_pFEV_post_plot')),
+                                                          column(12,
+                                                          tags$span(style="color:red", "Shading no longer indicates significance here"),
                                                           plotOutput('slope_boxplot'),
                                                            dataTableOutput('slope_table')
-                                                         ), 
+                                                         )), 
                                                          tabPanel('Imputed',
+                                                                  column(6,plotOutput('slope_fit_pFEV_pre_plot_i')),
+                                                                  column(6,plotOutput('slope_fit_pFEV_post_plot_i')),
+                                                                  column(12,
+                                                                         tags$span(style="color:red", "Shading no longer indicates significance here"),
+                                                                         
                                                                plotOutput('slope_boxplot_i'),
                                                                dataTableOutput('slope_table_i')
                                                                #plotOutput('slope_boxplot_i')
-                                                         )
+                                                         ))
                                                        )
                                               ),
                                               ############## T test ################
@@ -239,7 +285,37 @@ shinyUI(fluidPage(
                                                          )
                                                        )
                                     ) # tabset
-                             )# column
+                             ),
+                             tabPanel("Time-series comparisons",
+                                      tabsetPanel(
+                                        tabPanel('MANOVA',
+                                                 tabsetPanel(
+                                                   tabPanel('Original Data',
+                                                            tabsetPanel(
+                                                              tabPanel('Selected',
+                                                                       plotOutput('boxplot_pFEV_manova'),
+                                                                       dataTableOutput('selected_manova_table')
+                                                              ),
+                                                              tabPanel('Full',
+                                                                       dataTableOutput('full_manova_table'))
+                                                            )
+                                                   ),
+                                                   tabPanel('Imputed',
+                                                            tabsetPanel(
+                                                              tabPanel('Selected',
+                                                                       plotOutput('boxplot_pFEV_manova_i'),
+                                                                       dataTableOutput('selected_manova_table_i')
+                                                              ),
+                                                              tabPanel('Full',
+                                                                       dataTableOutput('full_manova_table_i'))
+                                                            )
+                                                   )
+                                                 ))
+                                        
+                                        
+                                        
+                                      ))))
+                             # column
                              
                     )#Stats
                     
@@ -252,6 +328,7 @@ shinyUI(fluidPage(
 
              column(12,
                     tabsetPanel(
+
                         ########## LINE ##########
                          tabPanel('smooth',
                                   #selectInput('change_mrn_select','MRN',patient_list,multiple = T,selected = patient_list,width = 800),
@@ -278,17 +355,24 @@ shinyUI(fluidPage(
                                         ##### STATS ###########
                                         tabPanel('Stats',
                                                  tabsetPanel(
+                                                   tabPanel('Pre Treatment vs Post Treatment',
+                                                            tabsetPanel(
                                                    tabPanel('ANOVA',
                                                             dataTableOutput('lm_table_d1'),
                                                             plotOutput('boxplot_anova_all_factor_d1'),
                                                             column(6,plotOutput('boxplot_anova_before_factor_d1')),
                                                             column(6,plotOutput('boxplot_anova_after_factor_d1'))
                                                    ),
+
                                                    tabPanel('Slope',
                                                             HTML(paste0('T test calculated on imputed smoothed first differential (D1) slopes for each patient. The slopes are calculated as a linear regression of all the values between the timepoints. The timepoints can be adjusted using the Timecourse Range slider ',textOutput('slope_d1_text'))),
+                                                            column(6,plotOutput('slope_fit_pFEV_pre_plot_d1')),
+                                                            column(6,plotOutput('slope_fit_pFEV_post_plot_d1')),
+                                                            column(12,
+                                                                   tags$span(style="color:red", "Shading no longer indicates significance here"),
                                                             plotOutput('slope_boxplot_d1'),
                                                             dataTableOutput('slope_table_d1')
-                                                   ),
+                                                   )),
                                                    # tabPanel('t test',
                                                    #          HTML(paste0('T test calculated on imputed smoothed first differential values (D1), (use with caution)')),
                                                    #          HTML(paste0('the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_d1_text'))),
@@ -312,7 +396,23 @@ shinyUI(fluidPage(
                                                             
                                                             )
                                                    
-                                                 )
+                                                 )),
+                                                 tabPanel('Time-series Comparison',
+                                                          tabPanel('MANOVA',
+                                                                   tabsetPanel(
+                                                                     tabPanel('Original Data',
+                                                                              tabsetPanel(
+                                                                                tabPanel('Selected',
+                                                                                         plotOutput('boxplot_pFEV_manova_d1'),
+                                                                                         dataTableOutput('selected_manova_table_d1')
+                                                                                ),
+                                                                                tabPanel('Full',
+                                                                                         dataTableOutput('full_manova_table_d1'))
+                                                                              )
+                                                                     )
+                                                                   ))
+                                                          
+                                                          )) #tabsetPanel#######
                                                  )
                                       )
                                       
@@ -332,7 +432,7 @@ shinyUI(fluidPage(
                              )
                         ########
 
-             )) #tabsetPanel
+             ))
     ),#change
     #### CLUSTERING ####
     tabPanel('Clustering',
@@ -355,7 +455,7 @@ shinyUI(fluidPage(
                 numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
                 
                 tabsetPanel(
-                  ###### CLUSTERING #########
+                  ###### CLUSTERING pFEV #########
                   tabPanel('pFEV Data',
                            radioButtons("cluster_imputed", 'Select Data',
                                         choiceNames = list('Original',"Imputed"),
@@ -363,16 +463,24 @@ shinyUI(fluidPage(
                            tabsetPanel(
                              tabPanel('Dendograms',
                                 plotOutput('discrete_cluster_plot'),  
-                                 plotOutput('mix_clu'),
-                                 dataTableOutput('cluster_analysis_within_table_selected'),
+                                plotOutput('mix_clu'),
+                                
+
+                                
+
                                  plotOutput('boxplot_pFEV_cluster'),
                                  plotOutput('boxplot_pFEV_cluster_full'),
-                                 plotOutput('bos3_surv_factor_plot_cluster'),
+                                 #plotOutput('bos3_surv_factor_plot_cluster'),
+                                  
+                                
+                                #plotOutput('bos3_surv_factor_plot_cluster'),
+                                
                                  #plotOutput('discrete_cutree_line'),
                                  #plotOutput('discrete_cutree_mean'),
                                 dataTableOutput('discrete_x_table'),
                                  htmlOutput('D_text')
                              ),
+           
                              tabPanel('ScatterPlots',
                                       plotOutput('distance_scatter'),
                                       plotOutput('distance_density'),
@@ -380,27 +488,60 @@ shinyUI(fluidPage(
                                       plotOutput('distance_polygon_neat'),
                                       dataTableOutput('distance_table'),
                                       dataTableOutput('distance_model_table')
+                             ),
+                             tabPanel('MANOVA',
+                                      plotOutput('boxplot_pFEV_manova_cluster'),
+                                      dataTableOutput('cluster_pairwise_manova_table')),
+                             
+                             tabPanel('Chi-squared',
+                                      tabsetPanel(
+                                        tabPanel('Selected',
+                                              tags$h3('Factor proportions across clusters by factor status'),
+                                              dataTableOutput('cluster_analyis_selected_table'),
+                                              dataTableOutput('chisq_cluster'),
+                                              
+                                              tags$h3('Factor proportions within clusters'),
+                                              dataTableOutput('cluster_analysis_within_table_selected_table'),
+                                              #uiOutput("cluster_select_factors"),
+                                              uiOutput("cluster_select_clusters"),
+                                              
+                                              verbatimTextOutput('test_text_c'),
+                                              dataTableOutput('chisq_cluster_within')
+                                     ),
+                             tabPanel('Full',
+                                      tags$h3('Factor proportions across clusters by factor status'),
+                                      dataTableOutput('cluster_analysis'),
+                                      tags$h3('Factor proportions within clusters'),
+                                      dataTableOutput('cluster_analysis_within_table')
+                             ))
+                             
+                             
                              ))), # Imputed pFEV Data
-           
+           ##### CLUSTERING CHANGE ####
                   tabPanel('Change Data (D1)',
                            tabsetPanel(
                              tabPanel('Dendograms',
                                       radioButtons("cluster_change_imputed", 'Select Data',
-                                                   choiceNames = list('Imputed',"Removed"),
+                                                   choiceNames = list('Imputed',"Remove pFEV missing values"),
                                                    choiceValues = list("imputed", "removed"),inline = T,selected = 'imputed'),
                                         plotOutput('discrete_cluster_plot_d1'),
                                         plotOutput('mix_clu_d1'),
-                                        dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                                        #dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                                        #uiOutput("clusters_d1"),
+                                        #textOutput('chisq_cluster_within_d1'),
+                                      
                                         #plotOutput("bos3_factor_plot_cluster_d1"),
                                         plotOutput('boxplot_pFEV_cluster_d1'),
                                         plotOutput('boxplot_pFEV_cluster_d1_full'),
-                                        plotOutput('bos3_surv_factor_plot_cluster_d1'),
+                                        
+                                      #plotOutput('bos3_surv_factor_plot_cluster_d1'),
                                       
                                          #plotOutput('discrete_cutree_line_d1'),
                                          #plotOutput('discrete_cutree_mean_d1'),
                                         dataTableOutput('discrete_x_table_d1'),
                                       
                                          htmlOutput('D_d1_text')), #Dendrogram
+
                              tabPanel('ScatterPlot',
                                       plotOutput('distance_scatter_d1'),
                                       plotOutput('distance_density_d1'),
@@ -408,37 +549,62 @@ shinyUI(fluidPage(
                                       plotOutput('distance_polygon_neat_d1'),
                                       dataTableOutput('distance_table_d1'),
                                       dataTableOutput('distance_model_table_d1')
-                                      ))),# change Data
+                                      ),
+                             tabPanel('MANOVA',
+                                      plotOutput('boxplot_change_manova_cluster_d1'),
+                                      dataTableOutput('cluster_change_pairwise_manova_table_d1'),
+                                      plotOutput('boxplot_pFEV_manova_cluster_d1'),
+                                      dataTableOutput('cluster_pFEV_pairwise_manova_table_d1')),
+                             tabPanel('Chi-squared',
+                                      tabsetPanel(
+                                        tabPanel('Selected',
+                                    tags$h3('Factor proportions across clusters by factor status'),
+                                    dataTableOutput('cluster_analyis_selected_table_d1'),
+                                    dataTableOutput('chisq_cluster_d1'),
+                                    
+                                    tags$h3('Factor proportions within clusters'),
+                                    dataTableOutput('cluster_analysis_within_table_selected_table_d1'),
+                                    uiOutput("cluster_select_clusters_d1"),
+                                    dataTableOutput('chisq_cluster_within_d1')
+                           ),
+                           tabPanel('Full',
+                                    tags$h3('Factor proportions across clusters by factor status'),
+                                    dataTableOutput('cluster_analysis_d1'),
+                                    tags$h3('Factor proportions within clusters'),
+                                    dataTableOutput('cluster_analysis_within_table_d1')
+                           )))
+                           
+                           )),# change Data
                   tabPanel('Comparison',
                            HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
-                           plotOutput('cluster_comparison')),
-                  tabPanel('Composition',
-                           tabsetPanel(
-                             tabPanel('Total',
-                                      HTML(paste('Percentage of total number of discrete factor occuring within each clusterm. The sum of every row is equal to 100%')),
-                                      tabsetPanel(
-                                        tabPanel('pFEV clusters',
-                                            dataTableOutput('cluster_analysis')),
-                                        tabPanel('D1 clusters',
-                                                 dataTableOutput('cluster_analysis_d1')   
-                                                  )
-                                        
-                                        
-                                                )
-                                      ),
-                            tabPanel('Within Clusters',
-                                     HTML(paste('Percentage of total number of discrete factor occuring within each clusterm. The sum of every row is equal to 100%')),
-                                     tabsetPanel(
-                                       tabPanel('pFEV clusters',
-                                                dataTableOutput('cluster_analysis_within_table')),
-                                       tabPanel('D1 clusters',
-                                                dataTableOutput('cluster_analysis_within_d1_table')   
-                                       )
-                                       
-                                       
-                                     ))
-                        
-                )) # Composition
+                           plotOutput('cluster_comparison'))
+                #   tabPanel('Composition',
+                #            tabsetPanel(
+                #              tabPanel('Total',
+                #                       HTML(paste('Percentage of total number of discrete factor occuring within each clusterm. The sum of every row is equal to 100%')),
+                #                       tabsetPanel(
+                #                         tabPanel('pFEV clusters',
+                #                             dataTableOutput('cluster_analysis')),
+                #                         tabPanel('D1 clusters',
+                #                                  dataTableOutput('cluster_analysis_d1')   
+                #                                   )
+                #                         
+                #                         
+                #                                 )
+                #                       ),
+                #             tabPanel('Within Clusters',
+                #                      HTML(paste('Percentage of total number of discrete factor occuring within each clusterm. The sum of every row is equal to 100%')),
+                #                      tabsetPanel(
+                #                        tabPanel('pFEV clusters',
+                #                                 dataTableOutput('cluster_analysis_within_table')),
+                #                        tabPanel('D1 clusters',
+                #                                 dataTableOutput('cluster_analysis_within_d1_table')   
+                #                        )
+                #                        
+                #                        
+                #                      ))
+                #         
+                # )) # Composition
                 )
                 
              )
@@ -460,7 +626,8 @@ shinyUI(fluidPage(
                ),
                tabPanel('Tables',
                         dataTableOutput('bos_df'),
-                        dataTableOutput('boss_factor_table')
+                        dataTableOutput('boss_factor_table'),
+                        dataTableOutput('bos_patient_status')
                         ),
                tabPanel('Smooth',
                         plotOutput('bos_plots_smooth'),
@@ -475,6 +642,8 @@ shinyUI(fluidPage(
                  
                  
              ), # BOSS
+
+
 
     ######### R SESSION INFO #########
           tabPanel('R Session Info',
@@ -491,4 +660,8 @@ shinyUI(fluidPage(
 )#fluidPage
   
 )#shiny
+
+#closeAllConnections()
+#rm(list=ls())
+
 

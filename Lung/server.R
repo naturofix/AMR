@@ -31,6 +31,7 @@ shinyServer(function(input, output) {
     #toBibtex(citation('dendextend'))
   })
   
+  
   output$t1 = renderText(input$pre_range[1])
   output$t2 = renderText(input$post_range[2])
   output$t_range_text = renderText(paste('(',input$pre_range[1],' to ',input$pre_range[2],') vs (',input$post_range[1],' to ',input$post_range[2],')'))
@@ -171,7 +172,7 @@ shinyServer(function(input, output) {
                   #print(excluded_patients()[my_i])
                   output[[plotname]] <- renderPlot({
                     #t_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% i_pFEV_lf_r()$MRN[1],]
-                    print(excluded_patients()[my_i])
+                    #print(excluded_patients()[my_i])
                     #o_data = pFEV_lf_r()[pFEV_lf_r()$MRN %in% patient_list[my_i],]
                     #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% patient_list[my_i],]
                     #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% patient_list[my_i],]
@@ -243,7 +244,8 @@ shinyServer(function(input, output) {
     }else{
       s = input$status_radio
     }
-    print(s)
+    s
+    #print(s)
     
   })
   
@@ -615,6 +617,13 @@ shinyServer(function(input, output) {
 
   })
   
+  output$smooth_line_pFEV = renderPlot({
+    r_data = pFEV_lf_r()
+    title = paste('pFEV values for ',length(unique(r_data$MRN))," Patients")
+    smooth_line_plot_function(r_data,title,input)
+    
+  })
+  
   output$line_i_pFEV = renderPlot({
     r_data = i_pFEV_lf_r()
     title = paste('Imputed pFEV values for ',length(unique(r_data$MRN))," Patients")
@@ -627,6 +636,8 @@ shinyServer(function(input, output) {
     title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
     boxplot_function(full_data,title,input)
   })
+  
+
   
   output$boxplot_pFEV_cluster = renderPlot({
     full_data = pFEV_lf_r()
@@ -1070,7 +1081,37 @@ shinyServer(function(input, output) {
             
           })
           
+          output$slope_fit_pFEV_pre_plot = renderPlot({
+            data = pFEV_lf_r()
+            cols = factor(c(input$pre_range[1]:input$pre_range[2]))
+            slope_fit_plot_function(data,cols,'Pre Treatment',input) 
+          })
+          output$slope_fit_pFEV_post_plot = renderPlot({
+            data = pFEV_lf_r()
+            cols = factor(c(input$post_range[1]:input$post_range[2]))
+            slope_fit_plot_function(data,cols,'Post Treatment',input) 
+          })
+          
           slope_boxplot_data = reactive(slope_boxplot_data_function(df_lm_sample(),df_slope(),input$global_factor))
+          
+          output$test_plot_1 = renderPlot({
+            data = slope_boxplot_data()
+            global_factor = input$global_factor
+            sig_col = c("white", "blanchedalmond")
+            if(!(0 %in% data$significant)){
+              sig_col = c("blanchedalmond")
+            }
+            sig_col = c('white','gray73')
+            
+            ggplot(data)+
+              geom_boxplot(aes_string(col = global_factor,y='value',x = global_factor,fill='variable')) +
+              scale_fill_manual(values = sig_col)
+              #geom_line(annotate("text", x = 2, y = 42, label = "*", size = 8)
+              
+              #geom_signif(comparisons = list(c(global_factor, 'value', 'variable')), 
+              #map_signif_level=TRUE)
+          })
+          
           output$slope_boxplot = renderPlot(slope_boxplot_function(slope_boxplot_data(),input$global_factor))
           output$slope_table = renderDataTable(t(df_slope()))
           
@@ -1091,6 +1132,17 @@ shinyServer(function(input, output) {
             full_data = df_lm_sample_i()
             df = slope_function(full_data,factor,cols)
             df = df[order(df$Status),]
+          })
+          
+          output$slope_fit_pFEV_pre_plot_i = renderPlot({
+            data = i_pFEV_lf_r()
+            cols = factor(c(input$pre_range[1]:input$pre_range[2]))
+            slope_fit_plot_function(data,cols,'Pre Treatment',input) 
+          })
+          output$slope_fit_pFEV_post_plot_i = renderPlot({
+            data = i_pFEV_lf_r()
+            cols = factor(c(input$post_range[1]:input$post_range[2]))
+            slope_fit_plot_function(data,cols,'Post Treatment',input) 
           })
           
           slope_boxplot_data_i = reactive(slope_boxplot_data_function(df_lm_sample_i(),df_slope_i(),input$global_factor))
@@ -1450,6 +1502,22 @@ shinyServer(function(input, output) {
             df
           })
           output$slope_table_d1 = renderDataTable(t(df_slope_d1()))
+          
+          
+          output$slope_fit_pFEV_pre_plot_d1 = renderPlot({
+            data = i_pFEV_sm_d1_fl_r()
+            cols = factor(c(input$pre_range[1]:input$pre_range[2]))
+            slope_fit_plot_function(data,cols,'Pre Treatment',input) 
+          })
+          output$slope_fit_pFEV_post_plot_d1 = renderPlot({
+            data = i_pFEV_sm_d1_fl_r()
+            cols = factor(c(input$post_range[1]:input$post_range[2]))
+            slope_fit_plot_function(data,cols,'Post Treatment',input) 
+          })
+          
+
+          
+          
           slope_boxplot_data_d1 = reactive(slope_boxplot_data_function(df_lm_sample_d1(),df_slope_d1(),input$global_factor))
           output$slope_boxplot_d1 = renderPlot(slope_boxplot_function(slope_boxplot_data_d1(),input$global_factor))
     ### T test #####
@@ -2265,11 +2333,7 @@ shinyServer(function(input, output) {
  
             ### PLOT CLUSTERS ####
             
-            output$test_text_1 = renderPrint({
-              #discrete_cluster_D_d1()$D[1]
-              discrete_cluster_D_d1()$x[2]
-            })
-            
+
 
             
             output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
@@ -2349,8 +2413,7 @@ shinyServer(function(input, output) {
             
             #### DISTANCE SCATTER PLOTS ####
             
-            #output$test_text_1 = renderPrint(discrete_cluster_D()$D)
-            #output$test_table_1 = renderDataTable(discrete_cluster_D()$D)
+
      
             distance_model = reactive({
               data_dist = discrete_cluster_D()$data_dist
@@ -2361,7 +2424,6 @@ shinyServer(function(input, output) {
               xy$model <- rownames(xy)
               xy
             })
-            
             output$distance_scatter = renderPlot({
               xy = distance_model()
               ggplot(xy, aes(x, y, colour=cluster)) + 
@@ -2448,132 +2510,242 @@ shinyServer(function(input, output) {
             
             
     #### CLUSTER COMPOSITION TABLES #####
+
+            
+            #output$test_text_2 = renderPrint(cluster_analysis_within_table_selected_df())
+            
+            #output$test_text_3 = renderPrint(input$cluster_select_factors)
     
+          #### TOTAL ----
+            # cluster ####
           cluster_analysis_total = reactive({
             df = pFEV_wf_r()
             df_tc = clust_comparison_total(df,'cluster')
+            df_tc
           })
-          output$cluster_analysis = renderDataTable(cluster_analysis_total())
-          output$cluster_analyis_selected = renderDataTable({
+          #output$cluster_analysis = renderDataTable(cluster_analysis_total())
+          
+          output$cluster_analysis = DT::renderDataTable({
             df = cluster_analysis_total()
-            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
-            df_selected
+            colour = 'lightgreen'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
           })
+          cluster_analyis_selected_df = reactive({
+            df = cluster_analysis_total()
+            data = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            data = data[order(data$Factor,data$Status),]
+            data
+            
+          })
+          
+          #output$cluster_analyis_selected_table = renderDataTable({cluster_analyis_selected_df()})
+          
+          output$cluster_analyis_selected_table = DT::renderDataTable({
+            df = cluster_analyis_selected_df()
+            colour = 'lightgreen'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          
+          
+
+          
+
+            # cluster d1 ####
           
           cluster_analysis_total_d1 = reactive({
             df = pFEV_wf_r()
             df_tc = clust_comparison_total(df,'cluster_d1')
+            #p = apply(df_tc,1, function(x) chisq.test(x[c(3:length(x))])$p.value)
+            #print(p)
             df_tc
           })
-          output$cluster_analysis_d1 = renderDataTable(cluster_analysis_total_d1())
-          output$cluster_analyis_selected_d1 = renderDataTable({
+          
+          
+          #output$cluster_analysis_d1 = renderDataTable(cluster_analysis_total_d1())
+          
+          output$cluster_analysis_d1 = DT::renderDataTable({
+            df = cluster_analysis_total_d1()
+            colour = 'lightgreen'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          
+          cluster_analyis_selected_df_d1 = reactive({
             df = cluster_analysis_total_d1()
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
             df_selected
           })
           
+
+          output$cluster_analyis_selected_table_d1 = DT::renderDataTable({
+            df = cluster_analyis_selected_df_d1()
+            colour = 'lightgreen'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          output$chisq_cluster_d1 = renderPrint({
+            data = cluster_analyis_selected_df_d1()
+            test_data = data[,c(3:dim(data)[2])]
+            test_data[is.na(test_data)] = 0
+            
+            chisq.test(test_data)
+          })
+          
+          
+          ### WITHIN ####
+            ## cluster ----
           cluster_analysis_within = reactive({
             df = pFEV_wf_r()
             df_tc = clust_comparison_within(df,'cluster')
             df_tc
           })
-          
-          # output$test_table_1 = DT::renderDataTable({
-          # 
-          #   df = cluster_analysis_within()
-          #   l = dim(df)[2]
-          #   df_3 = df
-          #   df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
-          #   df_3[is.na(df_3)] = 0
-          #   datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
-          #     background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
-          #     backgroundSize = '98% 88%',
-          #     backgroundRepeat = 'no-repeat',
-          #     backgroundPosition = 'center')
-          # })
+
           
           output$cluster_analysis_within_table = DT::renderDataTable({
             df = cluster_analysis_within()
-            l = dim(df)[2]
-            df_3 = df
-            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
-            df_3[is.na(df_3)] = 0
-            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
-                                            background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
-                                            backgroundSize = '98% 88%',
-                                            backgroundRepeat = 'no-repeat',
-                                            backgroundPosition = 'center')
-            
-            })
-          output$cluster_analysis_within_table_selected = DT::renderDataTable({
-            df = cluster_analysis_within()
-            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
-           
-            #datatable(df_selected,rownames = FALSE)
-            df = df_selected
-            l = dim(df)[2]
-            df_3 = df
-            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
-            df_3[is.na(df_3)] = 0
-            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
-                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
-                                                             backgroundSize = '98% 88%',
-                                                             backgroundRepeat = 'no-repeat',
-                                                             backgroundPosition = 'center')
+            colour = 'lightblue'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
           })
           
+          
+          cluster_analysis_within_table_selected_df = reactive({
+            df = cluster_analysis_within()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+          })
+
+          
+          output$cluster_analysis_within_table_selected_table = DT::renderDataTable({
+            df = cluster_analysis_within_table_selected_df()
+            colour = 'lightblue'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          
+            ### D1 ----
           cluster_analysis_within_d1 = reactive({
             df = pFEV_wf_r()
             df_tc = clust_comparison_within(df,'cluster_d1')
             df_tc
+            #df_tc$p
           })
+          
           output$cluster_analysis_within_d1_table = DT::renderDataTable({
-            #datatable(cluster_analysis_within_d1(),rownames = FALSE)
             df = cluster_analysis_within_d1()
-            l = dim(df)[2]
-            df_3 = df
-            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
-            df_3[is.na(df_3)] = 0
-            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
-                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
-                                                             backgroundSize = '98% 88%',
-                                                             backgroundRepeat = 'no-repeat',
-                                                             backgroundPosition = 'center')
-            })
-          output$cluster_analysis_within_table_selected_d1 = DT::renderDataTable({
+            colour = 'lightblue'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          
+          cluster_analysis_within_table_selected_df_d1 = reactive({
             df = cluster_analysis_within_d1()
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
-            #df_selected
-            #datatable(df_selected,rownames = FALSE)
-            df = df_selected
-            l = dim(df)[2]
-            df_3 = df
-            df_3[,c(3:l)] = apply(df_3[,c(3:l)],2,function(x) as.numeric(x))
-            df_3[is.na(df_3)] = 0
-            datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,c(3:l)]),
-                                                             background = styleColorBar(range(df_3[,c(3:l)]), 'lightblue'),
-                                                             backgroundSize = '98% 88%',
-                                                             backgroundRepeat = 'no-repeat',
-                                                             backgroundPosition = 'center')
+            df_selected
+          })
+          
+          output$cluster_analysis_within_table_selected_table_d1 = DT::renderDataTable({
+            df = cluster_analysis_within_table_selected_df_d1()
+            colour = 'lightblue'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            proportion_table_formating(df,col_range,colour)
+          })
+          
+
+          output$chisq_cluster_within_d1 = renderPrint({
+            data = cluster_analysis_within_table_selected_df_d1()
+            test_data = data[,c(3:dim(data)[2])]
+            test_data[is.na(test_data)] = 0
+            
+            chisq.test(test_data)
+          })
+          
+          
+          ### CHISQ ####
+          
+          # inputs =====
+          
+          output$cluster_select_clusters <- renderUI({
+            data = cluster_analysis_within_table_selected_df()
+            test_data = data[,c(3:dim(data)[2])]
+            clusters <- colnames(test_data)
+            selectInput("cluster_select_clusters", "Choose Clusters to Test using ChiSQ", choices = clusters, selected = clusters,multiple = T)
+          })
+          
+          output$cluster_select_clusters_d1 <- renderUI({
+            data = cluster_analysis_within_table_selected_df()
+            test_data = data[,c(3:dim(data)[2])]
+            clusters <- colnames(test_data)
+            selectInput("cluster_select_clusters", "Choose Clusters to Test using ChiSQ", choices = clusters, selected = clusters,multiple = T)
+          })
+
+          output$chisq_cluster = renderDataTable({
+            full_data = cluster_analyis_selected_df()
+            
+            chi_df = chisq_total(full_data,input)
+            chi_df
+            
+            
+            
+          })
+          output$chisq_cluster_within = renderDataTable({
+            data = cluster_analysis_within_table_selected_df()
+            
+            chi_df = chisq_within(data,input)
+            chi_df
+            
+            
+          })
+        
+          output$chisq_cluster_d1 = renderDataTable({
+            full_data = cluster_analyis_selected_df_d1()
+            
+            chi_df = chisq_total(full_data,input)
+            chi_df
+            
+            
+            
+          })
+          output$chisq_cluster_within_d1 = renderDataTable({
+            data = cluster_analysis_within_table_selected_df_d1()
+            
+            chi_df = chisq_within(data,input)
+            chi_df
+            
+            
           })
  
-########## SURVIVAL PLOTS ###########
+########## BOS PLOTS ###########
 
   
           
           bos_df = reactive({
             full_data = pFEV_wf
             full_data = pFEV_wf_r()
-            bos_df = BOS_function(full_data)
-            bos_df
+            bos_data = BOS_function(full_data)
+            #return(list(bos_df = bos_df,patient_status_df = patient_status_df))
+            bos_data
+          })
+          
+          patient_status_df= reactive({
+            full_data = pFEV_wf
+            full_data = pFEV_wf_r()
+            patient_status = BOS_patient_function(full_data)
+            #return(list(bos_df = bos_df,patient_status_df = patient_status_df))
+            patient_status
           })
           
           output$bos_df = renderDataTable(bos_df())
+          output$bos_patient_status = renderDataTable(patient_status_df())
           
           output$bos_plots = renderPlot({
+            x1 = -12
+            x2 = 12
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
-            bos_df_data = bos_df
+            #bos_df_data = bos_df$bos_df
             bos_df_data = bos_df()
             bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'BOS3_surv_free')]
             bos_data
@@ -2603,17 +2775,29 @@ shinyServer(function(input, output) {
           
           bos_factor = reactive({
             full_data = pFEV_wf_r()
-            #global_factor = 'Status'
+            global_factor = 'Status'
             global_factor = input$global_factor
             factor_entry = unique(na.omit(full_data[,global_factor]))
-            factor_entry
+            entry = factor_entry[1]
+            #factor_entry
             df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+            patient_df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1 = numeric(0),BOS2 = numeric(0),BOS3 = numeric())
             for(entry in factor_entry){
               function_data = full_data[full_data[,global_factor] == entry,]
               bos_df = BOS_function(function_data)
+              patient_status = BOS_patient_function(function_data)
+              str(patient_status)
+              head(patient_status)
               bos_df$Factor = global_factor
               bos_df$Status = entry
               df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
+              
+              
+              patient_status$Factor = global_factor
+              patient_status$Status = entry
+              head(patient_df)
+              head(patient_status)
+              patient_df = rbind(patient_df,patient_status[,c("Factor",'Status','time','BOS1','BOS2','BOS3')])
             }
             #View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
@@ -2629,7 +2813,8 @@ shinyServer(function(input, output) {
             m_bos = bos_factor()
             col_name = 'BOS1_free'
             p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
+            #print(p)
+            p
 
 
           })
@@ -2738,6 +2923,7 @@ shinyServer(function(input, output) {
             for(entry in factor_entry){
               function_data = full_data[full_data[,global_factor] == entry,]
               bos_df = BOS_function(function_data)
+              #bos_df = bos_data$bos_df
               bos_df$Factor = global_factor
               bos_df$Status = entry
               df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
@@ -2745,6 +2931,7 @@ shinyServer(function(input, output) {
             #View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
             m_bos
+            #View(m_bos)
           })
           output$bos3_surv_factor_plot_cluster = renderPlot({
             x1 = as.numeric(input$bos_range[1])
@@ -2767,6 +2954,7 @@ shinyServer(function(input, output) {
             for(entry in factor_entry){
               function_data = full_data[full_data[,global_factor] == entry,]
               bos_df = BOS_function(function_data)
+              #bos_df = bos_data$bos_df
               bos_df$Factor = global_factor
               bos_df$Status = entry
               df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
@@ -2802,7 +2990,7 @@ shinyServer(function(input, output) {
             m_bos
             
             f1 <- survfit(Surv(value) ~ variable, data = m_bos)
-            ggkm(f1)
+            #ggkm(f1)
             autoplot(f1,surv.geom = "line", surv.connect = FALSE) + 
               geom_vline(aes(xintercept =  0)) +
               xlim(-25,50)
@@ -2848,7 +3036,7 @@ shinyServer(function(input, output) {
           output$survival_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
-            print(global_factor)
+            #print(global_factor)
             colnames(plot_data)
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
@@ -2864,7 +3052,7 @@ shinyServer(function(input, output) {
           output$boss_3_free_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
-            print(global_factor)
+            #print(global_factor)
             colnames(plot_data)
             x1 = input$bos_range[1]
             x2 = input$bos_range[2]
@@ -2880,7 +3068,7 @@ shinyServer(function(input, output) {
           output$boss_2_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
-            print(global_factor)
+            #print(global_factor)
             colnames(plot_data)           
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
@@ -2896,7 +3084,7 @@ shinyServer(function(input, output) {
           output$boss_3_factor_l = renderPlot({
             plot_data = pFEV_wf_r()
             global_factor = input$global_factor
-            print(global_factor)
+            #print(global_factor)
             colnames(plot_data)
             x1 = as.numeric(input$bos_range[1])
             x2 = as.numeric(input$bos_range[2])
@@ -2909,20 +3097,443 @@ shinyServer(function(input, output) {
               xlim(x1,x2)
           })
           
-
+##### MORE STATS #########
+    ###### LOGISTIC REGRESSION ##########
+      output$lg_scatter = renderPlot({
+        data = pFEV_wf
+        colnames(data)
+        binary_factor = 'Status'
+        add_factor = '`BOS 3 free survival`'
+        
+        data = pFEV_wf_r()
+        binary_factor = input$binary_factor
+        add_factor = input$add_factor[1]
+        
+        ggplot(data = data, aes_string(y = binary_factor,x=add_factor)) + geom_jitter()
+        #data$Status[data$Status == '1'] = '0'
+        #data$Status[data$Status == 2] = 1
+        #data$Status
+        #fit = glm(Status~BOS2mnth, data = data,family=binomial)
+        #summary(fit)
+      })    
+      
+      lg = reactive({
+        data = pFEV_lf
+    
+        data = pFEV_wf_r()
+        binary_factor = input$binary_factor
+        add_factor = input$add_factor
+        add_factor_add = paste(add_factor,collapse = '+')
+        add_factor_add
+        cmd = paste('fit = glm(',binary_factor,'~',add_factor_add,', data = data,family=binomial)')
+        cmd
+        eval(parse(text = cmd))
+        fit
+        #str(tidy(fit))
+      })
           
+      output$logistic_regression_text = renderPrint(summary(lg()))
+      output$logistic_regression_table = renderDataTable(tidy(lg()))
+      
+      
+      
+      output$logistic_regression_p_hist = renderPlot({
+        tidy(lg()) %>% 
+          filter(term!="(Intercept)") %>% 
+          mutate(logp=-1*log10(p.value)) %>% 
+          ggplot(aes(term, logp)) + geom_bar(stat="identity") + coord_flip()
+      })
+      
+      xt = reactive({
+        data = pFEV_wf
+        fac1 = "Status"
+        fac2 = "HLAType"
+        data = pFEV_wf_r()
+        fac1 = input$binary_factor
+        fac2 = input$add_factor[1]
+        
+        cmd = paste('xt = xtabs(~',fac1,'+',fac2,', data = data)')
+        #print(cmd)
+        eval(parse(text = cmd))
+        xt
+      })
+      
+      output$chisq_xt = renderPrint(chisq.test(xt()))
+      output$fisher_xt = renderPrint(fisher.test(xt()))
+      output$mosaic_xt = renderPlot(mosaicplot(xt()))
+      
+      output$test_text_2 = renderPrint({
+        global_factor = 'Status'
+        global_factor = input$global_factor
+        plot_data = pFEV_lf_r()
+        qplot(plot_data, aes_string(x = 'time', y = 'value',group = global_factor, col = global_factor )) + 
+          #geom_vline(xintercept = 0) +
+          stat_smooth(outfit=fit<<-..y..)
+          #geom_point() +
+          #stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
+          
+          #theme(axis.text.x = element_text(size=8, angle=90)) +
+          #xlim(input$pre_range[1],input$post_range[2]) +
+          #ggtitle(title)
+        print(fit)
+      })
+      
+      #### MANOVA ####
+        ##cluster  -------
+
+      
+      
+      output$boxplot_pFEV_manova_cluster = renderPlot({
+        full_data = pFEV_lf_r()
+        global_factor = 'cluster'
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+        
+        boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+        
+      })
+      output$cluster_pairwise_manova_table= renderDataTable({
+        data = pFEV_lf_r()
+        m_factor = 'cluster'
+        function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
+        df = pairwise_manova_function(function_data,m_factor)
+        df
+      })
+
+      
+      output$boxplot_change_manova_cluster_d1 = renderPlot({
+        full_data = i_pFEV_sm_d1_fl_r()
+        global_factor = 'cluster_d1'
+        title = paste('Change D1 values for ',length(unique(full_data$MRN))," Patients")
+        cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+        
+        boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+        
+      })
+      output$cluster_change_pairwise_manova_table_d1= renderDataTable({
+        data = i_pFEV_sm_d1_fl_r()
+        function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
+        m_factor = 'cluster_d1'
+        df = pairwise_manova_function(function_data,m_factor)
+        df
+      })
+      
+      output$boxplot_pFEV_manova_cluster_d1 = renderPlot({
+        full_data = pFEV_lf_r()
+        global_factor = 'cluster_d1'
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+        
+        boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+        
+      })
+      output$cluster_pFEV_pairwise_manova_table_d1= renderDataTable({
+        data = pFEV_lf_r()
+        function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
+        m_factor = 'cluster_d1'
+        df = pairwise_manova_function(function_data,m_factor)
+        df
+      })
+      
+      # pFEV --------
+      
+      output$full_manova_table = renderDataTable({
+        data = pFEV_lf
+        cols = factor(c(-6,6))
+        data = pFEV_lf_r()
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
+        #df
+        for(m_factor in factor_colums_4_comparisons[-1]){
+          df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
+          #print(df_n)
+
+          if(dim(df_n)[1] > 0){
+            df = rbind(df,df_n)
+          }
+        }
+        df
+      })
+      output$full_manova_table_i = renderDataTable({
+        data = pFEV_lf
+        cols = factor(c(-6,6))
+        data = i_pFEV_lf_r()
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
+
+        for(m_factor in factor_colums_4_comparisons[-1]){
+
+          df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
+
+          if(dim(df_n)[1] > 0){
+            df = rbind(df,df_n)
+          }
+        }
+
+        df
+      })
+
+      
+      output$boxplot_pFEV_manova = renderPlot({
+        full_data = pFEV_lf_r()
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        boxplot_function(full_data,title,input)
+      })
+      output$boxplot_pFEV_manova_i = renderPlot({
+        full_data = i_pFEV_lf_r()
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        boxplot_function(full_data,title,input)
+      })
+
+      output$selected_manova_table = renderDataTable({
+        data = pFEV_lf
+        data = pFEV_lf_r()
+        global_factor = 'HLAStrength'
+        global_factor = input$global_factor
+        cols = factor(c(-6,6))
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,global_factor)
+      })
+      output$selected_manova_table_i = renderDataTable({
+        data = pFEV_lf
+        data = i_pFEV_lf_r()
+        global_factor = 'HLAStrength'
+        global_factor = input$global_factor
+        cols = factor(c(-6,6))
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,global_factor)
+      })
+      
+      
+      # D1 ----
+      output$boxplot_pFEV_manova_d1 = renderPlot({
+        full_data = i_pFEV_sm_d1_fl_r()
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        boxplot_function(full_data,title,input)
+      })
+      
+      output$selected_manova_table_d1 = renderDataTable({
+        data = pFEV_lf
+        data = i_pFEV_sm_d1_fl_r()
+        global_factor = 'HLAStrength'
+        global_factor = input$global_factor
+        cols = factor(c(-6,6))
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,global_factor)
+      })
+      
+      
+      output$full_manova_table_d1 = renderDataTable({
+        data = pFEV_lf
+        cols = factor(c(-6,6))
+        data = i_pFEV_sm_d1_fl_r()
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
+        for(m_factor in factor_colums_4_comparisons[-1]){
+          df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
+
+          if(dim(df_n)[1] > 0){
+            df = rbind(df,df_n)
+          }
+        }
+        df
+      })
+      
+      
+#         
+#         ggplot(data, aes(x = time, y = value, group = Status, col = Status)) + 
+#           geom_smooth(method = 'loess', aes(outfit=fit<<-..y..))
+#         
+#         
+#         colnames(data)
+#         model_data = data[data$Status == 1,]
+#         model = loess(value ~ time, data = model_data)
+#         modelFit <- data.frame(predict(model, se = TRUE))
+#         df <- data.frame(cbind(time = model_data$time
+#                                , value = model_data$value
+#                                , fit = modelFit$fit
+#                                , upperBound = modelFit$fit + 2 * modelFit$se.fit
+#                                , lowerBound = modelFit$fit - 2 * modelFit$se.fit
+#         ))
+#         df
+#         g <- ggplot(df, aes(time,value))
+#         g <- g + geom_point()
+#         g <- g + geom_linerange(aes(ymin = lowerBound, ymax = upperBound))
+#         g <- g + geom_point(aes(time, fit, size = 1))
+#         g <- g + geom_smooth(method = "loess")
+#         g
+#         print(model)
+#         newdata = data[data$Status == 2,]
+#         predict(model, newdata, se = TRUE)
+#         
 # 
-# ######## TEST ###########
-#           output$test_plot = renderPlot({
-#             data = t(discrete_cluster_D_d1()$o_data)
-#             library(pvclust)
-#             result <- pvclust(data, method.dist="euclidian", method.hclust="average", nboot=1000)
-#             plot(result)
-#             #pvrect(result, alpha=0.95)
-#             #seplot(result)
-#             #seplot(result, identify=TRUE)
-#           })
-#   
-#         ################## END ##########          
-# })
+#         fit = lm(y~x)
+#         #fit first degree polynomial equation:
+#         fit  <- lm(y~x)
+#         #second degree
+#         fit2 <- lm(y~poly(x,2,raw=TRUE))
+#         #third degree
+#         fit3 <- lm(y~poly(x,3,raw=TRUE))
+#         #fourth degree
+#         fit4 <- lm(y~poly(x,4,raw=TRUE))
+#         #generate range of 50 numbers starting from 30 and ending at 160
+#         xx <- seq(-24,48,1)
+#         plot(x,y,pch=19,ylim=c(0,1))
+#         lines(xx, predict(fit, data.frame(x=xx)), col="red")
+#         lines(xx, predict(fit2, data.frame(x=xx)), col="green")
+#         lines(xx, predict(fit3, data.frame(x=xx)), col="blue")
+#         lines(xx, predict(fit4, data.frame(x=xx)), col="purple")
+#         
+# 
+#         
+#         x = model_2_data$time
+#         y = model_2_data$value
+#         fit = lm(y~x)
+#         #fit first degree polynomial equation:
+#         fit  <- lm(y~x)
+#         #second degree
+#         fit2 <- lm(y~poly(x,2,raw=TRUE))
+#         #third degree
+#         fit3 <- lm(y~poly(x,3,raw=TRUE))
+#         #fourth degree
+#         fit4 <- lm(y~poly(x,4,raw=TRUE))
+#         
+#         model_data_1 = data[data$Status == 1,]
+#         x1 = model_data$time
+#         y1 = model_data$value
+#         glm_1 = glm(y1~x1)
+#         lines(xx, predict(glm_1, data.frame(x=xx)), col="green")
+#         
+#         goal_1 = goal(y~x)
+#         ?gl
+#         library(mgcv)
+#         gam_1 = gam(x1~y1)
+#         summary(gam_1)
+#         plot(gam1(X))
+#         lines(xx, predict(gam_1, data.frame(x=xx)), col="orange")
+#         plot.gam(gam_1,pages = 1, scale = 0)
+#         
+#         gam_2 = gam(y2~x2)
+#         
+#         plot(gam_2)
+#         anova(gam_1,gam_2)
+#         
+#         s1 = s(y1~x1)
+#         s1
+#         plot(s1)
+#         lo_1 = loess(y1~x1)
+#         summary(lo_1)
+#         model_data_2 = data[data$Status == 2,]
+#         x2 = model_data_2$time
+#         y2 = model_data_2$value
+#         
+#         lo_2 = loess(y2~x2)
+#         summary(lo_2)
+#         plot(x1,y1,col = 'red')
+#         points(x2,y2,col = 'blue')
+#         xl_1 <- seq(min(x),max(x), (max(x) - min(x))/1000)
+#         lines(xl_1, predict(lo_1,xl_1), col='red', lwd=2)
+#         
+#         xl_2 <- seq(min(x),max(x), (max(x) - min(x))/1000)
+#         lines(xl_2, predict(lo_2,xl_2), col='blue', lwd=2)
+#         
+#         anova(lo_1,lo_2)
+#         
+#         gllines(predict(lo))
+#         
+#         summary(lo)
+#         
+#         library(splines)
+#         fit_1 <- lm(y1~bs(x1,5))
+#         fit_2 <- lm(y2~bs(x2,5))
+#         anova(fit_1,fit_2)
+#         
+#         summary(fit2)
+#         #lines(fit2)
+#         plot(x1,y1,col = 'red')
+#         points(x2,y2,col = 'blue')
+#         xx1 <- seq(-24,48,length.out = 311*5)
+#         length(xx1)
+#         yy1 <- predict(fit_1, data.frame(x=xx1))
+#         length(yy1)
+#         lines(xx1,yy1, col='red')  
+#         xx2 <- seq(-24,48,length.out = 2701)
+#         
+#         yy2 <- predict(fit_2, data.frame(x=xx))
+#         length(yy2)
+#         lines(xx2,yy2, col='blue') 
+#         
+#         
+#         
+#        
+#         length(xx1)
+#         yy1 <- predict(fit_1)
+#         xx1 <- seq(-24,48,length.out = length(yy1))
+#         length(yy1)
+#         lines(xx1,yy1, col='red') 
+#         
+#         xx2 <- seq(-24,48,length.out = 363)
+#         
+#         yy2 <- predict(fit_2)
+#         length(yy2)
+#         lines(xx2,yy2, col='blue') 
+#         anova(fit_1,fit_2)
+#         
+#         predict(fit_1, model_data_2)
+#         
+#         poly(x, 4, raw = TRUE)
+#         
+#         data = i_pFEV_lf
+#         
+#         model_data_1 = data[data$Status == 1,]
+#         x1 = model_data$time
+#         y1 = model_data$value
+#         
+#         model_data_2 = data[data$Status == 2,]
+#         x2 = model_data_2$time
+#         y2 = model_data_2$value
+#         
+#         qfit_1 = qda(variable ~ value, data = model_data_1)
+#         summary(qfit_1)
+#         qfit_2 = qda(variable ~ value, data = model_data_2)
+#         summary(qfit_1)
+#         
+#         library(klaR)
+#         partimat(variable~value+Status,data=data,method="qda") 
+#         
+#         anova(qfit_1, qfit_2)
+#         
+#         qfit_1
+#         plot(qfit_1)
+#         
+#         st_fit = stl(data$time, data$value)
+#         })
+#       
+#       
+#           
+# # 
+# # ######## TEST ###########
+# #           output$test_plot = renderPlot({
+# #             data = t(discrete_cluster_D_d1()$o_data)
+# #             library(pvclust)
+# #             result <- pvclust(data, method.dist="euclidian", method.hclust="average", nboot=1000)
+# #             plot(result)
+# #             #pvrect(result, alpha=0.95)
+# #             #seplot(result)
+# #             #seplot(result, identify=TRUE)
+# #           })
+# #   
+# #         ################## END ##########          
+# # })
+#       
+      
 })
+
+
+on.exit(rm(list= ls()))

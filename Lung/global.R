@@ -1,5 +1,6 @@
 
 library(shiny)
+library(shinythemes)
 #library(shinydashboard)
 library(googlesheets)
 library(gplots)
@@ -48,127 +49,75 @@ if(g_sheet == T){
   clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   
   colnames(clustering)
-  saveRDS(file = 'clustering_5_new.rds',object = clustering)
+  saveRDS(file = 'clustering_6_new.rds',object = clustering)
   #clustering2 = clustering
 }else{
-  clustering = readRDS('clustering4.rds')
+  #clustering = readRDS('clustering4.rds') ## OLD CLUSTERING FILE
+  clustering = readRDS('clustering_6_new.rds')
+  
 }
 
 #clustering = as_tibble(clustering)
-dim(clustering)
-colnames(clustering)
-#colnames(clustering2)
-#setdiff(colnames(clustering),colnames(clustering2))
-#setdiff(colnames(clustering2),colnames(clustering))
+#clustering
 
-
-#boss = read.csv('BOS.csv',header = F,sep=';') # read boss table, generate from scratch
-#m_boss = melt(boss)
-
-# colnames(m_boss)
-# colnames(clustering)
-# colnames(clustering2)
-# setdiff(colnames(clustering),colnames(clustering2))
-# setdiff(colnames(clustering2),colnames(clustering))
-#ggplot(m_boss) + geom_line(aes(x = variable,y = value,col = V1,group = V1))
-
-#saveRDS(clustering,'clustering.rds')
-
-#### append duplicates  ########
-dup = duplicated(clustering[,1])
-dups = clustering[duplicated(clustering[,1]),1]
-row_names = clustering[,1]
-row_names[dup] = paste(row_names[dup],'a',sep='_') 
-row_names
-length(row_names)
-
-clustering = clustering[!is.na(row_names),]
-dim(clustering)
-row_names = row_names[!is.na(row_names)]
-rownames(clustering) = row_names
-clustering$MRN = row_names
-length(row_names)
-dim(clustering)
-
-########### SEPARATE COLUMS by name #########################
-colnames(clustering)
-#numeric_columns = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
-                    # ,"pFEV1_neg2", "pFEV1_neg1", "pFEV1_0", "pFEV1_pos1", "pFEV1_pos2", "pFEV1_pos3"     
-                    # ,"pFEV1_pos4", "pFEV1_pos5", "pFEV1_pos6", "pFEV1_pos12", "pFEV1_pos18", "pFEV1_pos24"    
-                    # ,"pFEV1_pos36", "pFEV1_pos48", 
-                    # "BOS1mnth", "BOS2mnth", "BOS3mnth", 
-                    # "ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
-
-add_numeric_columns = c("MonthsToEvent","YearsToDeath",'MonthSinceRx',"CRP",
-                        "FEV1Ratio")
-
-pFEV_cols = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
-              ,"pFEV1_neg2", "pFEV1_neg1", "pFEV1_0", "pFEV1_pos1", "pFEV1_pos2", "pFEV1_pos3"     
-              ,"pFEV1_pos4", "pFEV1_pos5", "pFEV1_pos6", "pFEV1_pos12", "pFEV1_pos18", "pFEV1_pos24"    
-              ,"pFEV1_pos36", "pFEV1_pos48")
-bos_cols = c("BOS1mnth", "BOS2mnth", "BOS3mnth","BOS 3 free survival")
-
-change_cols = c("ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
-
-numeric_select_columns = c("pFEV1_neg24","pFEV1_neg18", "pFEV1_neg12", "pFEV1_neg6", "pFEV1_neg5", "pFEV1_neg4", "pFEV1_neg3"     
-                           ,"pFEV1_neg2", "pFEV1_neg1", "pFEV1_0", "pFEV1_pos1", "pFEV1_pos2", "pFEV1_pos3"     
-                           ,"pFEV1_pos4", "pFEV1_pos5", "pFEV1_pos6", "pFEV1_pos12", "pFEV1_pos18", "pFEV1_pos24"    
-                           ,"pFEV1_pos36", "pFEV1_pos48")
-
-all_numeric_columns = c(pFEV_cols,bos_cols,add_numeric_columns,change_cols)
-all_numeric_columns
-length(all_numeric_columns)
-
-
-factor_columns = c("AltDxScore","DSA_HLAScore","HLAType","HLAStrength","BiopsyScore",
-                   "SignOfInfection","NewCTChange","AGrade","BGrade","PathScore","ViralPCR",
-                   "BactCulture","Methylpred","IVAbx")
-#factor_columns_con = c("Status" , "DaysSinceOnset", "Obstructive")
-factor_columns_con = c("Status" , "DaysSinceOnset", "Obst_post","BOS3orDeath")
-
-all_factor_columns = c(factor_columns,factor_columns_con)
-
-factor_colums_4_comparisons = c(factor_columns,factor_columns_con)
-
-date_columns = c("RxDate","DeathDate")
-
-all_factor_columns = c('MRN',factor_columns,factor_columns_con)
-full_factor_columns = all_factor_columns
-full_factor_columns = full_factor_columns[order(match(full_factor_columns,colnames(clustering)))]
-
-
-all_columns = c(all_factor_columns,all_numeric_columns,date_columns)
-all_columns
-length(all_columns)
-length(colnames(clustering))
-
+### ALL COLUMNS #####
+all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
+all_discrete_columns = c('MRN',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
+all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
 all_columns[!all_columns %in% colnames(clustering)]
 setdiff(colnames(clustering),all_columns)
 
 
+#### ORGANISING COLUMNS ############
+continuous_columns = order_columns(continuous_columns,colnames(clustering))
+continuous_date_columns = order_columns(continuous_date_columns,colnames(clustering))
+pFEV_cols = order_columns(pFEV_cols,colnames(clustering))
+bos_cols = order_columns(bos_cols,colnames(clustering))
+change_cols = order_columns(change_cols,colnames(clustering))
+
+discrete_numeric_columns = order_columns(discrete_numeric_columns,colnames(clustering))
+discrete_term_columns = order_columns(discrete_term_columns,colnames(clustering))
+
+all_continuous_columns = order_columns(all_continuous_columns,colnames(clustering))
+all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering)) 
+
+
+#### GROUPING COLUMNS ####
+discrete_columns_4_comparison = c(discrete_numeric_columns,discrete_term_columns) #factor_colums_4_comparisons
+discrete_columns_4_comparison = order_columns(discrete_columns_4_comparison,colnames(clustering))
+
+non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols)
+#discrete_columns_4_comparison
+
+
+
+### REMOVE DUPLICATE ROWS ####
+dup = duplicated(clustering[,1])
+dups = clustering[duplicated(clustering[,1]),1]
+dups
+row_names = clustering[,1]
+row_names[dup] = paste(row_names[dup],'a',sep='_') 
+clustering = clustering[!is.na(row_names),]
+row_names = row_names[!is.na(row_names)]
+rownames(clustering) = row_names
+clustering$MRN = row_names
+
+
+
+
+
+
+
+
+
 ######################################
-
-
 
 #### correct DATE columns ##########
 clust_date = clustering[,date_columns]
-clust_date[,"RxDate"]
-new_date = as.Date(clust_date[,"RxDate"],'%d-%b-%y')
-clust_date[,"RxDate"] = new_date
-clust_date[,"DeathDate"]
-new_date = as.Date(clust_date[,"DeathDate"],'%d-%b-%Y')
-#new_date
-clust_date[,"DeathDate"] = new_date
-#### Not sure if these are actully reintegrated, but are applied below
+#clust_date
+clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
+head(clust_date)
 
-##################################
-
-#### BOSS COLUMNS ####
-#bos_cols = c("BOS1mnth", "BOS2mnth", "BOS3mnth")
-
-boss_data = clustering[,bos_cols]
-boss_data_num = apply(boss_data, 2, function(x) as.numeric(as.character(x)))
-boss_data_num
 
 
 ####### PROCESS ###################
@@ -176,9 +125,9 @@ boss_data_num
 
 
 ############ FACTOR COLUMNS ###################
-cluster_factor = clustering[,factor_columns]
-clust_fac_con = clustering[,factor_columns_con]
-
+cluster_factor = clustering[,discrete_numeric_columns]
+clust_fac_con = clustering[,discrete_term_columns]
+#View(clust_fac_con)
 convert_factors = T # convert word columns to lowercase
 if(convert_factors==T){
   cluster_factor_con = apply(clust_fac_con, 2, function(x) tolower(factor(x)))
@@ -187,127 +136,110 @@ if(convert_factors==T){
 }
 
 
-colnames(cluster_factor_con)
+cluster_factor_con = apply(cluster_factor_con, 2, function(x) as.numeric(factor(x)))
+
+
+
 
 full_fac = cbind(cluster_factor,cluster_factor_con)
 full_fac$MRN = clustering$MRN
-full_fac_colnames = colnames(full_fac)[order(match(colnames(full_fac),colnames(clustering)))]
-full_fac = full_fac[,full_fac_colnames] ### original factor columns 
+
+full_fac = apply(full_fac,2, function(x) factor(x))
 
 
-### remove missing values from factor columsn #####
-num_fac = full_fac
-
-for(col in factor_columns_con){
-  num_fac[,col] = as.numeric(factor(num_fac[,col]))
-  #num_fac[,col][is.na(num_fac_0[,col])] <- factor_NA_value
-}
-
-for(col in factor_columns){
-  num_fac[,col] = as.numeric(num_fac[,col])
-  #num_fac[,col][is.na(num_fac_0[,col])] <- factor_NA_value
-}
-num_fac_0 = num_fac[,full_factor_columns]
 
 
-factor_NA_value = -2
-remove_fac_na = F
-if(remove_fac_na == T){
-  num_fac_0[is.na(num_fac_0)] <- factor_NA_value
-}
-
-# factor dataframe with missing values 02
-
-full_fac_0 = as.data.frame(apply(num_fac_0,2,function(x) factor(x)))
+#num_fac = apply(full_fac,2, function(x) as.numeric(x))
 
 
-##### CONSOLIDATE DATA #############
 
-#full_fac = cbind(full_fac,clust_date,boss_data_num)
-#full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num)
-
-###################################################
-
-##### DATE COMPUTATIONS ####
-
-#full_fac_0$survival_time = full_fac_0$DeathDate - full_fac_0$RxDate
-#full_fac_0$survival_time =  round((full_fac_0$DeathDate - full_fac_0$RxDate)/(365.25/12))
-#full_fac_0$survival_time
 ########### NUMERIC COLUMN ###############
 
 ## numric column ##
-clust_num = clustering[,numeric_columns]
-for(num_col in numeric_columns){
-  clust_num[,num_col] = as.numeric(clust_num[,num_col])
-}
-
-add_num = clustering[,add_numeric_columns]
-for(num_col in add_numeric_columns){
-  add_num[,num_col] = as.numeric(add_num[,num_col])
-}
-
-
-##### CONSOLIDATE DATA #############
-
-full_fac = cbind(full_fac,clust_date,boss_data_num,add_num)
-colnames(full_fac)
-full_fac_0 = cbind(full_fac_0,clust_date,boss_data_num,add_num)
-colnames(full_fac_0)
-###################################################
-
-
-
-#############################################
-
-
-full_num = cbind(full_fac,clust_num)
-
-
-### order ###
-patient_list = full_num$MRN
-patient_list = patient_list[order(patient_list)]
-
-
- 
-
-
+clust_num = clustering[,non_pFEV_continuous_columns]
+clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric(factor(x))))
+str(clust_num)
+#clust_num
 
 ####################### pFEV ##################################
 
 ########## ADD missing pFEV columns ###################
-pFEV = full_num[,pFEV_cols]
-full_fac_0$pFEV_na <- apply(pFEV, 1, function(x) round((1-(sum(is.na(x))/length(x)))*100,1))
+pFEV = clustering[,pFEV_cols]
+pFEV = as.data.frame(apply(pFEV,2, function(x) as.numeric(x)))
+rownames(pFEV) = rownames(clustering)
+pFEV_na <- apply(pFEV, 1, function(x) round((1-(sum(is.na(x))/length(x)))*100,1))
 
 
 
-pFEV_w = full_num[,pFEV_cols]
-pFEV_numeric_colnames_n = c(-24,-18,-12,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,12,18,24,36,48)
-pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24','36','48')
+pFEV_w = pFEV
+pFEV_numeric_colnames_n = c(-24,-18,-12,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,12,18,24)
+pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
 colnames(pFEV_w) = pFEV_numeric_colnames_f
 
-for(col in seq(-24,48,1)){
+
+for(col in seq(-24,24,1)){
   if(!col %in% pFEV_numeric_colnames_n){
     pFEV_w[,paste(col)] = NA
   }
 }
+
 p_cols = colnames(pFEV_w)[order(as.numeric(colnames(pFEV_w)))]
+
 pFEV_w = pFEV_w[,p_cols]
-pFEV_w_original = pFEV_w
-full_fac_0_original = full_fac_0
-excluded_patients_c = full_fac_0$MRN[full_fac_0$pFEV_na < completeness]
-excluded_patients_c = c(names(excluded_patients_c),patient_custom_exclude)
+
+
+################## CONSOLIDATE DATA ##############
+
+#full_num = cbind(full_fac,clust_num,clust_date)
+patient_list = clustering$MRN
+patient_list = patient_list[order(patient_list)]
+
+
+processed_data = cbind(full_fac,clust_num,clust_date)
+
+
+processed_data_pFEV = cbind(full_fac,clust_num,clust_date,pFEV)
+
+
+
+processed_data = as.data.frame(processed_data[,order_columns(colnames(processed_data),colnames(clustering))])
+processed_data$pFEV_na = as.numeric(pFEV_na)
+
+
+
+full_factor_columns = colnames(processed_data)
+processed_data = cbind(processed_data,pFEV_w) #extended withe missing columns
+
+
+
+### order ###
+excluded_patients_c = processed_data$MRN[processed_data$pFEV_na < completeness]
 r_list = patient_list[!patient_list %in% excluded_patients_c]
-r_list
-pFEV_wf = cbind(full_fac_0,pFEV_w)
-pFEV_wf_original = cbind(full_fac_0_original,pFEV_w_original)
-pFEV_lf_original = melt(pFEV_wf_original, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
 
-pFEV_lf = melt(pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+
+
+processed_data_r = processed_data # allowed for additional processing here
+
+full_fac_0 = processed_data_r[,full_factor_columns]
+pFEV_w = processed_data_r[,p_cols]
+pFEV_wf = processed_data_r
+
+pFEV_lf = melt(processed_data_r, id.vars = full_factor_columns, measure.vars = colnames(pFEV_w))
 pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
-pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
+pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
 
+term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
+for(term in discrete_term_columns){
+  reason = data.frame(Name = clustering[,term],Number = as.numeric(processed_data[,term]))
+  reason
+  reason = reason[order(reason$Number),]
+  reason = reason[!duplicated(reason),]
+  reason$Factor = term
+  reason$Number = factor(reason$Number)
+  reason = reason[,c('Factor','Number','Name')]
+  term_mapping_df = rbind(term_mapping_df,reason)
+}
 
- 
 ####################### IMPUTE pFEV ####################### 
   
 pFEV_ts = as.ts(t(pFEV_w))
@@ -316,15 +248,15 @@ pFEV_ts
 i_pFEV_ts = na.interpolation(pFEV_ts)
 
 i_pFEV_ts = as.data.frame(t(i_pFEV_ts))
-colnames(i_pFEV_ts) = seq(-24,48,1)
-rownames(i_pFEV_ts)
+colnames(i_pFEV_ts) = seq(-24,24,1)
+#rownames(i_pFEV_ts) = rownames(full_fac_0)
 
 
 i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
 i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
 i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
 
-pFEV_lf[,full_factor_columns] = apply(pFEV_lf[,full_factor_columns],2,function(x) factor(x))
+pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
 
 i_pFEV_lf$i = pFEV_lf$value
 i_pFEV_lf$data = pFEV_lf$value
@@ -339,7 +271,7 @@ i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
 
 
 time = as.numeric(colnames(i_pFEV_ts))
-
+time
 i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
 colnames(i_pFEV_sm) = time
 
@@ -392,7 +324,7 @@ i_pFEV_sm_d2_fl$time = as.numeric(as.character(i_pFEV_sm_d2_fl$variable))
 
 before = colnames(pFEV_w)[c(1:25)]
 
-after = colnames(pFEV_w)[c(25:73)]
+after = colnames(pFEV_w)[c(25:49)]
 
 
 

@@ -8,6 +8,17 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15){
   hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
 }
 
+########
+
+order_columns = function(column_list,ordering_list){
+  column_list = column_list[order(match(column_list,ordering_list))]
+  return(column_list)
+}
+
+
+
+
+
 ########### PLOTS############
 
 line_plot_function = function(plot_data,title,input){
@@ -32,7 +43,7 @@ smooth_line_plot_function = function(plot_data,title,input){
     #stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
     
     theme(axis.text.x = element_text(size=8, angle=90)) +
-    #xlim(input$pre_range[1],input$post_range[2]) +
+    xlim(input$pre_range[1],input$post_range[2]) +
     ggtitle(title)
 }
 
@@ -554,6 +565,9 @@ boxplot_pp_ratio_full_function = function(full_data,t1,t2){
   df1 = data.frame(Factor = factor, Status = entry,pre = pre_ratio,post = post_ratio)
   df = rbind(df,df1)
   df_m = melt(df,id.vars = c('Factor','Status'))
+  df_m$Status = factor(df_m$Status)
+  df_m$Factor = factor(df_m$Factor)
+  #View(df_m)
   p =  ggplot(df_m, aes(x = Status,y=value,col=variable)) +
     geom_hline(yintercept=0)+
     geom_boxplot()
@@ -845,7 +859,7 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   df_m
 }
   #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
-boxplot_pp_ratio_plot_function = function(df_m){ 
+boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of log2(ratio)'){ 
   u = as.numeric(as.character(unique(df_m$Status)))
   u = factor(u[(order(u))])
   #sig_col = c("white", "blanchedalmond")
@@ -853,15 +867,29 @@ boxplot_pp_ratio_plot_function = function(df_m){
   #  sig_col = c("blanchedalmond")
   #}
   df_m = df_m[!is.na(df_m$value),]
+  #View(df_m)
   sig_col = c("white", "blanchedalmond")
   if(!(0 %in% df_m$significant)){
     sig_col = c("blanchedalmond")
   }
+  df_m$Status = factor(df_m$Status, levels = u)
+  #View(df_m)
   p = ggplot(df_m, aes(x = Status,y=value,col=variable, fill = significant)) +
     geom_hline(yintercept=0)+
     geom_boxplot() +
     scale_x_discrete(limits = u) + 
     scale_fill_manual(values = sig_col)
+  # scale_fill_manual(values = sig_col)
+  #sig_col = c('white','azure1')
+  p = ggplot(df_m, aes(x = variable,y=value,col=Status, fill = significant)) +
+    geom_hline(yintercept=0)+
+    geom_boxplot() +
+    labs(col = global_factor) + 
+    #scale_x_discrete(limits = u) + 
+    scale_fill_manual(values = sig_col) + 
+    facet_grid(. ~ Status)+
+    ggtitle(title)
+    #geom_signif(comparisons = c('pre','post'),textsize = 1)
   # scale_fill_manual(values = sig_col)
   
   
@@ -880,11 +908,22 @@ boxplot_pp_ratio_plot_function = function(df_m){
 
 clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
-                               num_w_1,num_col_list_1,num_w_2,num_col_list_2){
-  data = i_pFEV_wf[r_list,c(30:50)]
-  rownames(data)
-  data = data[complete.cases(data),]
-  weights = rep(10,dim(data)[2])
+                              num_w_1,num_col_list_1,num_w_2,num_col_list_2){
+  #View(full_data)
+  
+  testing = 'F'
+  if(testing == T){
+    colnames(full_data)
+    rownames(full_data)
+    data = i_pFEV_wf[r_list,c(30:50)]
+    data = full_data[,paste(unlist(factor(c(-6:6))))]
+    colnames(data)
+    rownames(data)
+    View(data)
+    data = data[complete.cases(data),]
+    weights = rep(10,dim(data)[2])
+    weights
+  }
   #d_num = 3
   clust_fac_col_list = c(fac_col_list_1,fac_col_list_2)
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
@@ -894,6 +933,8 @@ clustering_function = function(full_data,r_list,d_num,
   
   
   data = full_data[r_list,clust_col_list]
+  
+  #View(data)
   o_data = data
   
   
@@ -1576,3 +1617,113 @@ pairwise_manova_function = function(data,m_factor){
 }
 
 
+
+binary_t_test_function = function(pre_data,post_data,factor_list,global_factor,input){
+  p_pre = tidy(t.test(na.omit(pre_data$value[pre_data[,global_factor] == factor_list[1]]),na.omit(pre_data$value[pre_data[,global_factor] == factor_list[2]])))
+  p_pre$comparison = 'Pre Treatment'
+  p_pre$range = paste(input$pre_range[1],'to',input$pre_range[2])
+  
+  p_post = tidy(t.test(na.omit(post_data$value[post_data[,global_factor] == factor_list[1]]),na.omit(post_data$value[post_data[,global_factor] == factor_list[2]]))) 
+  p_post$comparison = 'Post Treatment'
+  p_post$range = paste(input$post_range[1],'to',input$post_range[2])
+  
+  t_df = rbind(p_pre,p_post)
+  t_df$term = global_factor
+  t_df$Status = paste(factor_list, collapse = ', ')
+  return(t_df)
+}
+
+horizontal_stats_function = function(full_data,pre_cols,post_cols,global_factor,input) {
+  t_df_b = data.frame(estimate = numeric(0), estimate1 = numeric(0), estimate2 = numeric(0), statistic = numeric(0), p.value = numeric(0), parameter = numeric(0), conf.low = numeric(0), conf.high = numeric(0), method = numeric(0), alternative = numeric(0), comparison = numeric(0), range = numeric(0), term = numeric(0), Status = numeric(0))
+  t_df = t_df_b
+  anova_df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), range = numeric(0), Status = numeric(0))
+  anova_df = anova_df_b
+
+  pre_data = full_data[full_data$variable %in% pre_cols,]
+  
+  post_data = full_data[full_data$variable %in% post_cols,]
+  
+  
+  full_data[,global_factor][is.na(full_data[,global_factor])] = 'NA'
+  factor_list = paste(unique(full_data[,global_factor]))
+
+  factor_list = factor_list[order(factor_list)]
+
+  if(length(factor_list) == 2){
+
+    t_df = tryCatch(binary_t_test_function(pre_data,post_data,factor_list,global_factor,input), error = function(e) e = t_df_b)
+
+  }else{
+    if(length(factor_list > 2)){
+ 
+      anova_df = tryCatch(anova_function(pre_data,post_data,global_factor,factor_list,input), error = function(e) e = anova_df_b)
+
+      for(i in c(1:length(factor_list))){
+        i_entry = factor_list[i]
+        for(j in c(1:length(factor_list))){
+          if(i < j){
+            j_entry = factor_list[j]
+            sub_factor_list = c(i_entry,j_entry)
+            t_df_n = t_df_b
+            #print('mulit t test')
+            t_df_n = tryCatch(binary_t_test_function(pre_data,post_data,sub_factor_list,global_factor,input), error = function(e) e = t_df_b)
+            if(dim(t_df_n)[1] > 0){
+              t_df = rbind(t_df,t_df_n)
+            }
+            
+          }
+        }
+      }
+      
+    }
+  }
+  #View(t_df)
+  #View(anova_df)
+  t_df = t_df[,c('term','Status','comparison','range',colnames(t_df)[c(0:(length(colnames(t_df))-4))])]
+  anova_df = anova_df[,c('term','Status','comparison','range',colnames(anova_df)[c(1:(length(colnames(anova_df))-3))])]
+  
+  
+  t_df$p.value = signif(t_df$p.value,3)
+  anova_df$p.value = signif(anova_df$p.value,3)
+  output = list(t_df = t_df, anova_df = anova_df, pre_data = pre_data, post_data = post_data)
+  return(output)
+}
+
+anova_function = function(pre_data,post_data,global_factor,factor_list,input){
+  cmd = paste("pre_anova = tidy(manova(cbind(time,value) ~ ",global_factor,", data = pre_data))")
+  #print(cmd)
+  eval(parse(text = cmd))
+  pre_anova$comparison ='Pre Treatment'
+  pre_anova$range = paste(input$pre_range[1],'to',input$pre_range[2])
+  #pre_anova$Factor = global_factor
+  #df_a$comparisong ='Pre Treatment'
+  pre_anova$Status = paste(factor_list,collapse = ', ')
+  cmd = paste("post_anova = tidy(manova(cbind(time,value) ~ ",global_factor,", data = post_data))")
+  #print(cmd)
+  eval(parse(text = cmd))
+  post_anova$comparison ='Post Treatment'
+  post_anova$range = paste(input$post_range[1],'to',input$post_range[2])
+  
+  #post_anova$Factor = global_factor
+  #df_a$comparisong ='Pre Treatment'
+  post_anova$Status = paste(factor_list,collapse = ', ')
+  anova_df = rbind(pre_anova,post_anova)
+  #anova_df
+  return(anova_df)
+}
+
+
+
+
+######### FORMATTING ##############
+
+significance_table_formatting_function = function(df){
+  if('term' %in% colnames(df)){
+    df = df[order(df$term),]
+  }
+  df$significant = ifelse(df$p.value < 0.05,1,0)
+  datatable(df, options = list(columnDefs = list(list(targets = grep('significant',colnames(df)), visible = FALSE)))) %>% formatStyle(
+    'p.value', 'significant',
+    backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))
+  ) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
+}

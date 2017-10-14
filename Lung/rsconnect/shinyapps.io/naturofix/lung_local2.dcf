@@ -5,9 +5,9 @@ account: naturofix
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 217459
-bundleId: 1013170
+bundleId: 1015237
 url: https://naturofix.shinyapps.io/lung_local2/
-when: 1507241536.8982
+when: 1507366158.68861
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: BOS.csv|SessionInfo.tex|clustering.rds|clustering2.rds|clustering3.rds|df.rds|sample.R
+ignoredFiles: BOS.csv|clustering2.rds|clustering3.rds|survival_plots.R

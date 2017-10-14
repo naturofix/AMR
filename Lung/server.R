@@ -14,6 +14,25 @@ shinyServer(function(input, output) {
 
   ########## TEXT OUTPUTS ##################
   
+  output$missing_columns = renderPrint({
+    paste('Columns in googlesheet not in app : ',paste(setdiff(colnames(clustering),all_columns),collapse = ', ')
+)
+  })
+  
+  output$additional_columns = renderPrint({
+    paste('Columns in app not in the googlesheet : ',paste(all_columns[!all_columns %in% colnames(clustering)]),collapse = ', ')
+  })
+
+  output$duplicated_samples = renderPrint({
+    paste('Duplicated samples : ',paste(unique(dups),collapse = ', '))
+  })
+  
+  output$processed_data_str = renderPrint({
+    print(dim(clustering))
+    print(dim(processed_data))
+    print(str(processed_data))
+  })
+  
   output$sessionInfo <- renderText({
     paste(capture.output(si$R.version$version.string), '"<br />"')
   })
@@ -49,7 +68,16 @@ shinyServer(function(input, output) {
   
     output$clustering = renderDataTable(clustering)
     #output$clustering = renderDataTable(clustering)
-    output$full_num = renderDataTable(full_num)
+    output$full_num = renderDataTable(processed_data)
+    output$term_mapping = renderTable(term_mapping_df)
+    
+    
+    output$pFEV_wf = renderDataTable(pFEV_wf)
+    output$i_pFEV_wf = renderDataTable(i_pFEV_wf)
+    output$i_pFEV_sm_lf= renderDataTable(i_pFEV_smf)
+    output$i_pFEV_sm_d1_f = renderDataTable(i_pFEV_sm_d1_f)
+    output$i_pFEV_sm_d2_f = renderDataTable(i_pFEV_sm_d2_f)
+
     output$pFEV_wf_r = renderDataTable(pFEV_wf_r())
     output$i_pFEV_wf_r = renderDataTable(i_pFEV_wf_r())
     output$i_pFEV_sm_lf_r = renderDataTable(i_pFEV_smf_r())
@@ -64,7 +92,7 @@ shinyServer(function(input, output) {
 #### MISSINGNESS ############# 
     output$missmap_plot = renderPlot({
       par(mar=c(20,2,2,2),mgp=c(30,1,0))
-      missmap(full_num)
+      missmap(pFEV)
     },height = 800, width = 800 )
 
     output$pFEV_na_hist = renderPlot({
@@ -78,7 +106,6 @@ shinyServer(function(input, output) {
               excluded_patients = reactive(patient_list[patient_list %in% input$remove_list])
             
               retained_patients = reactive(patient_list[!(patient_list %in% input$remove_list)])
-            
             line_size = 2
             point_size = 4
             sm_size = 1
@@ -250,6 +277,7 @@ shinyServer(function(input, output) {
   })
   
   pFEV_wf_r = reactive({
+    print(retained_patients())
     o_data = pFEV_wf
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
@@ -619,7 +647,7 @@ shinyServer(function(input, output) {
   
   output$smooth_line_pFEV = renderPlot({
     r_data = pFEV_lf_r()
-    title = paste('pFEV values for ',length(unique(r_data$MRN))," Patients")
+    title = paste('SMOOTHED curve fitted to pFEV values for ',length(unique(r_data$MRN))," Patients")
     smooth_line_plot_function(r_data,title,input)
     
   })
@@ -1318,8 +1346,68 @@ shinyServer(function(input, output) {
           
         })
         output$boxplot_pp_ratio = renderPlot({
-          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data())
+          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data(),input$global_factor,title)
         })
+            ### for clustering ####
+        pp_t_test_ratio_cluster = reactive({
+          full_data = pFEV_lf_r()
+          factor = 'cluster'
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
+          df = pp_t_test_ratio_function(full_data,factor,t1,t2)
+          df_s = df[order(df$Status),]
+          #View(df_s)
+          df_s
+          
+          #print(df)
+        })
+        boxplot_pp_ratio_data_cluster = reactive({
+          full_data = pFEV_lf_r()
+          df_s = pp_t_test_ratio_cluster()
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
+          global_factor = 'cluster'
+          df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
+          #View(df)
+          df
+          
+        })
+        output$boxplot_pp_ratio_cluster = renderPlot({
+          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title)
+        })
+        
+        pp_t_test_ratio_cluster_d1 = reactive({
+          full_data = pFEV_lf_r()
+          factor = 'cluster_d1'
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
+          df = pp_t_test_ratio_function(full_data,factor,t1,t2)
+          df_s = df[order(df$Status),]
+          #View(df_s)
+          df_s
+          
+          #print(df)
+        })
+        boxplot_pp_ratio_data_cluster_d1 = reactive({
+          full_data = pFEV_lf_r()
+          df_s = pp_t_test_ratio_cluster_d1()
+          t1 = input$pre_range[1]
+          t2 = input$post_range[2]
+          global_factor = 'cluster_d1'
+          df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
+          #View(df)
+          df
+          
+        })
+        output$boxplot_pp_ratio_cluster_d1 = renderPlot({
+          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster_d1(),'cluster_d1',title)
+        })
+        
             #### Imputed####
         pp_t_test_ratio_i = reactive({
           full_data = i_pFEV_lf_r()
@@ -1348,7 +1436,9 @@ shinyServer(function(input, output) {
           
         })
         output$boxplot_pp_ratio_i = renderPlot({
-          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data())
+          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data(),input$global_factor,title)
         })
         
       
@@ -2320,6 +2410,7 @@ shinyServer(function(input, output) {
               }else{
                 full_data = i_pFEV_sm_d1_f_c_ir()
               }
+              #full_data =  i_pFEV_sm_d1_f
               
               
             #discrete_cluster_D_d1 = reactive({
@@ -3198,6 +3289,7 @@ shinyServer(function(input, output) {
         function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
         df = pairwise_manova_function(function_data,m_factor)
         df
+        significance_table_formatting_function(df)
       })
 
       
@@ -3216,6 +3308,9 @@ shinyServer(function(input, output) {
         m_factor = 'cluster_d1'
         df = pairwise_manova_function(function_data,m_factor)
         df
+        #View(df)
+        significance_table_formatting_function(df)
+        
       })
       
       output$boxplot_pFEV_manova_cluster_d1 = renderPlot({
@@ -3233,6 +3328,8 @@ shinyServer(function(input, output) {
         m_factor = 'cluster_d1'
         df = pairwise_manova_function(function_data,m_factor)
         df
+        significance_table_formatting_function(df)
+        
       })
       
       # pFEV --------
@@ -3243,17 +3340,25 @@ shinyServer(function(input, output) {
         data = pFEV_lf_r()
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
-        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
+        df = pairwise_manova_function(function_data,discrete_columns_4_comparison[1])
+        print(discrete_columns_4_comparison[1])
         #df
-        for(m_factor in factor_colums_4_comparisons[-1]){
+        for(m_factor in discrete_columns_4_comparison[-1]){
+          print(m_factor)
+          print(unique(data[,m_factor]))
+          data[,m_factor][is.na(data[,m_factor])] = 'NA'
+          if(length(na.omit(data[,m_factor])) > 50){
+            if(length(na.omit(unique(data[,m_factor]))) > 1){
           df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
           #print(df_n)
 
           if(dim(df_n)[1] > 0){
             df = rbind(df,df_n)
           }
-        }
+        }}}
         df
+        significance_table_formatting_function(df)
+        
       })
       output$full_manova_table_i = renderDataTable({
         data = pFEV_lf
@@ -3261,18 +3366,24 @@ shinyServer(function(input, output) {
         data = i_pFEV_lf_r()
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
-        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
+        df = pairwise_manova_function(function_data,discrete_columns_4_comparison[1])
 
-        for(m_factor in factor_colums_4_comparisons[-1]){
+        for(m_factor in discrete_columns_4_comparison[-1]){
+          print(m_factor)
+          data[,m_factor][is.na(data[,m_factor])] = 'NA'
+          if(length(na.omit(data[,m_factor])) > 50){
+            if(length(na.omit(unique(data[,m_factor]))) > 1){
 
           df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
 
           if(dim(df_n)[1] > 0){
             df = rbind(df,df_n)
           }
-        }
+        }}}
 
         df
+        significance_table_formatting_function(df)
+        
       })
 
       
@@ -3296,6 +3407,8 @@ shinyServer(function(input, output) {
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
         df = pairwise_manova_function(function_data,global_factor)
+        significance_table_formatting_function(df)
+        
       })
       output$selected_manova_table_i = renderDataTable({
         data = pFEV_lf
@@ -3306,6 +3419,8 @@ shinyServer(function(input, output) {
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
         df = pairwise_manova_function(function_data,global_factor)
+        significance_table_formatting_function(df)
+        
       })
       
       
@@ -3325,6 +3440,9 @@ shinyServer(function(input, output) {
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
         df = pairwise_manova_function(function_data,global_factor)
+        
+
+        significance_table_formatting_function(df)
       })
       
       
@@ -3334,15 +3452,24 @@ shinyServer(function(input, output) {
         data = i_pFEV_sm_d1_fl_r()
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
-        df = pairwise_manova_function(function_data,factor_colums_4_comparisons[1])
-        for(m_factor in factor_colums_4_comparisons[-1]){
-          df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
-
-          if(dim(df_n)[1] > 0){
-            df = rbind(df,df_n)
+        print(discrete_columns_4_comparison[1])
+        df = pairwise_manova_function(function_data,discrete_columns_4_comparison[1])
+        for(m_factor in discrete_columns_4_comparison[-1]){
+          print(m_factor)
+          data[,m_factor][is.na(data[,m_factor])] = 'NA'
+          if(length(na.omit(data[,m_factor])) > 50){
+            if(length(na.omit(unique(data[,m_factor]))) > 1){
+              df_n = tryCatch(pairwise_manova_function(function_data,m_factor), error = function(e) e = data.frame(d = numeric(0)))
+    
+              if(dim(df_n)[1] > 0){
+                df = rbind(df,df_n)
+            }
+            }
           }
         }
         df
+        significance_table_formatting_function(df)
+        
       })
       
       
@@ -3531,9 +3658,276 @@ shinyServer(function(input, output) {
 # #   
 # #         ################## END ##########          
 # # })
-#       
+#  
+    output$test_plot_1 = renderPlot({
+      data = pFEV_lf_r()
+      data = data[data$time > input$pre_range[1] & data$time < input$pre_range[2],]
+      global_factor = input$global_factor
+      ggplot(data, aes_string(x = global_factor, y = 'value')) +
+        geom_boxplot() +
+        geom_signif(comparisons = c('0','1'))
+    })
+    #   
+    # horizontal_stats = reactive({
+    #   t_df_b = data.frame(estimate = numeric(0), estimate1 = numeric(0), estimate2 = numeric(0), statistic = numeric(0), p.value = numeric(0), parameter = numeric(0), conf.low = numeric(0), conf.high = numeric(0), method = numeric(0), alternative = numeric(0), comparison = numeric(0), Factor = numeric(0), Status = numeric(0))
+    #   anova_df = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0))
+    #   tfull_data = pFEV_lf
+    #   global_factor = 'HLAType'
+    #   pre_cols = factor(c(-6:0))
+    #   post_cols = factor(c(0:6))
+    #   full_data = pFEV_lf_r()
+    #   print(dim(full_data))
+    #   #global_factor = 'Status'
+    #   global_factor = input$global_factor
+    #   pre_cols = factor(c(input$pre_range[1]:input$pre_range[2]))
+    #   post_cols = factor(c(input$post_range[1]:input$post_range[2]))
+    #   pre_data = full_data[full_data$variable %in% pre_cols,]
+    #   print(dim(pre_data))
+    #   post_data = full_data[full_data$variable %in% post_cols,]
+    #   print(dim(post_data))
+    #   factor_list = paste(unique(full_data[,global_factor]))
+    #   factor_list = factor_list[order(factor_list)]
+    #   factor_list
+    #   if(length(factor_list) == 2){
+    #     t_df_b = binary_t_test_function(pre_data,post_data,factor_list,global_factor,input)
+    #     print(t_df)
+    #   }else{
+    #     if(length(factor_list > 2)){
+    #       for(i in c(1:length(factor_list))){
+    #         i_entry = factor_list[i]
+    #         for(j in c(1:length(factor_list))){
+    #           if(i < j){
+    #             j_entry = factor_list[j]
+    #             sub_factor_list = c(i_entry,j_entry)
+    #             t_df = binary_t_test_function(pre_data,post_data,sub_factor_list,global_factor,input)
+    #             t_df_b = rbind(t_df_b,t_df)
+    #             cmd = paste("pre_anova = tidy(manova(cbind(time,value) ~ ",global_factor,", data = pre_data))")
+    #             print(cmd)
+    #             eval(parse(text = cmd))
+    #             pre_anova$comparisong ='Pre Treatment'
+    #             pre_anova$range = paste(input$pre_range[1],'to',input$pre_range[2])
+    #             #pre_anova$Factor = global_factor
+    #             #df_a$comparisong ='Pre Treatment'
+    #             pre_anova$Status = paste(factor_list,collapse = ', ')
+    #             cmd = paste("post_anova = tidy(manova(cbind(time,value) ~ ",global_factor,", data = post_data))")
+    #             print(cmd)
+    #             eval(parse(text = cmd))
+    #             post_anova$comparisong ='Post Treatment'
+    #             post_anova$range = paste(input$post_range[1],'to',input$post_range[2])
+    #             
+    #             #post_anova$Factor = global_factor
+    #             #df_a$comparisong ='Pre Treatment'
+    #             post_anova$Status = paste(factor_list,collapse = ', ')
+    #             anova_df = rbind(pre_anova,post_anova)
+    #             anova_df
+    #           }
+    #         }
+    #       }
+    #       
+    #     }
+    #   }
+    #   
+    # t_df_b = t_df_b[,c('Factor','Status','comparison','range','p.value')]
+    # t_df_b$p.value = signif(t_df_b$p.value,3)
+    # anova_df$p.value = signif(anova_df$p.value,3)
+    # list(t_df = t_df_b, anova_df = anova_df, pre_data = pre_data, post_data = post_data)
+    # })
       
+    #output$test_text_1 = reactive({ 
+      
+  ##### VERTIVAL T TESTS ####
+    horizontal_stats = reactive({
+        
+        #global_factor = 'HLAType'
+        pre_cols = factor(c(-6:0))
+        post_cols = factor(c(0:6))
+        full_data = pFEV_lf_r()
+
+        global_factor = 'Status'
+        global_factor = input$global_factor
+        pre_cols = paste(factor(c(input$pre_range[1]:input$pre_range[2])))
+        post_cols = paste(factor(c(input$post_range[1]:input$post_range[2])))
+
+        df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor,input)
+  
+        df_output
+        
+        
+      })
+    output$horizontal_t_test = renderDataTable({
+      df = horizontal_stats()$t_df
+      significance_table_formatting_function(df)
+      })
+    output$horizontal_anova = renderDataTable({
+      df = horizontal_stats()$anova_df
+      significance_table_formatting_function(df)
+      })
+    output$hor_box_pre = renderPlot({
+      data = horizontal_stats()$pre_data
+      ggplot(data, aes_string(x = input$global_factor,y = 'value', col = input$global_factor)) + 
+        geom_boxplot()
+    })
+    output$hor_box_post = renderPlot({
+      data = horizontal_stats()$post_data
+      ggplot(data, aes_string(x = input$global_factor,y = 'value', col = input$global_factor)) + 
+        geom_boxplot()
+    })
+    
+    horizontal_stats_d1 = reactive({
+      
+      #global_factor = 'HLAType'
+      pre_cols = factor(c(-6:0))
+      post_cols = factor(c(0:6))
+      full_data = i_pFEV_sm_d1_fl_r()
+  
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      pre_cols = factor(c(input$pre_range[1]:input$pre_range[2]))
+      post_cols = factor(c(input$post_range[1]:input$post_range[2]))
+      df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor,input)
+
+      
+      
+    })
+    output$horizontal_t_test_d1 = renderDataTable({
+      df = horizontal_stats_d1()$t_df
+      significance_table_formatting_function(df)
+      })
+    output$horizontal_anova_d1 = renderDataTable({
+      df = horizontal_stats_d1()$anova_df
+      significance_table_formatting_function(df)
+      })
+    output$hor_box_pre_d1 = renderPlot({
+      data = horizontal_stats_d1()$pre_data
+      ggplot(data, aes_string(x = input$global_factor,y = 'value', col = input$global_factor)) + 
+        geom_boxplot()
+    })
+    output$hor_box_post_d1 = renderPlot({
+      data = horizontal_stats_d1()$post_data
+      ggplot(data, aes_string(x = input$global_factor,y = 'value', col = input$global_factor)) + 
+        geom_boxplot()
+    })
+    
+    #output$test_text_1 = renderPrint({
+   horizontal_stats_full = reactive({
+      #print('test')
+      #global_factor = 'HLAType'
+      pre_cols = factor(c(-6:0))
+      post_cols = factor(c(0:6))
+      full_data = pFEV_lf_r()
+      #print(dim(full_data))
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      pre_cols = paste(factor(c(input$pre_range[1]:input$pre_range[2])))
+      post_cols = paste(factor(c(input$post_range[1]:input$post_range[2])))
+      #print(pre_cols)
+      #print(post_cols)
+      global_factor_list = discrete_columns_4_comparison
+      #print(global_factor_list[1])
+      df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor_list[1],input)
+      # #output = list(t_df = t_df_b, anova_df = anova_df, pre_data = pre_data, post_data = post_data)
+      #print(df_output)
+      t_df = df_output$t_df
+      anova_df = df_output$anova_df
+      for(global_factor in discrete_columns_4_comparison[-1]){
+        #print(global_factor)
+        df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor,input)
+        if(dim(df_output$t_df)[1] > 0){
+          t_df = rbind(t_df,df_output$t_df)
+        }
+        if(dim(df_output$t_df)[1] > 0){
+          anova_df = rbind(anova_df,df_output$anova_df)
+        }
+      }
+
+      list(t_df = t_df,anova_df = anova_df)
+      
+      
+    })
+    
+    output$horizontal_t_test_full = renderDataTable({
+      df = horizontal_stats_full()$t_df
+      significance_table_formatting_function(df)
+      })
+    output$horizontal_anova_full = renderDataTable({
+      df = horizontal_stats_full()$anova_df
+      significance_table_formatting_function(df)
+      })
+    
+    horizontal_stats_full_d1 = reactive({
+
+      pre_cols = factor(c(-6:0))
+      post_cols = factor(c(0:6))
+      full_data = i_pFEV_sm_d1_fl_r()
+
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      pre_cols = paste(factor(c(input$pre_range[1]:input$pre_range[2])))
+      post_cols = paste(factor(c(input$post_range[1]:input$post_range[2])))
+
+      global_factor_list = discrete_columns_4_comparison
+   
+      df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor_list[1],input)
+ 
+      t_df = df_output$t_df
+      anova_df = df_output$anova_df
+      for(global_factor in discrete_columns_4_comparison[-1]){
+  
+        df_output = horizontal_stats_function(full_data,pre_cols,post_cols,global_factor,input)
+        if(dim(df_output$t_df)[1] > 0){
+          t_df = rbind(t_df,df_output$t_df)
+        }
+        if(dim(df_output$t_df)[1] > 0){
+          anova_df = rbind(anova_df,df_output$anova_df)
+        }
+      }
+      
+      list(t_df = t_df,anova_df = anova_df)
+      
+      
+    })
+    
+    output$horizontal_t_test_full_d1 = renderDataTable({
+      df = horizontal_stats_full_d1()$t_df
+      significance_table_formatting_function(df)
+    })
+    output$horizontal_anova_full_d1 = renderDataTable({
+      df = horizontal_stats_full_d1()$anova_df
+      significance_table_formatting_function(df)
+    })
+
+    
+    output$pFEV_mean_table = renderTable({
+      full_data = pFEV_wf
+      full_data = pFEV_wf_r()
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      
+      #data = full_data[,pFEV_numeric_colnames_f]
+      factor_list = unique(full_data[,global_factor])
+      #print(factor_list)
+      data = full_data[,pFEV_numeric_colnames_f]
+      mean_df = data.frame('pFEV' = pFEV_numeric_colnames_f)
+      mean_list = as.data.frame(apply(data,2,function(x) mean(x,na.rm=T)))
+      colnames(mean_list) = 'Mean for all'
+      mean_df = cbind(mean_df,mean_list)
+      for(entry in factor_list){
+        sub_data = full_data[full_data[,global_factor] == entry,pFEV_numeric_colnames_f]
+        sub_mean_list = data.frame(apply(sub_data,2,function(x) mean(x,na.rm=T)))
+        colnames(sub_mean_list) = paste('Mean for',global_factor, entry)
+        #print(sub_mean_list)
+        mean_df = cbind(mean_df,sub_mean_list)
+      }
+      mean_df
+      
+      #(mean_df['0',2] - mean_df[,2])/ mean_df['0',2]* 100
+    })
+
+
 })
+
+
+
 
 
 on.exit(rm(list= ls()))

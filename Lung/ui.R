@@ -1,13 +1,16 @@
 library(shiny)
 shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
+  #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(3,selectInput('global_factor','Factor to Separate by',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster','cluster_d1'),multiple = F,selected = 'cluster_d1')),
     column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'Both'),
                               choiceValues = list("1", "2","0"
                               ),inline = F,selected = '0')),
-    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-12,0),width = 800)),
-    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=48,step = 1,value = c(0,12),width = 800)),
+    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-3,0),width = 800)),
+    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,3),width = 800)),
+    #column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-12,0),width = 800)),
+    #column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,12),width = 800)),
     #column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
     
     column(12,
@@ -15,7 +18,13 @@ shinyUI(fluidPage(
     tabsetPanel(selected = 'Clustering',
     ############# TESTING ##############
       tabPanel('Testing',
-               tabsetPanel(
+               tabsetPanel(selected = 'text',
+                 tabPanel('Sanity Check',
+                          verbatimTextOutput('additional_columns'),
+                          verbatimTextOutput('missing_columns'),
+                          verbatimTextOutput('duplicated_samples'),
+                          verbatimTextOutput("processed_data_str")
+                          ),
                  tabPanel('text',
                           verbatimTextOutput('test_text_1'),
                           verbatimTextOutput('test_text_2'),
@@ -71,6 +80,18 @@ shinyUI(fluidPage(
         tabsetPanel(
           tabPanel('Original',dataTableOutput('clustering')),
           tabPanel('Processed',dataTableOutput('full_num')),
+          tabPanel('Term Mapping',
+                   tableOutput('term_mapping')),
+          
+          
+          # tabPanel('pFEV',dataTableOutput('pFEV_wf')),
+          # tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf')),
+          # tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf')),
+          # #i_pFEV_sm_lf_r
+          # #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
+          # tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f")),
+          # tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f")),
+          
           tabPanel('pFEV',dataTableOutput('pFEV_wf_r')),
           tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf_r')),
           tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf_r')),
@@ -114,6 +135,9 @@ shinyUI(fluidPage(
              #             width = NULL)),
               column(12,
                      tabsetPanel(
+                    tabPanel('Mean Table',
+                             tableOutput('pFEV_mean_table')
+                             ),
                     ######## LINE PLOTS ###########
                     tabPanel('Line Plot',
                              
@@ -142,19 +166,12 @@ shinyUI(fluidPage(
                              ),
                     
 
-                    # ##### BOSS #######
-                    # tabPanel('BOSS',
-                    #          tabsetPanel(
-                    #            tabPanel('BOSS temp',
-                    #                     plotOutput('boss_test'))
-                    #          )
-                    #          
-                    # ),#BOSS
                     ############## STAT ################
                     tabPanel('Stats',
                              column(12,
                                     #selectInput('anova_factor','Factor to Separate by',full_factor_columns,multiple = F,selected = 'Status'),                        tabsetPan
                                   tabsetPanel(
+                                    ### PRE POST ####
                                     tabPanel('Pre Treatment vs Post Treatment',
                                              tabsetPanel(
   
@@ -286,6 +303,8 @@ shinyUI(fluidPage(
                                                        )
                                     ) # tabset
                              ),
+                             
+                             ### TIME SERIES #####
                              tabPanel("Time-series comparisons",
                                       tabsetPanel(
                                         tabPanel('MANOVA',
@@ -309,12 +328,31 @@ shinyUI(fluidPage(
                                                               tabPanel('Full',
                                                                        dataTableOutput('full_manova_table_i'))
                                                             )
-                                                   )
+                                                   ))))),
+                                                 
+                                        tabPanel('Pre vs Pre and Post vs Post',
+                                                 tabsetPanel(
+                                                   tabPanel('Selected',
+                                                 column(6,plotOutput("hor_box_pre")),
+                                                 column(6,plotOutput("hor_box_post")),
+                                                 column(12,
+                                                  tags$h4('MANOVA'),
+                                                 dataTableOutput('horizontal_anova'),
+                                                 tags$h4('T test'),
+                                                 dataTableOutput('horizontal_t_test'))
+                                                 ),
+                                                 tabPanel('MANOVA',
+                                                          dataTableOutput('horizontal_anova_full')),
+                                                  tabPanel('T test',
+                                                          dataTableOutput('horizontal_t_test_full')
+
+                                                          )
                                                  ))
+                                                 
                                         
                                         
                                         
-                                      ))))
+                                      ))
                              # column
                              
                     )#Stats
@@ -398,6 +436,7 @@ shinyUI(fluidPage(
                                                    
                                                  )),
                                                  tabPanel('Time-series Comparison',
+                                                          tabsetPanel(
                                                           tabPanel('MANOVA',
                                                                    tabsetPanel(
                                                                      tabPanel('Original Data',
@@ -412,7 +451,30 @@ shinyUI(fluidPage(
                                                                      )
                                                                    ))
                                                           
-                                                          )) #tabsetPanel#######
+                                                )
+                                                          
+                                                          ),
+                                                tabPanel('Pre vs Pre and Post vs Post',
+                                                         tabsetPanel(
+                                                           tabPanel('Selected',
+                                                                    column(6,plotOutput("hor_box_pre_d1")),
+                                                                    column(6,plotOutput("hor_box_post_d1")),
+                                                                    column(12,
+                                                                           tags$h4('MANOVA'),
+                                                                           dataTableOutput('horizontal_anova_d1'),
+                                                                           tags$h4('T test'),
+                                                                           dataTableOutput('horizontal_t_test_d1'))
+                                                           ),
+                                                           tabPanel('MANOVA',
+                                                                    dataTableOutput('horizontal_anova_full_d1')),
+                                                           tabPanel('T test',
+                                                                    dataTableOutput('horizontal_t_test_full_d1')
+                                                                    
+                                                           )
+                                                         ))
+                                                
+                                                
+                                                ) #tabsetPanel#######
                                                  )
                                       )
                                       
@@ -438,23 +500,23 @@ shinyUI(fluidPage(
     tabPanel('Clustering',
              
              column(6,
-                    selectInput('mix_clust_col_fac','Discrete Factors List 1',colnames(full_fac_0),multiple = T,selected = default_cluster_list,width = 600),
-                    numericInput('fac_weight', "Weight of Discrete Factors for List 1", 10, min = 10, max = 20, step = 1),
-                    selectInput('mix_clust_col_fac_2','Discrete Factors List 2',colnames(full_fac_0),multiple = T,width = 600),
-                    numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", 0, min = 0, max = 20, step = 1)
+                    selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = c("SignOfInflammation","BiopsyScore"),width = 600),
+                    numericInput('fac_weight', "Weight of Discrete Factors for List 1", 10, min = 0, max = 20, step = 1),
+                    selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = c("NewCTChange","Ground glass","HLAType","HLAStrongWeak"),width = 600),
+                    numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", 5, min = 0, max = 20, step = 1)
                     ),
               column(6,
-                    selectInput('mix_clust_col_num','Continuous Variable List 1',colnames(i_pFEV_ts),multiple = T,selected = default_continuous_cluster_list,width = 600),
-                    numericInput('num_weight', "Weight of Continuous Variable for List 1", 10, min = 10, max = 20, step = 1),
+                    selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = c('-3','-1','0'),width = 600),
+                    numericInput('num_weight', "Weight of Continuous Variable for List 1", 4, min = 0, max = 20, step = 1),
 
-                    selectInput('mix_clust_col_num_2','Continuous Variable List 2',colnames(i_pFEV_ts),multiple = T,width = 600),
-                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", 0, min = 10, max = 20, step = 1)
+                    selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = c("Eosinophil peak"),width = 600),
+                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", 10, min = 10, max = 20, step = 1)
                     ),
              column(12,
                 #HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
-                numericInput('clutree_num', "Number of Clusters", 5, min = 1, max = dim(full_num)[1], step = 1),
+                numericInput('clutree_num', "Number of Clusters", 3, min = 1, max = 50, step = 1),
                 
-                tabsetPanel(
+                tabsetPanel(selected = 'Change Data (D1)',
                   ###### CLUSTERING pFEV #########
                   tabPanel('pFEV Data',
                            radioButtons("cluster_imputed", 'Select Data',
@@ -466,10 +528,14 @@ shinyUI(fluidPage(
                                 plotOutput('mix_clu'),
                                 
 
+                                plotOutput('distance_density'),
+                                tags$h4('log2 ratio t test'),
+                                plotOutput('boxplot_pp_ratio_cluster'),
                                 
-
-                                 plotOutput('boxplot_pFEV_cluster'),
-                                 plotOutput('boxplot_pFEV_cluster_full'),
+                                #tags$h4('Clustering Range'),
+                                # plotOutput('boxplot_pFEV_cluster'),
+                                #tags$h4('Full Range'),
+                                 plotOutput('boxplot_pFEV_cluster_full')
                                  #plotOutput('bos3_surv_factor_plot_cluster'),
                                   
                                 
@@ -477,18 +543,18 @@ shinyUI(fluidPage(
                                 
                                  #plotOutput('discrete_cutree_line'),
                                  #plotOutput('discrete_cutree_mean'),
-                                dataTableOutput('discrete_x_table'),
-                                 htmlOutput('D_text')
+                                #dataTableOutput('discrete_x_table'),
+                                # htmlOutput('D_text')
                              ),
            
-                             tabPanel('ScatterPlots',
-                                      plotOutput('distance_scatter'),
-                                      plotOutput('distance_density'),
-                                      plotOutput('distance_polygon'),
-                                      plotOutput('distance_polygon_neat'),
-                                      dataTableOutput('distance_table'),
-                                      dataTableOutput('distance_model_table')
-                             ),
+                             # tabPanel('ScatterPlots',
+                             #          plotOutput('distance_scatter'),
+                             #          plotOutput('distance_density'),
+                             #          plotOutput('distance_polygon'),
+                             #          plotOutput('distance_polygon_neat'),
+                             #          dataTableOutput('distance_table'),
+                             #          dataTableOutput('distance_model_table')
+                             # ),
                              tabPanel('MANOVA',
                                       plotOutput('boxplot_pFEV_manova_cluster'),
                                       dataTableOutput('cluster_pairwise_manova_table')),
@@ -526,30 +592,33 @@ shinyUI(fluidPage(
                                                    choiceValues = list("imputed", "removed"),inline = T,selected = 'imputed'),
                                         plotOutput('discrete_cluster_plot_d1'),
                                         plotOutput('mix_clu_d1'),
+                                        plotOutput('distance_density_d1'),
+                                      tags$h4('log2 ratio t test'),
+                                      plotOutput('boxplot_pp_ratio_cluster_d1'),
+                                      
                                         #dataTableOutput('cluster_analysis_within_table_selected_d1'),
                                         #uiOutput("clusters_d1"),
                                         #textOutput('chisq_cluster_within_d1'),
                                       
                                         #plotOutput("bos3_factor_plot_cluster_d1"),
-                                        plotOutput('boxplot_pFEV_cluster_d1'),
-                                        plotOutput('boxplot_pFEV_cluster_d1_full'),
+                                        #plotOutput('boxplot_pFEV_cluster_d1'),
+                                        plotOutput('boxplot_pFEV_cluster_d1_full')
                                         
                                       #plotOutput('bos3_surv_factor_plot_cluster_d1'),
                                       
                                          #plotOutput('discrete_cutree_line_d1'),
                                          #plotOutput('discrete_cutree_mean_d1'),
-                                        dataTableOutput('discrete_x_table_d1'),
+                                       # dataTableOutput('discrete_x_table_d1'),
                                       
-                                         htmlOutput('D_d1_text')), #Dendrogram
+                                       #  htmlOutput('D_d1_text')), #Dendrogram
 
-                             tabPanel('ScatterPlot',
-                                      plotOutput('distance_scatter_d1'),
-                                      plotOutput('distance_density_d1'),
-                                      plotOutput('distance_polygon_d1'),
-                                      plotOutput('distance_polygon_neat_d1'),
-                                      dataTableOutput('distance_table_d1'),
-                                      dataTableOutput('distance_model_table_d1')
-                                      ),
+                             # tabPanel('ScatterPlot',
+                             #          plotOutput('distance_scatter_d1'),
+                             #          plotOutput('distance_polygon_d1'),
+                             #          plotOutput('distance_polygon_neat_d1'),
+                             #          dataTableOutput('distance_table_d1'),
+                             #          dataTableOutput('distance_model_table_d1')
+                                       ),
                              tabPanel('MANOVA',
                                       plotOutput('boxplot_change_manova_cluster_d1'),
                                       dataTableOutput('cluster_change_pairwise_manova_table_d1'),

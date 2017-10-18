@@ -103,9 +103,31 @@ shinyServer(function(input, output) {
   
   ############## pFEV line plots ######################
   ######### DISPLAY PATIENTS INDIVIDUALL AND CHOOSE WHICH ONES TO REMOVE ############
+              output$auto_removed_patients = renderText(paste(excluded_patients_c,collapse = ', '))
+              
               excluded_patients = reactive(patient_list[patient_list %in% input$remove_list])
             
-              retained_patients = reactive(patient_list[!(patient_list %in% input$remove_list)])
+              retained_patients = reactive({
+                
+                patient_list = patient_list[!(patient_list %in% input$remove_list)]
+                if(input$status_radio == '2'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath < as.numeric(input$post_range[2])])
+                  print('Dead MRN')
+                  print(length(MRN))
+                  print(MRN)
+                  patient_list = patient_list[patient_list %in% MRN]
+                }
+                if(input$status_radio == '1'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath > as.numeric(input$post_range[2]) | pFEV_wf$Status == '1'])
+                  print('Alive MRN')
+                  print(length(MRN))
+                  print(MRN)
+                  patient_list = patient_list[patient_list %in% MRN]
+                }
+                
+                patient_list
+                
+                })
             line_size = 2
             point_size = 4
             sm_size = 1
@@ -272,13 +294,30 @@ shinyServer(function(input, output) {
       s = input$status_radio
     }
     s
-    #print(s)
     
+
+    #print(s)
+    s
   })
   
+  pFEV_wf_c = reactive({
+    o_data = pFEV_wf
+    #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data)
+    #o_data = cbind(pFEV_wf, pFEV_2_zero()$per_data)
+    #o_data = cbind(pFEV_wf, pFEV_sym())
+    
+    #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_2_zero()$per_data, pFEV_sym())
+    #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_sym())
+    
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    #data = data[data$Status %in% status_r(),]
+    #View(data)
+    data
+  })  
+              
   pFEV_wf_r = reactive({
     print(retained_patients())
-    o_data = pFEV_wf
+    o_data = pFEV_wf_c()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
     m_data_d1 = discrete_cluster_D_d1()$data
@@ -289,20 +328,16 @@ shinyServer(function(input, output) {
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
 
     data
     
     })
-  pFEV_wf_c = reactive({
-    o_data = pFEV_wf
-    data = o_data[o_data$MRN %in% retained_patients(),]
-    data
-  })
+
   
   pFEV_lf_r = reactive({
     w_data = pFEV_wf_r()
-    data = melt(w_data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w))
+    data = melt(w_data, measure.vars = colnames(pFEV_w))
     data$time = as.numeric(as.character(data$variable))
     
     data
@@ -314,14 +349,15 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
-    data = data[data$Status %in% status_r(),]
-    
+    #data = data[data$Status %in% status_r(),]
     data
   })
   
   i_pFEV_wf_c = reactive({
     o_data = i_pFEV_wf
     data = o_data[o_data$MRN %in% retained_patients(),]
+    #data = data[data$Status %in% status_r(),]
+    data
   })
   
   
@@ -332,7 +368,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -343,7 +379,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -354,7 +390,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -363,6 +399,8 @@ shinyServer(function(input, output) {
   i_pFEV_sm_d1_f_c = reactive({
     o_data = i_pFEV_sm_d1_f
     data = o_data[o_data$MRN %in% retained_patients(),]
+    #data = data[data$Status %in% status_r(),]
+    #View(data)
     data
   })
   i_pFEV_sm_d1_f_r = reactive({
@@ -371,7 +409,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     data
   })
   i_pFEV_sm_d1_fl_r = reactive({
@@ -381,7 +419,7 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -395,7 +433,11 @@ shinyServer(function(input, output) {
     for(col_name in d1_cols){
       o_data[which(is.na(m_data[,col_name])),col_name] = NA
     }
-    o_data
+    data = o_data
+    #data = data[data$Status %in% status_r(),]
+    data
+    #View(data)
+    data
   })
   i_pFEV_sm_d1_f_c_ir_r = reactive({
     o_data = i_pFEV_sm_d1_f_c_ir()
@@ -409,7 +451,7 @@ shinyServer(function(input, output) {
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
     
@@ -430,7 +472,7 @@ shinyServer(function(input, output) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
@@ -441,10 +483,12 @@ shinyServer(function(input, output) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
-    data = data[data$Status %in% status_r(),]
+    #data = data[data$Status %in% status_r(),]
     
     data
   })
+  
+  #comp_data = r
   
   # output$test_table_1 = renderDataTable(pFEV_lf_r())
   # output$test_table_2 = renderDataTable(i_pFEV_sm_d1_fl_r())
@@ -1353,6 +1397,8 @@ shinyServer(function(input, output) {
             ### for clustering ####
         pp_t_test_ratio_cluster = reactive({
           full_data = pFEV_lf_r()
+          plot_data = full_data
+          #View(plot_data)
           factor = 'cluster'
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
@@ -1382,6 +1428,7 @@ shinyServer(function(input, output) {
         
         pp_t_test_ratio_cluster_d1 = reactive({
           full_data = pFEV_lf_r()
+          #View(full_data)
           factor = 'cluster_d1'
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
@@ -2085,6 +2132,7 @@ shinyServer(function(input, output) {
         }else{
           full_data = i_pFEV_wf_c()
         }
+        #View(full_data)
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -3896,7 +3944,7 @@ shinyServer(function(input, output) {
       significance_table_formatting_function(df)
     })
 
-    
+####### RATIOS AND PERCENTAGES #######    
     output$pFEV_mean_table = renderTable({
       full_data = pFEV_wf
       full_data = pFEV_wf_r()
@@ -3923,11 +3971,279 @@ shinyServer(function(input, output) {
       #(mean_df['0',2] - mean_df[,2])/ mean_df['0',2]* 100
     })
 
+    pFEV_2_zero = reactive({
+      full_data = pFEV_wf
+      #full_data = pFEV_wf_r()
+      
+      pre_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n < 0]
+      pre_times
+      post_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n > 0]
+      
+      zero_data = full_data[,'0']
+      zero_data
+      
+      pre_data = full_data[,pre_times]
+      post_data = full_data[,post_times]
+      
+      pre_ratio_data = log2(zero_data/pre_data)
+      colnames(pre_ratio_data) = paste0('log2zero_',pre_times)
+      post_ratio_data = log2(post_data/zero_data)
+      colnames(post_ratio_data) = paste0('log2zero_',post_times)
+      
+      ratio_data = cbind(pre_ratio_data,post_ratio_data)
+      
+      
+      pre_per_data =  (zero_data-pre_data)/pre_data*100
+      colnames(pre_per_data) = paste0('per2zero_',pre_times)
+      
+      post_per_data = (post_data-zero_data)/post_data*100
+      colnames(post_per_data) = paste0('per2zero_',post_times)
+      per_data = cbind(pre_per_data,post_per_data)
+      per_data
+      class(per_data)
+      list(ratio_data = ratio_data, per_data = per_data)  
+
+    })
+    
+    output$pFEV_ratio2zero = renderDataTable(table_formatting_function(pFEV_2_zero()$ratio_data))
+
+    output$pFEV_per2zero = renderDataTable(table_formatting_function(pFEV_2_zero()$per_data))
+    
+    
+    pFEV_sym = reactive({ # calcuates the ratios and percentages of timepoints across zero, -12 compared to 12, -3 compared to 3
+      full_data = pFEV_wf
+      #full_data = pFEV_wf_r()
+      colnames(full_data)
+      ratio_df = data.frame(MRN = full_data$MRN)
+      i = 1
+      for(i in sym_times_cols){
+        print(i)
+        r1 = full_data[,as.character(-(i))]
+        r1
+        r2 = full_data[,as.character((i))]
+        r2
+        log2(r2/r1)
+        as.character(i)
+        ratio_df[,paste0('log2_',i)] = log2(r2/r1)
+        ratio_df[,paste0('per_',i,'')] = (r2-r1)/r1*100
+        
+        
+      }
+      ratio_df = ratio_df[,-1]
+      ratio_df
+    })
+    
+    output$pFEV_ratio_df = renderDataTable({
+      df = pFEV_sym()
+      
+      df[,sym_ratio_colnames]
+      #table_formatting_function(df)
+      })
+    
+    output$sym_ratio_boxplot = renderPlot({
+      #full_data = sym_df
+      full_data = pFEV_sym()
+      #ratio_colnames = paste0('log2(',sym_times_cols,')')
+      #ratio_colnames
+      plot_data = melt(full_data, measure.vars = sym_ratio_colnames)
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      ggplot(plot_data, aes_string(x = 'variable', y = 'value', col = global_factor)) +
+        geom_boxplot()
+    })
+    
+    output$sym_per_boxplot = renderPlot({
+      #full_data = sym_df
+      full_data = pFEV_sym()
+      #ratio_colnames = paste0('per_',sym_times_cols)
+      #ratio_colnames
+      plot_data = melt(full_data, measure.vars = sym_ratio_colnames)
+      global_factor = 'Status'
+      global_factor = input$global_factor
+      ggplot(plot_data, aes_string(x = 'variable', y = 'value', col = global_factor)) +
+        geom_boxplot()
+    })
+    
+    mean_sym = reactive({
+      #full_data = sym_df
+      global_factor = 'Status'
+      #ratio_colnames = paste0('log2(',sym_times_cols,')')
+      #per_colnames = paste0('per_',sym_times_cols)
+    
+      full_data = pFEV_sym()
+      global_factor = input$global_factor
+      factor_list = unique(full_data[,global_factor])
+      factor_list
+      entry = factor_list[1]
+      sub_data = full_data[full_data[,global_factor] == entry,sym_ratio_colnames]
+      mean_ratio_df = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+      mean_ratio_df$Factor = global_factor
+      mean_ratio_df$Status = entry
+      for(entry in factor_list[-1]){
+        sub_data = full_data[full_data[,global_factor] == entry,sym_ratio_colnames]
+        mean_ratio_df_n = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+        mean_ratio_df_n$Factor = global_factor
+        mean_ratio_df_n$Status = entry
+        mean_ratio_df = rbind(mean_ratio_df,mean_ratio_df_n)
+      }
+    mean_ratio_df
+    sub_data = full_data[full_data[,global_factor] == entry,sym_per_colnames]
+    mean_per_df = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+    mean_per_df$Factor = global_factor
+    mean_per_df$Status = entry
+    for(entry in factor_list[-1]){
+      sub_data = full_data[full_data[,global_factor] == entry,sym_per_colnames]
+      mean_per_df_n = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+      mean_per_df_n$Factor = global_factor
+      mean_per_df_n$Status = entry
+      mean_per_df = rbind(mean_per_df,mean_per_df_n)
+    }
+    #mean_per_df
+    
+    mean_ratio_df = mean_ratio_df[,c('Factor','Status',colnames(mean_ratio_df[c(1:(length(colnames(mean_ratio_df))-2))]))]
+    mean_per_df = mean_per_df[,c('Factor','Status',colnames(mean_per_df[c(1:(length(colnames(mean_per_df))-2))]))]
+    
+    list(mean_ratio_df = mean_ratio_df, mean_per_df = mean_per_df)
+    })
+    
+
+    
+    output$sym_ratio_mean_df = renderDataTable(table_formatting_function(mean_sym()$mean_ratio_df))
+    output$sym_per_mean_df = renderDataTable(table_formatting_function(mean_sym()$mean_per_df))
+    
+    anova_sym = reactive({
+      anova_df_b = data.frame(term = numeric(0), df = numeric(0), sumsq = numeric(0), meansq = numeric(0), statistic = numeric(0),
+                            p.value = numeric(0), Factor = numeric(0), time  = numeric(0))
+      anova_df = anova_df_b
+      #full_data = sym_df
+      global_factor = 'HLAType'
+      full_data = pFEV_sym()
+      global_factor = input$global_factor
+      #ratio_colnames = paste0('log2(',sym_times_cols,')')
+      #per_colnames = paste0('per_',sym_times_cols)
+      
+      ratio_stat_data = melt(full_data, measure.vars = sym_ratio_colnames)
+      per_stat_data = melt(full_data, measure.vars = sym_per_colnames)
+      time = sym_ratio_colnames[7]
+      for(time in sym_ratio_colnames){
+        time_data = ratio_stat_data[ratio_stat_data$variable == time,]
+        #cmd = paste("anova_df = tidy(manova(cbind(variable,value) ~ ",global_factor,", data = stat_data))")
+        anova_df_n = tryCatch(tidy(anova(lm(time_data$value ~ time_data$HLAType))), error = function(e) e = anova_df_b)
+        if(dim(anova_df_n)[1] > 0){
+          anova_df_n$Factor = global_factor
+          anova_df_n$time = time
+          anova_df = rbind(anova_df,anova_df_n)
+        }
+      }
+      anova_df
+      df = col_rearrange_function(anova_df,2)
+      df
+
+    })
+    
+    manova_sym = reactive({
+
+      #full_data = sym_df
+      global_factor = 'HLAType'
+      full_data = pFEV_sym()
+      global_factor = input$global_factor
+      sym_times_cols_selected = sym_times_cols[sym_times_cols <= input$post_range[2]]
+      #ratio_colnames = paste0('log2(',sym_times_cols_selected,')')
+      #per_colnames = paste0('per_',sym_times_cols)
+      
+      ratio_stat_data = melt(full_data, measure.vars = ratio_colnames)
+ 
+      manova_df = pairwise_manova_function(ratio_stat_data,global_factor)
+      manova_df$range = paste(sym_times_cols_selected,collapse = ', ')
+      manova_df
+      
+    })
+    
+    output$manova_sym_table = renderDataTable({
+      df = manova_sym()
+      significance_table_formatting_function(df)
+      })
+    
+    
+    output$anova_pw_sym_ratio = renderDataTable({
+      df =  anova_sym()
+      df
+      significance_table_formatting_function(df)
+    })
+    
+
+sym_t_test = reactive({
+  t_df_b = data.frame(estimate = numeric(0), estimate1 = numeric(0), estimate2 = numeric(0),
+                      statistic = numeric(0), p.value = numeric(0), parameter = numeric(0),
+                      conf.low = numeric(0), conf.high = numeric(0), method = numeric(0), 
+                      alternative = numeric(0),
+                      Factor = numeric(0), comparison = numeric(0), time = numeric(0))
+  t_df = t_df_b
+  #full_data = sym_df
+  global_factor = "HLAType"
+  full_data = pFEV_sym()
+
+  #ratio_colnames = paste0('log2(',sym_times_cols,')')
+  #per_colnames = paste0('per_',sym_times_cols)
+
+  global_factor = input$global_factor
+  factor_list = unique(full_data[,global_factor])
+  factor_list = paste(factor_list[order(factor_list)])
+  #factor_list
+  l = length(factor_list)
+  entry = factor_list[1]
+  #entry
+  time = ratio_colnames[7]
+  #time
+  i = 1
+  j = 2
+  ratio_data = melt(full_data,measure.vars = ratio_colnames)
+  for(time in ratio_colnames){
+    time_data = ratio_data[ratio_data$variable == time,]
+      for(i in c(1:l)){
+        for(j in c(1:l)){
+          if(i < j){
+            i_entry = factor_list[i]
+            #i_entry
+            j_entry = factor_list[j]
+            #j_entry
+            i_data = time_data$value[time_data[,global_factor] == i_entry]
+            #i_data
+            j_data = time_data$value[time_data[,global_factor] == j_entry]
+            #j_data
+            t_df_n = tryCatch(tidy(t.test(i_data,j_data)), error = function(e) e = t_df_b)
+            t_df_n
+            if(dim(t_df_n)[1] > 0){
+  
+              #colnames(t_df_n)
+              t_df_n$Factor = global_factor
+              t_df_n$comparison = paste(i_entry,'vs',j_entry)
+              t_df_n$time = time
+              #t_df_n
+              t_df = rbind(t_df,t_df_n)
+              #t_df
+            }
+          }
+        }
+
+      }
+    }
+  t_df
+  #colnames(t_df)
+  df = col_rearrange_function(t_df,3)
+  df
 
 })
 
 
 
+output$sym_t_test_table = renderDataTable({
+  df = sym_t_test()
+  significance_table_formatting_function(df)
+})
 
 
-on.exit(rm(list= ls()))
+    
+})
+
+

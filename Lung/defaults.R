@@ -1,7 +1,9 @@
 completeness = 20 # percentage of datapoints required to automatically include patients
-patient_custom_exclude = c('4924475','5863880','5931655','5884461') # list of patients to exclude
-patient_custom_exclude = c()
+#patient_custom_exclude = c('4924475','5863880','5931655','5884461') # list of patients to exclude
+patient_custom_exclude = c('4941516', '4964463', '5863880', '5881350', '5884461', '5900493', '5928232', '5931655', '5931655_a', '4854594', '4941516', '5895629', '4905274', '4977337', '5876473', '5916182')
+#patient_custom_exclude = c()
 default_cluster_list = c("HLAType","HLAStrongWeak","NewCTChange","SignOfInflammation")
+
 default_continuous_cluster_list = factor(c(-6, -3, -2, -1, 0, 1, 2, 3))
 
 
@@ -36,8 +38,16 @@ pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0',
 
 clustering_continuous_columns = c(pFEV_numeric_colnames_f,continuous_columns,continuous_date_columns)
 
+sym_times_cols = c(24,12,6,5,4,3,2,1)
+ratio_colnames = paste0('log2(',sym_times_cols,')')
+per_colnames = paste0('per_',sym_times_cols)
 
+sym_ratio_colnames = paste0('log2_',sym_times_cols)
+sym_per_colnames = paste0('per_',sym_times_cols)
+log2zero_ratio_colnames = paste0('log2zero_',pFEV_numeric_colnames_f)
+log2zero_per_colnames = paste0('per2zero_',pFEV_numeric_colnames_f)
 
+clustering_continuous_columns = c(pFEV_numeric_colnames_f,continuous_columns,continuous_date_columns,sym_ratio_colnames,log2zero_ratio_colnames)
 
 
 

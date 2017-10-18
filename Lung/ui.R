@@ -15,10 +15,41 @@ shinyUI(fluidPage(
     
     column(12,
     
-    tabsetPanel(selected = 'Clustering',
+    tabsetPanel(selected = 'Testing',
     ############# TESTING ##############
       tabPanel('Testing',
-               tabsetPanel(selected = 'text',
+ 
+               tabsetPanel(selected = 'Sym Data',
+                           tabPanel('Sym Data',
+                                    tabsetPanel(
+                                      tabPanel('Data Table',
+                                               tags$h3('log2 ratio of timepoints on either side of treatment, ie log2(-12/12) or log2(-6/6)'),
+                                               dataTableOutput('pFEV_ratio_df')
+                                      ),
+                                      tabPanel('Plots',
+                                               plotOutput('sym_ratio_boxplot'),
+                                               plotOutput('sym_per_boxplot')),
+                                      tabPanel('Means',
+                                        tags$h4('Mean log2(ratio)  (-12/12)'),
+                                        dataTableOutput("sym_ratio_mean_df"),
+                                        tags$h4('Mean percentage change (-12 to 12)'),
+                                        dataTableOutput("sym_per_mean_df")
+                                               ),
+                                      tabPanel('MANOVA',
+                                               tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
+                                               
+                                               dataTableOutput('manova_sym_table')
+                                               ),
+                                      tabPanel('ANOVA',
+                                        tags$h5('Determines if there is a significant difference between the factors (ie clusters) at a specific timepoints for which log2 ratio were generated. ie(log2(-12/12)'),
+                                        dataTableOutput('anova_pw_sym_ratio')
+                                               ),
+                                      tabPanel('T tests',
+                                               dataTableOutput('sym_t_test_table')
+                                               
+                                    )
+                           )),
+                           
                  tabPanel('Sanity Check',
                           verbatimTextOutput('additional_columns'),
                           verbatimTextOutput('missing_columns'),
@@ -116,16 +147,23 @@ shinyUI(fluidPage(
     
     
     tabPanel('Select Data',
-             HTML(paste('Plots take some time to render, please wait ...')),
-             selectInput('remove_list','Patients Removed',patient_list,multiple = T,selected = excluded_patients_c, width = 800),
-             
              tabsetPanel(
+               tabPanel('Select',
+            tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
+            textOutput('auto_removed_patients'),
+             selectInput('remove_list','Additional Patients Removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800)
+               ),
+             tabPanel('Plot',
+                      HTML(paste('Plots take some time to render, please wait ...')),
+             tabsetPanel(
+               
+               
                #   #HTML(paste('Plots take some time to render, please wait ...')),
                tabPanel('Excluded',column(12,uiOutput('excluded_plots'))),
                #   
                tabPanel('Retained',column(12,uiOutput("plots")))
                #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
-             )
+             )))
     ),
     
     
@@ -135,9 +173,17 @@ shinyUI(fluidPage(
              #             width = NULL)),
               column(12,
                      tabsetPanel(
-                    tabPanel('Mean Table',
-                             tableOutput('pFEV_mean_table')
+                       tabPanel('Tables',
+                                tabsetPanel(
+                                    tabPanel('Mean Table',
+                                    tableOutput('pFEV_mean_table')
                              ),
+                             tabPanel('log 2 ratio vs zero',
+                                         dataTableOutput("pFEV_ratio2zero")),
+                             tabPanel('precentage change vs zero',
+                                      dataTableOutput("pFEV_per2zero"))
+
+                             )),
                     ######## LINE PLOTS ###########
                     tabPanel('Line Plot',
                              
@@ -516,12 +562,12 @@ shinyUI(fluidPage(
                 #HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
                 numericInput('clutree_num', "Number of Clusters", 3, min = 1, max = 50, step = 1),
                 
-                tabsetPanel(selected = 'Change Data (D1)',
+                tabsetPanel(selected = 'pFEV Data',
                   ###### CLUSTERING pFEV #########
                   tabPanel('pFEV Data',
                            radioButtons("cluster_imputed", 'Select Data',
                                         choiceNames = list('Original',"Imputed"),
-                                        choiceValues = list("original", "imputed"),inline = T,selected = 'imputed'),
+                                        choiceValues = list("original", "imputed"),inline = T,selected = 'original'),
                            tabsetPanel(
                              tabPanel('Dendograms',
                                 plotOutput('discrete_cluster_plot'),  

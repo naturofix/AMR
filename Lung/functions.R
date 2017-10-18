@@ -767,9 +767,11 @@ pp_t_test_ratio_function = function(full_data,factor,t1,t2){
         paired = TRUE
       }
     }
+    #paired = FALSE
     
-    t = t.test(na.omit(pre_ratio),na.omit(post_ratio),alternative = c("two.sided"),paired = paired)
-    p = t$p.value
+    
+    p = tryCatch(t.test(na.omit(pre_ratio),na.omit(post_ratio),alternative = c("two.sided"),paired = paired)$p.value, error = function(e) e = 2)
+    #p = t$p.value
     
     s = 0
     if(p < 0.05){
@@ -929,13 +931,17 @@ clustering_function = function(full_data,r_list,d_num,
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
   clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
   clust_col_list = c(clust_num_col_list,clust_fac_col_list)
-  #print(clust_col_list)
+  print(colnames(full_data))
+  print(clust_col_list)
   
   
-  data = full_data[r_list,clust_col_list]
-  
+  #t_data = full_data[r_list,clust_col_list]
+  #View(t_data)
+  r_data = full_data[,clust_col_list]
+  #View(r_data)
+  data = r_data
   #View(data)
-  o_data = data
+  o_data = r_data
   
   
   weights_2 = c()
@@ -1576,7 +1582,7 @@ pairwise_manova_function = function(data,m_factor){
   factor_list
   num = length(factor_list)
   if(num > 1){
-    cmd = paste('res.man = manova(cbind(time,value) ~ ',m_factor,', data = data)')
+    cmd = paste('res.man = manova(cbind(variable,value) ~ ',m_factor,', data = data)')
     eval(parse(text = cmd))
     df = tidy(res.man)
     if(num > 2){
@@ -1591,7 +1597,7 @@ pairwise_manova_function = function(data,m_factor){
             m_data = data[data[,m_factor] %in% c(i_entry,j_entry),]
             df_n = df_b
             df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
-            cmd = paste('df_n = tidy(manova(cbind(time,value) ~ ',m_factor,', data = m_data))')
+            cmd = paste('df_n = tidy(manova(cbind(variable,value) ~ ',m_factor,', data = m_data))')
             
             try(eval(parse(text = cmd)))
               df_n$comparison = paste(i_entry,'vs',j_entry)
@@ -1616,6 +1622,54 @@ pairwise_manova_function = function(data,m_factor){
   }
 }
 
+pairwise_manova_function_backup = function(data,m_factor){
+  df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
+  if(dim(data)[1] > 1){
+    
+    factor_list = paste(unlist(unique(data[,m_factor])))
+    factor_list = factor_list[order(factor_list)]
+    factor_list
+    num = length(factor_list)
+    if(num > 1){
+      cmd = paste('res.man = manova(cbind(time,value) ~ ',m_factor,', data = data)')
+      eval(parse(text = cmd))
+      df = tidy(res.man)
+      if(num > 2){
+        df$comparison = 'All'
+        nums = lapply(factor_list, function(x) length(na.omit(data$value[data[,m_factor] == x])))
+        df$numbers = paste(nums, collapse = ', ')
+        for(i in c(1:num)){
+          i_entry = factor_list[i]
+          for(j in c(1:num)){
+            j_entry = factor_list[j]
+            if(i < j){
+              m_data = data[data[,m_factor] %in% c(i_entry,j_entry),]
+              df_n = df_b
+              df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
+              cmd = paste('df_n = tidy(manova(cbind(time,value) ~ ',m_factor,', data = m_data))')
+              
+              try(eval(parse(text = cmd)))
+              df_n$comparison = paste(i_entry,'vs',j_entry)
+              df_n$numbers = paste(length(m_data$value[m_data[,m_factor] == i_entry & !is.na(m_data$value)]),'vs',length(m_data$value[m_data[,m_factor] == j_entry  & !is.na(m_data$value)]))
+              df = rbind(df,df_n)
+              
+              
+            }
+          }
+        }
+        
+        
+      }else{
+        df$comparison = paste(factor_list[1],'vs',factor_list[2])
+        df$numbers = paste(length(data$value[data[,m_factor] == factor_list[1]  & !is.na(data$value)]),'vs',length(data$value[data[,m_factor] == factor_list[2]  & !is.na(data$value)]))
+        
+      }
+      df$p.value = signif(df$p.value,3)
+      
+      return(df)
+    }
+  }
+}
 
 
 binary_t_test_function = function(pre_data,post_data,factor_list,global_factor,input){
@@ -1714,6 +1768,15 @@ anova_function = function(pre_data,post_data,global_factor,factor_list,input){
 
 
 
+manova_function = function(stat_data,global_factor,input){
+  cmd = paste("anova_df = tidy(manova(cbind(variable,value) ~ ",global_factor,", data = stat_data))")
+  #print(cmd)
+  eval(parse(text = cmd))
+  anova_df
+}
+
+
+
 
 ######### FORMATTING ##############
 
@@ -1726,4 +1789,14 @@ significance_table_formatting_function = function(df){
     'p.value', 'significant',
     backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))
   ) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
+}
+
+table_formatting_function = function(df){
+  datatable(df) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
+}
+
+col_rearrange_function = function(df,col_num){
+  l = length(colnames(df))
+  df = df[,c((l-col_num+1):l,1:(l-col_num))]
+  return(df)
 }

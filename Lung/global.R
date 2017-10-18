@@ -86,7 +86,7 @@ all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering))
 discrete_columns_4_comparison = c(discrete_numeric_columns,discrete_term_columns) #factor_colums_4_comparisons
 discrete_columns_4_comparison = order_columns(discrete_columns_4_comparison,colnames(clustering))
 
-non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols)
+non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols,continuous_date_columns)
 #discrete_columns_4_comparison
 
 
@@ -116,7 +116,7 @@ clustering$MRN = row_names
 clust_date = clustering[,date_columns]
 #clust_date
 clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
-head(clust_date)
+#head(clust_date)
 
 
 
@@ -157,10 +157,13 @@ full_fac = apply(full_fac,2, function(x) factor(x))
 
 ## numric column ##
 clust_num = clustering[,non_pFEV_continuous_columns]
-clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric(factor(x))))
+clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric((x))))
 str(clust_num)
 #clust_num
 
+
+
+#as.numeric(clustering$MonthsToDeath)
 ####################### pFEV ##################################
 
 ########## ADD missing pFEV columns ###################
@@ -213,7 +216,7 @@ processed_data = cbind(processed_data,pFEV_w) #extended withe missing columns
 
 
 ### order ###
-excluded_patients_c = processed_data$MRN[processed_data$pFEV_na < completeness]
+excluded_patients_c = paste(processed_data$MRN[processed_data$pFEV_na < completeness])
 r_list = patient_list[!patient_list %in% excluded_patients_c]
 
 

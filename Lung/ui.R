@@ -3,12 +3,20 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster','cluster_d1'),multiple = F,selected = 'cluster_d1')),
+    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+ 
+    
     column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'Both'),
                               choiceValues = list("1", "2","0"
                               ),inline = F,selected = '0')),
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-3,0),width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,3),width = 800)),
+    column(12,
+           radioButtons("data_select", 'Select Change Data',
+                        choiceNames = list('pFEV',"imputed", 'change', "change_ri"),
+                        choiceValues = list("pFEV", "imputed",'change','change_ri'),inline = T,selected = 'imputed')
+           
+    ),
     #column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = c(-12,0),width = 800)),
     #column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = c(0,12),width = 800)),
     #column(6,sliderInput('anova_range','Timecourse Range',min = -48,max=24,step = 1,value = c(-6,6),width = 800)),
@@ -124,6 +132,9 @@ shinyUI(fluidPage(
           # tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f")),
           
           tabPanel('pFEV',dataTableOutput('pFEV_wf_r')),
+          tabPanel('pFEV_l',dataTableOutput('pFEV_lf_r')),
+          
+          tabPanel('Change Data', dataTableOutput('change_data')),
           tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf_r')),
           tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf_r')),
           #i_pFEV_sm_lf_r

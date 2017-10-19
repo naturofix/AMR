@@ -931,6 +931,7 @@ clustering_function = function(full_data,r_list,d_num,
   clust_num_col_list = c(num_col_list_1,num_col_list_2)
   clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
   clust_col_list = c(clust_num_col_list,clust_fac_col_list)
+  clust_col_list = clust_col_list[clust_col_list %in% colnames(full_data)]
   print(colnames(full_data))
   print(clust_col_list)
   

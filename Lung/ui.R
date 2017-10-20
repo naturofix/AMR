@@ -27,36 +27,8 @@ shinyUI(fluidPage(
     ############# TESTING ##############
       tabPanel('Testing',
  
-               tabsetPanel(selected = 'Sym Data',
-                           tabPanel('Sym Data',
-                                    tabsetPanel(
-                                      tabPanel('Data Table',
-                                               tags$h3('log2 ratio of timepoints on either side of treatment, ie log2(-12/12) or log2(-6/6)'),
-                                               dataTableOutput('pFEV_ratio_df')
-                                      ),
-                                      tabPanel('Plots',
-                                               plotOutput('sym_ratio_boxplot'),
-                                               plotOutput('sym_per_boxplot')),
-                                      tabPanel('Means',
-                                        tags$h4('Mean log2(ratio)  (-12/12)'),
-                                        dataTableOutput("sym_ratio_mean_df"),
-                                        tags$h4('Mean percentage change (-12 to 12)'),
-                                        dataTableOutput("sym_per_mean_df")
-                                               ),
-                                      tabPanel('MANOVA',
-                                               tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
-                                               
-                                               dataTableOutput('manova_sym_table')
-                                               ),
-                                      tabPanel('ANOVA',
-                                        tags$h5('Determines if there is a significant difference between the factors (ie clusters) at a specific timepoints for which log2 ratio were generated. ie(log2(-12/12)'),
-                                        dataTableOutput('anova_pw_sym_ratio')
-                                               ),
-                                      tabPanel('T tests',
-                                               dataTableOutput('sym_t_test_table')
-                                               
-                                    )
-                           )),
+               tabsetPanel(
+ 
                            
                  tabPanel('Sanity Check',
                           verbatimTextOutput('additional_columns'),
@@ -528,7 +500,37 @@ shinyUI(fluidPage(
                                                                     dataTableOutput('horizontal_t_test_full_d1')
                                                                     
                                                            )
-                                                         ))
+                                                         )),                          
+                                                        tabPanel('Symmetry Data',
+                                                                   #tags$h4('Ratios generates symmetrically across treatment i.e(-3/3) and then statistics performed on these ratios'),
+                                                                   tabsetPanel(
+                                                                     tabPanel('Data Table',
+                                                                              tags$h3('log2 ratio of timepoints on either side of treatment, ie log2(-12/12) or log2(-6/6)'),
+                                                                              dataTableOutput('pFEV_ratio_df')
+                                                                     ),
+                                                                     tabPanel('Plots',
+                                                                              plotOutput('sym_ratio_boxplot'),
+                                                                              plotOutput('sym_per_boxplot')),
+                                                                     tabPanel('Means',
+                                                                              tags$h4('Mean log2(ratio)  (-12/12)'),
+                                                                              dataTableOutput("sym_ratio_mean_df"),
+                                                                              tags$h4('Mean percentage change (-12 to 12)'),
+                                                                              dataTableOutput("sym_per_mean_df")
+                                                                     ),
+                                                                     tabPanel('MANOVA',
+                                                                              tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
+                                                                              
+                                                                              dataTableOutput('manova_sym_table')
+                                                                     ),
+                                                                     tabPanel('ANOVA',
+                                                                              tags$h5('Determines if there is a significant difference between the factors (ie clusters) at a specific timepoints for which log2 ratio were generated. ie(log2(-12/12)'),
+                                                                              dataTableOutput('anova_pw_sym_ratio')
+                                                                     ),
+                                                                     tabPanel('T tests',
+                                                                              dataTableOutput('sym_t_test_table')
+                                                                              
+                                                                     )
+                                                                   ))
                                                 
                                                 
                                                 ) #tabsetPanel#######
@@ -554,6 +556,9 @@ shinyUI(fluidPage(
              ))
     ),#change
     #### CLUSTERING ####
+    tabPanel('Processed Data',
+             tabsetPanel(
+             
     tabPanel('Clustering',
              
              column(6,
@@ -700,10 +705,10 @@ shinyUI(fluidPage(
                                     dataTableOutput('cluster_analysis_within_table_d1')
                            )))
                            
-                           )),# change Data
-                  tabPanel('Comparison',
-                           HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
-                           plotOutput('cluster_comparison'))
+                           ))# change Data
+                  # tabPanel('Comparison',
+                  #          HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
+                  #          plotOutput('cluster_comparison'))
                 #   tabPanel('Composition',
                 #            tabsetPanel(
                 #              tabPanel('Total',
@@ -734,7 +739,7 @@ shinyUI(fluidPage(
                 )
                 
              )
-    ),
+    ))),
 
     ####### BOSS #######
     tabPanel('BOS',

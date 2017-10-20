@@ -2200,7 +2200,9 @@ shinyServer(function(input, output) {
           full_data = i_pFEV_wf_c()
         }
         #View(full_data)
-        full_data = pFEV_wf_c()
+        #full_data = pFEV_wf_c()
+        full_data = change_data()
+        
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -4110,7 +4112,7 @@ shinyServer(function(input, output) {
     
     output$sym_ratio_boxplot = renderPlot({
       #full_data = sym_df
-      full_data = change_data()
+      full_data = change_data_w()
       #ratio_colnames = paste0('log2(',sym_times_cols,')')
       #ratio_colnames
       plot_data = melt(full_data, measure.vars = sym_ratio_colnames)
@@ -4122,7 +4124,7 @@ shinyServer(function(input, output) {
     
     output$sym_per_boxplot = renderPlot({
       #full_data = sym_df
-      full_data = change_data()
+      full_data = change_data_w()
       #ratio_colnames = paste0('per_',sym_times_cols)
       #ratio_colnames
       plot_data = melt(full_data, measure.vars = sym_per_colnames)
@@ -4138,7 +4140,7 @@ shinyServer(function(input, output) {
       #ratio_colnames = paste0('log2(',sym_times_cols,')')
       #per_colnames = paste0('per_',sym_times_cols)
 
-      full_data = change_data()
+      full_data = change_data_w()
       global_factor = input$global_factor
       factor_list = unique(full_data[,global_factor])
       factor_list
@@ -4185,7 +4187,7 @@ shinyServer(function(input, output) {
           anova_df = anova_df_b
           #full_data = sym_df
           global_factor = 'HLAType'
-          full_data = change_data()
+          full_data = change_data_w()
           global_factor = input$global_factor
           #ratio_colnames = paste0('log2(',sym_times_cols,')')
           #per_colnames = paste0('per_',sym_times_cols)
@@ -4196,7 +4198,7 @@ shinyServer(function(input, output) {
           for(time in sym_ratio_colnames){
             time_data = ratio_stat_data[ratio_stat_data$variable == time,]
             #cmd = paste("anova_df = tidy(manova(cbind(variable,value) ~ ",global_factor,", data = stat_data))")
-            anova_df_n = tryCatch(tidy(anova(lm(time_data$value ~ time_data$HLAType))), error = function(e) e = anova_df_b)
+            anova_df_n = tryCatch(tidy(anova(lm(time_data$value ~ time_data[,global_factor]))), error = function(e) e = anova_df_b)
             if(dim(anova_df_n)[1] > 0){
               anova_df_n$Factor = global_factor
               anova_df_n$time = time
@@ -4213,7 +4215,7 @@ shinyServer(function(input, output) {
 
           #full_data = sym_df
           global_factor = 'HLAType'
-          full_data = change_data()
+          full_data = change_data_w()
           #View(full_data)
           global_factor = input$global_factor
           sym_times_cols_selected = sym_ratio_colnames[sym_times_cols <= input$post_range[2]]
@@ -4251,7 +4253,7 @@ shinyServer(function(input, output) {
       t_df = t_df_b
       #full_data = sym_df
       global_factor = "HLAType"
-      full_data = change_data()
+      full_data = change_data_w()
 
       #ratio_colnames = paste0('log2(',sym_times_cols,')')
       #per_colnames = paste0('per_',sym_times_cols)

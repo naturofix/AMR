@@ -3,7 +3,7 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
  
     
     column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'Both'),
@@ -556,8 +556,8 @@ shinyUI(fluidPage(
              ))
     ),#change
     #### CLUSTERING ####
-    tabPanel('Processed Data',
-             tabsetPanel(
+    #tabPanel('Processed Data',
+    #         tabsetPanel(
              
     tabPanel('Clustering',
              
@@ -578,12 +578,12 @@ shinyUI(fluidPage(
                 #HTML('Weight of factors changes how the factors influence the clustering. The pFEV values are set at a weight of 10'),
                 numericInput('clutree_num', "Number of Clusters", 3, min = 1, max = 50, step = 1),
                 
-                tabsetPanel(selected = 'pFEV Data',
+                #tabsetPanel(selected = 'pFEV Data',
                   ###### CLUSTERING pFEV #########
-                  tabPanel('pFEV Data',
-                           radioButtons("cluster_imputed", 'Select Data',
-                                        choiceNames = list('Original',"Imputed"),
-                                        choiceValues = list("original", "imputed"),inline = T,selected = 'original'),
+                  #tabPanel('pFEV Data',
+                           # radioButtons("cluster_imputed", 'Select Data',
+                           #              choiceNames = list('Original',"Imputed"),
+                           #              choiceValues = list("original", "imputed"),inline = T,selected = 'original'),
                            tabsetPanel(
                              tabPanel('Dendograms',
                                 plotOutput('discrete_cluster_plot'),  
@@ -644,68 +644,68 @@ shinyUI(fluidPage(
                              ))
                              
                              
-                             ))), # Imputed pFEV Data
+                             ))) # Imputed pFEV Data
            ##### CLUSTERING CHANGE ####
-                  tabPanel('Change Data (D1)',
-                           tabsetPanel(
-                             tabPanel('Dendograms',
-                                      radioButtons("cluster_change_imputed", 'Select Data',
-                                                   choiceNames = list('Imputed',"Remove pFEV missing values"),
-                                                   choiceValues = list("imputed", "removed"),inline = T,selected = 'imputed'),
-                                        plotOutput('discrete_cluster_plot_d1'),
-                                        plotOutput('mix_clu_d1'),
-                                        plotOutput('distance_density_d1'),
-                                      tags$h4('log2 ratio t test'),
-                                      plotOutput('boxplot_pp_ratio_cluster_d1'),
-                                      
-                                        #dataTableOutput('cluster_analysis_within_table_selected_d1'),
-                                        #uiOutput("clusters_d1"),
-                                        #textOutput('chisq_cluster_within_d1'),
-                                      
-                                        #plotOutput("bos3_factor_plot_cluster_d1"),
-                                        #plotOutput('boxplot_pFEV_cluster_d1'),
-                                        plotOutput('boxplot_pFEV_cluster_d1_full')
-                                        
-                                      #plotOutput('bos3_surv_factor_plot_cluster_d1'),
-                                      
-                                         #plotOutput('discrete_cutree_line_d1'),
-                                         #plotOutput('discrete_cutree_mean_d1'),
-                                       # dataTableOutput('discrete_x_table_d1'),
-                                      
-                                       #  htmlOutput('D_d1_text')), #Dendrogram
-
-                             # tabPanel('ScatterPlot',
-                             #          plotOutput('distance_scatter_d1'),
-                             #          plotOutput('distance_polygon_d1'),
-                             #          plotOutput('distance_polygon_neat_d1'),
-                             #          dataTableOutput('distance_table_d1'),
-                             #          dataTableOutput('distance_model_table_d1')
-                                       ),
-                             tabPanel('MANOVA',
-                                      plotOutput('boxplot_change_manova_cluster_d1'),
-                                      dataTableOutput('cluster_change_pairwise_manova_table_d1'),
-                                      plotOutput('boxplot_pFEV_manova_cluster_d1'),
-                                      dataTableOutput('cluster_pFEV_pairwise_manova_table_d1')),
-                             tabPanel('Chi-squared',
-                                      tabsetPanel(
-                                        tabPanel('Selected',
-                                    tags$h3('Factor proportions across clusters by factor status'),
-                                    dataTableOutput('cluster_analyis_selected_table_d1'),
-                                    dataTableOutput('chisq_cluster_d1'),
-                                    
-                                    tags$h3('Factor proportions within clusters'),
-                                    dataTableOutput('cluster_analysis_within_table_selected_table_d1'),
-                                    uiOutput("cluster_select_clusters_d1"),
-                                    dataTableOutput('chisq_cluster_within_d1')
-                           ),
-                           tabPanel('Full',
-                                    tags$h3('Factor proportions across clusters by factor status'),
-                                    dataTableOutput('cluster_analysis_d1'),
-                                    tags$h3('Factor proportions within clusters'),
-                                    dataTableOutput('cluster_analysis_within_table_d1')
-                           )))
-                           
-                           ))# change Data
+                  # tabPanel('Change Data (D1)',
+                  #          tabsetPanel(
+                  #            tabPanel('Dendograms',
+                  #                     radioButtons("cluster_change_imputed", 'Select Data',
+                  #                                  choiceNames = list('Imputed',"Remove pFEV missing values"),
+                  #                                  choiceValues = list("imputed", "removed"),inline = T,selected = 'imputed'),
+                  #                       plotOutput('discrete_cluster_plot_d1'),
+                  #                       plotOutput('mix_clu_d1'),
+                  #                       plotOutput('distance_density_d1'),
+                  #                     tags$h4('log2 ratio t test'),
+                  #                     plotOutput('boxplot_pp_ratio_cluster_d1'),
+                  #                     
+                  #                       #dataTableOutput('cluster_analysis_within_table_selected_d1'),
+                  #                       #uiOutput("clusters_d1"),
+                  #                       #textOutput('chisq_cluster_within_d1'),
+                  #                     
+                  #                       #plotOutput("bos3_factor_plot_cluster_d1"),
+                  #                       #plotOutput('boxplot_pFEV_cluster_d1'),
+                  #                       plotOutput('boxplot_pFEV_cluster_d1_full')
+                  #                       
+                  #                     #plotOutput('bos3_surv_factor_plot_cluster_d1'),
+                  #                     
+                  #                        #plotOutput('discrete_cutree_line_d1'),
+                  #                        #plotOutput('discrete_cutree_mean_d1'),
+                  #                      # dataTableOutput('discrete_x_table_d1'),
+                  #                     
+                  #                      #  htmlOutput('D_d1_text')), #Dendrogram
+                  # 
+                  #            # tabPanel('ScatterPlot',
+                  #            #          plotOutput('distance_scatter_d1'),
+                  #            #          plotOutput('distance_polygon_d1'),
+                  #            #          plotOutput('distance_polygon_neat_d1'),
+                  #            #          dataTableOutput('distance_table_d1'),
+                  #            #          dataTableOutput('distance_model_table_d1')
+                  #                      ),
+                  #            tabPanel('MANOVA',
+                  #                     plotOutput('boxplot_change_manova_cluster_d1'),
+                  #                     dataTableOutput('cluster_change_pairwise_manova_table_d1'),
+                  #                     plotOutput('boxplot_pFEV_manova_cluster_d1'),
+                  #                     dataTableOutput('cluster_pFEV_pairwise_manova_table_d1')),
+                  #            tabPanel('Chi-squared',
+                  #                     tabsetPanel(
+                  #                       tabPanel('Selected',
+                  #                   tags$h3('Factor proportions across clusters by factor status'),
+                  #                   dataTableOutput('cluster_analyis_selected_table_d1'),
+                  #                   dataTableOutput('chisq_cluster_d1'),
+                  #                   
+                  #                   tags$h3('Factor proportions within clusters'),
+                  #                   dataTableOutput('cluster_analysis_within_table_selected_table_d1'),
+                  #                   uiOutput("cluster_select_clusters_d1"),
+                  #                   dataTableOutput('chisq_cluster_within_d1')
+                  #          ),
+                  #          tabPanel('Full',
+                  #                   tags$h3('Factor proportions across clusters by factor status'),
+                  #                   dataTableOutput('cluster_analysis_d1'),
+                  #                   tags$h3('Factor proportions within clusters'),
+                  #                   dataTableOutput('cluster_analysis_within_table_d1')
+                  #          )))
+                  #          
+                  #          ))# change Data
                   # tabPanel('Comparison',
                   #          HTML('Comparison of clusters generated from pFEV and Change D1 data. The line plots are from the means for each cluster. The pFEV clusters are the thicker lines'),
                   #          plotOutput('cluster_comparison'))
@@ -736,10 +736,7 @@ shinyUI(fluidPage(
                 #                      ))
                 #         
                 # )) # Composition
-                )
-                
-             )
-    ))),
+                ),
 
     ####### BOSS #######
     tabPanel('BOS',

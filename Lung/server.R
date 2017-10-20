@@ -322,11 +322,11 @@ shinyServer(function(input, output) {
     o_data = pFEV_wf_c()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
-    m_data_d1 = discrete_cluster_D_d1()$data
-    m_data_d1$MRN = rownames(m_data_d1)
+    #data$m_data_d1 = discrete_cluster_D_d1()$data
+    #data$m_data_d1$MRN = rownames(m_data_d1)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
+    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
@@ -350,7 +350,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     data
   })
@@ -368,7 +368,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
     
@@ -380,7 +380,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     
     data
@@ -390,7 +390,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
     
@@ -410,7 +410,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     data
   })
@@ -419,7 +419,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
     
@@ -445,11 +445,11 @@ shinyServer(function(input, output) {
     o_data = i_pFEV_sm_d1_f_c_ir()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
-    m_data_d1 = discrete_cluster_D_d1()$data
-    m_data_d1$MRN = rownames(m_data_d1)
+    #data$m_data_d1 = discrete_cluster_D_d1()$data
+    #data$m_data_d1$MRN = rownames(m_data_d1)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
+    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
@@ -473,7 +473,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     
     data
@@ -483,7 +483,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
+    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
     
@@ -531,13 +531,13 @@ shinyServer(function(input, output) {
     m_data$MRN = rownames(m_data)
     c_m_data = m_data
     #View(c_m_data)
-    m_data_d1 = discrete_cluster_D_d1()$data
-    m_data_d1$MRN = rownames(m_data_d1)
-    c_m_data_d1 = m_data_d1
+    #data$m_data_d1 = discrete_cluster_D_d1()$data
+    #data$m_data_d1$MRN = rownames(m_data_d1)
+    #c_m_data_d1 = m_data_d1
     #View(c_m_data_d1)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
+    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
@@ -2194,11 +2194,11 @@ shinyServer(function(input, output) {
       # 
       # 
       discrete_cluster_D = reactive({
-        if(input$cluster_imputed == 'original'){
-          full_data = pFEV_wf_c()
-        }else{
-          full_data = i_pFEV_wf_c()
-        }
+        # if(input$cluster_imputed == 'original'){
+        #   full_data = pFEV_wf_c()
+        # }else{
+        #   full_data = i_pFEV_wf_c()
+        # }
         #View(full_data)
         #full_data = pFEV_wf_c()
         full_data = change_data()
@@ -2521,104 +2521,104 @@ shinyServer(function(input, output) {
   
   
     ####### D1 Clustering ############
-            
-            discrete_cluster_D_d1 = reactive({
-              if(input$cluster_change_imputed == 'imputed'){
-                full_data = i_pFEV_sm_d1_f_c()
-              }else{
-                full_data = i_pFEV_sm_d1_f_c_ir()
-              }
-              #full_data =  i_pFEV_sm_d1_f
-              
-            full_data = change_data()
-            #discrete_cluster_D_d1 = reactive({
-             # full_data = i_pFEV_sm_d1_f
-              cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
-                                                      input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
-                                                      input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
-              cluster_data_list
-            })
-  
+            # 
+            # discrete_cluster_D_d1 = reactive({
+            #   if(input$cluster_change_imputed == 'imputed'){
+            #     full_data = i_pFEV_sm_d1_f_c()
+            #   }else{
+            #     full_data = i_pFEV_sm_d1_f_c_ir()
+            #   }
+            #   #full_data =  i_pFEV_sm_d1_f
+            #   
+            # full_data = change_data()
+            # #discrete_cluster_D_d1 = reactive({
+            #  # full_data = i_pFEV_sm_d1_f
+            #   cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
+            #                                           input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+            #                                           input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+            #   cluster_data_list
+            # })
+            # 
  
             ### PLOT CLUSTERS ####
             
 
-
-            
-            output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
-            
-            output$discrete_x_table_d1 = renderDataTable({
-              #discrete_cluster_D_d1()$x_cluster
-              x_cluster = discrete_cluster_D_d1()$x_cluster
-              #x_cluster = clust_org_d1()$dendr$label
-              x_cluster_table = data.frame(num = numeric(0),MRN = numeric(0))
-              for(entry in unique(x_cluster$cluster)){
-                line_list  = x_cluster[x_cluster$cluster == entry,'label']
-                line = paste(line_list,collapse = (', '))
-                line
-                x_cluster_table[entry,'num'] = length(line_list)
-                x_cluster_table[entry,'MRN'] = line
-              }
-             t(x_cluster_table)
-            #})
-            })
-            
-            discrete_cutree_line_plots_d1 = reactive({
-              data = discrete_cluster_D_d1()$data
-              cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
-              data = cbind(data,full_fac_0[rownames(data),])
-              n_cols = eval(input$mix_clust_col_num)
-              max_n_cols = factor(max(as.numeric(n_cols)))
-              min_n_cols = factor(min(as.numeric(n_cols)))
-              m = which(colnames(i_pFEV_sm_d1) == min_n_cols)
-              n = which(colnames(i_pFEV_sm_d1) == max_n_cols)
-              sub_n_cols = colnames(i_pFEV_sm_d1)[c(m:n)]
-              #sub_n_cols
-              #print(sub_n_cols)
-              plot_data = i_pFEV_sm_d1_f[rownames(data),]
-              plot_data$cluster = data$cluster
-              data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
-              p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-                
-                geom_line() +
-                #geom_point(aes(y = data),size = 3) +
-                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
-                theme(axis.text.x = element_text(size=14, angle=90)) +
-                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-                ggtitle("Clusters from imputer pFEV")
-              
-              
-              s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
-                #geom_line() +
-                geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
-                
-                stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
-                             aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
-                theme(axis.text.x = element_text(size=14, angle=90)) +
-                scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-                ggtitle("Mean of clusters from imputed pFEV values")
-              
-              list(p = p,s = s)
-            })
-            output$discrete_cutree_line_d1 = renderPlot(discrete_cutree_line_plots_d1()$p)
-            output$discrete_cutree_mean_d1 = renderPlot(discrete_cutree_line_plots_d1()$s)
-            
-            
-            output$mix_clu_d1 = renderPlot({
-              data = discrete_cluster_D_d1()$o_data
-              weights = discrete_cluster_D_d1()$weights
-              D = discrete_cluster_D_d1()$D
-              mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
-            })
-            
-            output$cluster_comparison = renderPlot({
-              ggplot(NULL) + 
-                stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=4,aes(x = variable, y = value,group=cluster,col = cluster)) +
-                stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=2,aes(x = variable, y = value,group=cluster_d1,col= cluster_d1)) 
-            })
-        
+# 
+#             
+#             output$D_d1_text = renderPrint(str(discrete_cluster_D_d1()$D,indent.str = '<br />'))
+#             
+#             output$discrete_x_table_d1 = renderDataTable({
+#               #discrete_cluster_D_d1()$x_cluster
+#               x_cluster = discrete_cluster_D_d1()$x_cluster
+#               #x_cluster = clust_org_d1()$dendr$label
+#               x_cluster_table = data.frame(num = numeric(0),MRN = numeric(0))
+#               for(entry in unique(x_cluster$cluster)){
+#                 line_list  = x_cluster[x_cluster$cluster == entry,'label']
+#                 line = paste(line_list,collapse = (', '))
+#                 line
+#                 x_cluster_table[entry,'num'] = length(line_list)
+#                 x_cluster_table[entry,'MRN'] = line
+#               }
+#              t(x_cluster_table)
+#             #})
+#             })
+#             
+#             discrete_cutree_line_plots_d1 = reactive({
+#               data = discrete_cluster_D_d1()$data
+#               cols = colnames(full_fac_0)[!(colnames(full_fac_0) %in% colnames(data))]
+#               data = cbind(data,full_fac_0[rownames(data),])
+#               n_cols = eval(input$mix_clust_col_num)
+#               max_n_cols = factor(max(as.numeric(n_cols)))
+#               min_n_cols = factor(min(as.numeric(n_cols)))
+#               m = which(colnames(i_pFEV_sm_d1) == min_n_cols)
+#               n = which(colnames(i_pFEV_sm_d1) == max_n_cols)
+#               sub_n_cols = colnames(i_pFEV_sm_d1)[c(m:n)]
+#               #sub_n_cols
+#               #print(sub_n_cols)
+#               plot_data = i_pFEV_sm_d1_f[rownames(data),]
+#               plot_data$cluster = data$cluster
+#               data_l =  melt(plot_data, id.vars = c(colnames(full_fac_0),'cluster'), measure.vars = sub_n_cols)
+#               p = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+#                 geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+#                 
+#                 geom_line() +
+#                 #geom_point(aes(y = data),size = 3) +
+#                 stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+#                              aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) +
+#                 theme(axis.text.x = element_text(size=14, angle=90)) +
+#                 scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+#                 ggtitle("Clusters from imputer pFEV")
+#               
+#               
+#               s = ggplot(data = data_l, aes(x=variable,y=value,group= MRN,col=cluster)) + 
+#                 #geom_line() +
+#                 geom_vline(aes(xintercept = which(levels(data_l$variable) %in% '0'))) +
+#                 
+#                 stat_summary(data = data_l,fun.y=mean,geom="line",lwd=2,
+#                              aes_string(x = 'variable', y = 'value',group='cluster',col = 'cluster')) + 
+#                 theme(axis.text.x = element_text(size=14, angle=90)) +
+#                 scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+#                 ggtitle("Mean of clusters from imputed pFEV values")
+#               
+#               list(p = p,s = s)
+#             })
+#             output$discrete_cutree_line_d1 = renderPlot(discrete_cutree_line_plots_d1()$p)
+#             output$discrete_cutree_mean_d1 = renderPlot(discrete_cutree_line_plots_d1()$s)
+#             
+#             
+#             output$mix_clu_d1 = renderPlot({
+#               data = discrete_cluster_D_d1()$o_data
+#               weights = discrete_cluster_D_d1()$weights
+#               D = discrete_cluster_D_d1()$D
+#               mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
+#             })
+#             
+#             output$cluster_comparison = renderPlot({
+#               ggplot(NULL) + 
+#                 stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=4,aes(x = variable, y = value,group=cluster,col = cluster)) +
+#                 stat_summary(data = pFEV_lf_r(), fun.y=mean,geom="line",lwd=2,aes(x = variable, y = value,group=cluster_d1,col= cluster_d1)) 
+#             })
+#         
             
             #### DISTANCE SCATTER PLOTS ####
             

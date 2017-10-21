@@ -151,40 +151,42 @@ shinyUI(fluidPage(
     
     
 ##################### pFEV #####################
-    tabPanel('pFEV',
+  tabPanel('Tables',
+           tabsetPanel(
+             tabPanel('Mean Table',
+                      tableOutput('pFEV_mean_table')
+             ),
+             tabPanel('log 2 ratio vs zero',
+                      dataTableOutput("pFEV_ratio2zero")),
+             tabPanel('precentage change vs zero',
+                      dataTableOutput("pFEV_per2zero"))
+             
+           )),
+
+    tabPanel('Plots',
              #column(6,numericInput('completeness', "Completeness", 30, min = 0, max = 100, step = 1,
              #             width = NULL)),
               column(12,
                      tabsetPanel(
-                       tabPanel('Tables',
-                                tabsetPanel(
-                                    tabPanel('Mean Table',
-                                    tableOutput('pFEV_mean_table')
-                             ),
-                             tabPanel('log 2 ratio vs zero',
-                                         dataTableOutput("pFEV_ratio2zero")),
-                             tabPanel('precentage change vs zero',
-                                      dataTableOutput("pFEV_per2zero"))
 
-                             )),
                     ######## LINE PLOTS ###########
                     tabPanel('Line Plot',
                              
                              #selectInput('mrn_select','MRN',patient_list,multiple = T,selected = patient_list, width = 800),
-                             column(12,plotOutput('line_pFEV')),
+                             column(12,plotOutput('line_pFEV'))
                              #column(12,plotOutput('smooth_line_pFEV')),
                              
-                             column(12,plotOutput('line_i_pFEV'))
+                             #column(12,plotOutput('line_i_pFEV'))
                              ),
                     ######## BOXPLOTS ##########
                     tabPanel('Boxplot',
                              column(12,
                                     plotOutput('boxplot_pFEV'),
-                                    plotOutput('boxplot_i_pFEV')),
-                             column(6,
-                                    plotOutput('boxplot_pFEV_mean')),
-                             column(6,
-                                    plotOutput('boxplot_i_pFEV_mean'))
+                                    #plotOutput('boxplot_i_pFEV')),
+                             #column(6,
+                                    plotOutput('boxplot_pFEV_mean'))
+                             #column(6,
+                            #        plotOutput('boxplot_i_pFEV_mean'))
                              
                              ),
                     tabPanel('Interaction',
@@ -192,7 +194,7 @@ shinyUI(fluidPage(
                              column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
                              
                              plotOutput('interaction_plot')
-                             ),
+                             )))),
                     
 
                     ############## STAT ################
@@ -394,11 +396,11 @@ shinyUI(fluidPage(
                                       ))
                              # column
                              
-                    )#Stats
+                    ),#Stats
                     
                     
-                        )) #tabsetPanel
-             ), #pFEV
+                         #tabsetPanel
+              #pFEV
 
 ##################### Change #########################
     tabPanel('Change',

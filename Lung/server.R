@@ -331,17 +331,17 @@ shinyServer(function(input, output) {
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
     #data = data[data$Status %in% status_r(),]
-
+    data = change_data_w()
     data
     
     })
 
   
   pFEV_lf_r = reactive({
-    w_data = pFEV_wf_r()
-    data = melt(w_data, measure.vars = colnames(pFEV_w))
-    data$time = as.numeric(as.character(data$variable))
-    
+    #w_data = pFEV_wf_r()
+    #data = melt(w_data, measure.vars = colnames(pFEV_w))
+    #data$time = as.numeric(as.character(data$variable))
+    data = change_data_l()
     data
   })
   
@@ -493,8 +493,10 @@ shinyServer(function(input, output) {
   comp_data = reactive({
     print(input$data_select)
     data = pFEV_wf_c()
+    
     if(input$data_select == 'pFEV'){
       data = pFEV_wf_c()
+      
     }
     if(input$data_select == 'imputed'){
       data = i_pFEV_wf_c()
@@ -502,7 +504,7 @@ shinyServer(function(input, output) {
     if(input$data_select == 'change'){
       data = i_pFEV_sm_d1_f_c()
     }
-    if(input$data_select == 'change_ir'){
+    if(input$data_select == 'change_ri'){
       data = i_pFEV_sm_d1_f_c_ir()
     }
     #View(data)
@@ -510,6 +512,38 @@ shinyServer(function(input, output) {
     data
     
   })
+  
+  
+  select_cols = reactive({
+    print(input$data_select)
+    #data = pFEV_wf_c()
+    select_cols = colnames(pFEV_w)
+    if(input$data_select == 'pFEV'){
+      #data = pFEV_wf_c()
+      select_cols = colnames(pFEV_w)
+      
+      
+    }
+    if(input$data_select == 'imputed'){
+      #data = i_pFEV_wf_c()
+      select_cols = colnames(pFEV_w)
+      
+    }
+    if(input$data_select == 'change'){
+      #data = i_pFEV_sm_d1_f_c()
+      select_cols = colnames(i_pFEV_sm_d1)
+      
+    }
+    if(input$data_select == 'change_ri'){
+      select_cols = colnames(i_pFEV_sm_d1)
+      
+    }
+    #View(data)
+    
+    select_cols
+    
+  })
+  
   
   change_data = reactive({
     data = cbind(comp_data(),pFEV_2_zero()$ratio_data, sym_data())
@@ -550,7 +584,7 @@ shinyServer(function(input, output) {
   
   change_data_l = reactive({
     w_data = change_data_w()
-    data = melt(w_data, measure.vars = colnames(pFEV_w))
+    data = melt(w_data, measure.vars = select_cols())
     data$time = as.numeric(as.character(data$variable))
     data_w = data
     View(data_l)

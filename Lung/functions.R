@@ -322,7 +322,7 @@ slope_fit_plot_function = function(data,cols,x_label,input){
 slope_boxplot_data_function = function(data,df,global_factor){
   slope_cols = c("slope_Pre","slope_Post")
   data$significant = factor(df$significant[match(data[,global_factor],df$Status)])
-  data_l = melt(data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1','significant'), measure.vars = slope_cols)
+  data_l = melt(data, measure.vars = slope_cols)
   return(data_l)
 }
 

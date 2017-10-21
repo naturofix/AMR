@@ -172,7 +172,7 @@ shinyUI(fluidPage(
                              
                              #selectInput('mrn_select','MRN',patient_list,multiple = T,selected = patient_list, width = 800),
                              column(12,plotOutput('line_pFEV')),
-                             column(12,plotOutput('smooth_line_pFEV')),
+                             #column(12,plotOutput('smooth_line_pFEV')),
                              
                              column(12,plotOutput('line_i_pFEV'))
                              ),
@@ -202,6 +202,7 @@ shinyUI(fluidPage(
                                   tabsetPanel(
                                     ### PRE POST ####
                                     tabPanel('Pre Treatment vs Post Treatment',
+                                             tags$h5('Statistical assesment of pFEV values between pre treatment ranges and post treatment ranges. The ranges are adjusted using the range slides.'),
                                              tabsetPanel(
   
                                   
@@ -209,6 +210,7 @@ shinyUI(fluidPage(
                                           ########### ANOVA #############
       
                                           tabPanel('ANOVA',
+                                                   tags$h5('Asseses if there is a significant change in the pFEV values pre treatment or post treatment.'),
                                                 tabsetPanel(
                                                    tabPanel('Original Data',
                                                        dataTableOutput('lm_table'),
@@ -225,6 +227,8 @@ shinyUI(fluidPage(
                                                 )),
 
                                               ############ SLOPE #################
+                                              tabPanel('T test',
+                                                       tabsetPanel(
                                               tabPanel('Slope',
                                                        HTML(paste0('T test calculated on pFEV slopes for each patient. Slopes are calculated from a linear regression of all points between two timepoints. The timepoints can be adjusted using the Timecourse Range slider ',textOutput('slope_pFEV_text'))),
                                                        tabsetPanel(
@@ -263,7 +267,7 @@ shinyUI(fluidPage(
                                               #          )
                                               #       ),
                                           
-                                          tabPanel('t test',
+                                          tabPanel('pFEV range',
                                                    HTML(paste0('T test are calculated on all pFEV values between the selected timepoints.')),
                                                    HTML(paste0('The timepoints can be adjusted using the Pre and Post Treatment Range Sliders ',textOutput('t_range_text'))),
                                                    
@@ -284,7 +288,7 @@ shinyUI(fluidPage(
 
                                                 ),
                                           
-                                              tabPanel('t test zero',
+                                              tabPanel('pFEV timepoint vs Zero',
                                                        HTML(paste0('T test calculated on pFEV values from a pre or post timepoint vs the zero timepoint, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_pFEV_zero_text'))),
                                                        
                                                        tabsetPanel(
@@ -301,7 +305,11 @@ shinyUI(fluidPage(
                                                          )
                                                        )
                                               ),
-                                              tabPanel('t test log2(ratio)',
+                                              tabPanel('log2 ratio',
+                                                       HTML(paste('T test calculated on log2 ratio, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_ratio_text'))),
+                                                       
+                                                       tabsetPanel(
+                                              tabPanel('Full Pre vs Post',
                                                        tabsetPanel(
                                                          tabPanel('Original Data',
                                                              #HTML(paste0('T test calculated on log2 ratio, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_ratio_text'))),
@@ -314,8 +322,7 @@ shinyUI(fluidPage(
                                                           )
                                                        )
                                               ),
-                                              tabPanel('t test log2(ratio) by factor',
-                                                       HTML(paste0('T test calculated on log2 ratio, the timepoints can be adjusted using the Timecourse Range slider ',textOutput('t_ratio_text'))),
+                                              tabPanel('Pre vs Post by selected factor',
                                                        tabsetPanel(
                                                          tabPanel('Original Data',
                                                            plotOutput('boxplot_pp_ratio'),
@@ -329,14 +336,16 @@ shinyUI(fluidPage(
                                                                )
                                                          
                                                          )
-                                                       )
+                                                       )))))
                                     ) # tabset
                              ),
                              
                              ### TIME SERIES #####
                              tabPanel("Time-series comparisons",
+                                      tags$h5("Assesses if the time series are significantly different from each other"),
                                       tabsetPanel(
                                         tabPanel('MANOVA',
+                                                 tags$h5('Compares the difference between pFEV values at each timepoint for different discrete factors, and determines if the whole timeseries is significantly different or not'),
                                                  tabsetPanel(
                                                    tabPanel('Original Data',
                                                             tabsetPanel(
@@ -360,6 +369,7 @@ shinyUI(fluidPage(
                                                    ))))),
                                                  
                                         tabPanel('Pre vs Pre and Post vs Post',
+                                                 tags$h5('Vertical comparison, asseses is the pre treatment values are different between different discrete factors. The same is done for the post treatment values. Post is not compared to Pre.'),
                                                  tabsetPanel(
                                                    tabPanel('Selected',
                                                  column(6,plotOutput("hor_box_pre")),
@@ -500,37 +510,7 @@ shinyUI(fluidPage(
                                                                     dataTableOutput('horizontal_t_test_full_d1')
                                                                     
                                                            )
-                                                         )),                          
-                                                        tabPanel('Symmetry Data',
-                                                                   #tags$h4('Ratios generates symmetrically across treatment i.e(-3/3) and then statistics performed on these ratios'),
-                                                                   tabsetPanel(
-                                                                     tabPanel('Data Table',
-                                                                              tags$h3('log2 ratio of timepoints on either side of treatment, ie log2(-12/12) or log2(-6/6)'),
-                                                                              dataTableOutput('pFEV_ratio_df')
-                                                                     ),
-                                                                     tabPanel('Plots',
-                                                                              plotOutput('sym_ratio_boxplot'),
-                                                                              plotOutput('sym_per_boxplot')),
-                                                                     tabPanel('Means',
-                                                                              tags$h4('Mean log2(ratio)  (-12/12)'),
-                                                                              dataTableOutput("sym_ratio_mean_df"),
-                                                                              tags$h4('Mean percentage change (-12 to 12)'),
-                                                                              dataTableOutput("sym_per_mean_df")
-                                                                     ),
-                                                                     tabPanel('MANOVA',
-                                                                              tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
-                                                                              
-                                                                              dataTableOutput('manova_sym_table')
-                                                                     ),
-                                                                     tabPanel('ANOVA',
-                                                                              tags$h5('Determines if there is a significant difference between the factors (ie clusters) at a specific timepoints for which log2 ratio were generated. ie(log2(-12/12)'),
-                                                                              dataTableOutput('anova_pw_sym_ratio')
-                                                                     ),
-                                                                     tabPanel('T tests',
-                                                                              dataTableOutput('sym_t_test_table')
-                                                                              
-                                                                     )
-                                                                   ))
+                                                         ))
                                                 
                                                 
                                                 ) #tabsetPanel#######
@@ -555,6 +535,38 @@ shinyUI(fluidPage(
 
              ))
     ),#change
+
+                         
+tabPanel('Symmetry Data',
+         #tags$h4('Ratios generates symmetrically across treatment i.e(-3/3) and then statistics performed on these ratios'),
+         tabsetPanel(
+           tabPanel('Data Table',
+                    tags$h3('log2 ratio of timepoints on either side of treatment, ie log2(-12/12) or log2(-6/6)'),
+                    dataTableOutput('pFEV_ratio_df')
+           ),
+           tabPanel('Plots',
+                    plotOutput('sym_ratio_boxplot'),
+                    plotOutput('sym_per_boxplot')),
+           tabPanel('Means',
+                    tags$h4('Mean log2(ratio)  (-12/12)'),
+                    dataTableOutput("sym_ratio_mean_df"),
+                    tags$h4('Mean percentage change (-12 to 12)'),
+                    dataTableOutput("sym_per_mean_df")
+           ),
+           tabPanel('MANOVA',
+                    tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
+                    
+                    dataTableOutput('manova_sym_table')
+           ),
+           tabPanel('ANOVA',
+                    tags$h5('Determines if there is a significant difference between the factors (ie clusters) at a specific timepoints for which log2 ratio were generated. ie(log2(-12/12)'),
+                    dataTableOutput('anova_pw_sym_ratio')
+           ),
+           tabPanel('T tests',
+                    dataTableOutput('sym_t_test_table')
+                    
+           )
+         )),
     #### CLUSTERING ####
     #tabPanel('Processed Data',
     #         tabsetPanel(

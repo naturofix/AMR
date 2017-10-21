@@ -460,7 +460,7 @@ shinyServer(function(input, output) {
   })
   i_pFEV_sm_d1_fl_c_ir_r = reactive({
     w_data = i_pFEV_sm_d1_f_c_ir_r()
-    data = melt(w_data, id.vars = c(colnames(full_fac_0),'cluster','cluster_d1'), measure.vars = colnames(pFEV_w)[-2])
+    data = melt(w_data, measure.vars = colnames(pFEV_w)[-2])
     data$time = as.numeric(as.character(data$variable))
     data
   })
@@ -512,11 +512,11 @@ shinyServer(function(input, output) {
   })
   
   change_data = reactive({
-    #data = cbind(comp_data(),pFEV_2_zero()$ratio_data, sym_data())
+    data = cbind(comp_data(),pFEV_2_zero()$ratio_data, sym_data())
     #data$MRN = rownames(data)
     #data = cbind(comp_data(),pFEV_2_zero()$ratio_data)
-    data = cbind(comp_data(), sym_data())
-    print(colnames(data))
+    #data = cbind(comp_data(), sym_data())
+    #print(colnames(data))
     #View(data)
     data
     
@@ -680,8 +680,8 @@ shinyServer(function(input, output) {
       l2 = c()
       for(entry in unique(pFEV_lf_r()$MRN)){
         #print(entry)
-        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster','cluster_d1')][pFEV_lf_r()$MRN == entry,]))
-        l2 = c(l2,unique(i_pFEV_sm_d1_fl_r()[,c('cluster','cluster_d1')][i_pFEV_sm_d1_fl_r()$MRN == entry,]))
+        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster')][pFEV_lf_r()$MRN == entry,]))
+        l2 = c(l2,unique(i_pFEV_sm_d1_fl_r()[,c('cluster')][i_pFEV_sm_d1_fl_r()$MRN == entry,]))
       }
       #print(identical(l1,l2))
       #print('HIT')
@@ -711,8 +711,8 @@ shinyServer(function(input, output) {
       l2 = c()
       for(entry in unique(pFEV_lf_r()$MRN)){
         #print(entry)
-        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster','cluster_d1')][pFEV_lf_r()$MRN == entry,]))
-        l2 = c(l2,unique(i_pFEV_sm_d2_fl_r()[,c('cluster','cluster_d1')][i_pFEV_sm_d2_fl_r()$MRN == entry,]))
+        l1 = c(l1,unique(pFEV_lf_r()[,c('cluster')][pFEV_lf_r()$MRN == entry,]))
+        l2 = c(l2,unique(i_pFEV_sm_d2_fl_r()[,c('cluster')][i_pFEV_sm_d2_fl_r()$MRN == entry,]))
       }
       #print(identical(l1,l2))
       #print('HIT')
@@ -823,24 +823,24 @@ shinyServer(function(input, output) {
 
   },height = 1600)
   
-  output$boxplot_pFEV_cluster_d1 = renderPlot({
-    full_data = pFEV_lf_r()
-    global_factor = 'cluster_d1'
-    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
-    cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
-    
-    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
-    
-  })
+  # output$boxplot_pFEV_cluster_d1 = renderPlot({
+  #   full_data = pFEV_lf_r()
+  #   global_factor = 'cluster_d1'
+  #   title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+  #   cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+  #   
+  #   boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+  #   
+  # })
   
-  output$boxplot_pFEV_cluster_d1_full = renderPlot({
-    full_data = pFEV_lf_r()
-    global_factor = 'cluster_d1'
-    title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
-    cols = factor(c(input$pre_range[1]:input$post_range[2]))
-    
-    boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
-  })
+  # output$boxplot_pFEV_cluster_d1_full = renderPlot({
+  #   full_data = pFEV_lf_r()
+  #   global_factor = 'cluster_d1'
+  #   title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+  #   cols = factor(c(input$pre_range[1]:input$post_range[2]))
+  #   
+  #   boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+  # })
   
   output$boxplot_i_pFEV = renderPlot({
     
@@ -1493,34 +1493,34 @@ shinyServer(function(input, output) {
           boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title)
         })
         
-        pp_t_test_ratio_cluster_d1 = reactive({
-          full_data = pFEV_lf_r()
-          #View(full_data)
-          factor = 'cluster_d1'
-          t1 = input$pre_range[1]
-          t2 = input$post_range[2]
-          df = pp_t_test_ratio_function(full_data,factor,t1,t2)
-          df_s = df[order(df$Status),]
-          #View(df_s)
-          df_s
-          
-          #print(df)
-        })
-        boxplot_pp_ratio_data_cluster_d1 = reactive({
-          full_data = pFEV_lf_r()
-          df_s = pp_t_test_ratio_cluster_d1()
-          t1 = input$pre_range[1]
-          t2 = input$post_range[2]
-          global_factor = 'cluster_d1'
-          df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
-          #View(df)
-          df
-          
-        })
-        output$boxplot_pp_ratio_cluster_d1 = renderPlot({
-          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
-          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster_d1(),'cluster_d1',title)
-        })
+        # pp_t_test_ratio_cluster_d1 = reactive({
+        #   full_data = pFEV_lf_r()
+        #   #View(full_data)
+        #   factor = 'cluster_d1'
+        #   t1 = input$pre_range[1]
+        #   t2 = input$post_range[2]
+        #   df = pp_t_test_ratio_function(full_data,factor,t1,t2)
+        #   df_s = df[order(df$Status),]
+        #   #View(df_s)
+        #   df_s
+        #   
+        #   #print(df)
+        # })
+        # boxplot_pp_ratio_data_cluster_d1 = reactive({
+        #   full_data = pFEV_lf_r()
+        #   df_s = pp_t_test_ratio_cluster_d1()
+        #   t1 = input$pre_range[1]
+        #   t2 = input$post_range[2]
+        #   global_factor = 'cluster_d1'
+        #   df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
+        #   #View(df)
+        #   df
+        #   
+        # })
+        # output$boxplot_pp_ratio_cluster_d1 = renderPlot({
+        #   title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+        #   boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster_d1(),'cluster_d1',title)
+        # })
         
             #### Imputed####
         pp_t_test_ratio_i = reactive({
@@ -2763,13 +2763,13 @@ shinyServer(function(input, output) {
 
             # cluster d1 ####
           
-          cluster_analysis_total_d1 = reactive({
-            df = pFEV_wf_r()
-            df_tc = clust_comparison_total(df,'cluster_d1')
-            #p = apply(df_tc,1, function(x) chisq.test(x[c(3:length(x))])$p.value)
-            #print(p)
-            df_tc
-          })
+          # cluster_analysis_total_d1 = reactive({
+          #   df = pFEV_wf_r()
+          #   df_tc = clust_comparison_total(df,'cluster_d1')
+          #   #p = apply(df_tc,1, function(x) chisq.test(x[c(3:length(x))])$p.value)
+          #   #print(p)
+          #   df_tc
+          # })
           
           
           #output$cluster_analysis_d1 = renderDataTable(cluster_analysis_total_d1())
@@ -2835,12 +2835,12 @@ shinyServer(function(input, output) {
           })
           
             ### D1 ----
-          cluster_analysis_within_d1 = reactive({
-            df = pFEV_wf_r()
-            df_tc = clust_comparison_within(df,'cluster_d1')
-            df_tc
-            #df_tc$p
-          })
+          # cluster_analysis_within_d1 = reactive({
+          #   df = pFEV_wf_r()
+          #   df_tc = clust_comparison_within(df,'cluster_d1')
+          #   df_tc
+          #   #df_tc$p
+          # })
           
           output$cluster_analysis_within_d1_table = DT::renderDataTable({
             df = cluster_analysis_within_d1()
@@ -3069,16 +3069,16 @@ shinyServer(function(input, output) {
             
           })
           
-          output$bos3_surv_factor_plot_cluster = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = 'cluster_d1'
-            m_bos = bos_factor()
-            col_name = 'BOS3_surv_free'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            
-          })
+          # output$bos3_surv_factor_plot_cluster = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = 'cluster_d1'
+          #   m_bos = bos_factor()
+          #   col_name = 'BOS3_surv_free'
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   
+          # })
           
           output$bos1_factor_plot_smooth = renderPlot({
             x1 = as.numeric(input$bos_range[1])
@@ -3153,36 +3153,36 @@ shinyServer(function(input, output) {
             
           })
           
-          bos_factor_cluster_d1 = reactive({
-            full_data = pFEV_wf_r()
-            #global_factor = 'Status'
-            global_factor = 'cluster_d1'
-            factor_entry = unique(na.omit(full_data[,global_factor]))
-            factor_entry
-            df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
-            for(entry in factor_entry){
-              function_data = full_data[full_data[,global_factor] == entry,]
-              bos_df = BOS_function(function_data)
-              #bos_df = bos_data$bos_df
-              bos_df$Factor = global_factor
-              bos_df$Status = entry
-              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
-            }
-            #View(df)
-            m_bos = melt(df,id.vars= c('Factor','Status','time'))
-            m_bos
-          })
-          
-          output$bos3_surv_factor_plot_cluster_d1 = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = 'cluster_d1'
-            m_bos = bos_factor_cluster_d1()
-            col_name = 'BOS3_surv_free'
-            p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            
-          })
+          # bos_factor_cluster_d1 = reactive({
+          #   full_data = pFEV_wf_r()
+          #   #global_factor = 'Status'
+          #   global_factor = 'cluster_d1'
+          #   factor_entry = unique(na.omit(full_data[,global_factor]))
+          #   factor_entry
+          #   df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+          #   for(entry in factor_entry){
+          #     function_data = full_data[full_data[,global_factor] == entry,]
+          #     bos_df = BOS_function(function_data)
+          #     #bos_df = bos_data$bos_df
+          #     bos_df$Factor = global_factor
+          #     bos_df$Status = entry
+          #     df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
+          #   }
+          #   #View(df)
+          #   m_bos = melt(df,id.vars= c('Factor','Status','time'))
+          #   m_bos
+          # })
+          # 
+          # output$bos3_surv_factor_plot_cluster_d1 = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = 'cluster_d1'
+          #   m_bos = bos_factor_cluster_d1()
+          #   col_name = 'BOS3_surv_free'
+          #   p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   
+          # })
           
           
 
@@ -3411,44 +3411,44 @@ shinyServer(function(input, output) {
       })
 
       
-      output$boxplot_change_manova_cluster_d1 = renderPlot({
-        full_data = i_pFEV_sm_d1_fl_r()
-        global_factor = 'cluster_d1'
-        title = paste('Change D1 values for ',length(unique(full_data$MRN))," Patients")
-        cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
-        
-        boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
-        
-      })
-      output$cluster_change_pairwise_manova_table_d1= renderDataTable({
-        data = i_pFEV_sm_d1_fl_r()
-        function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
-        m_factor = 'cluster_d1'
-        df = pairwise_manova_function(function_data,m_factor)
-        df
-        #View(df)
-        significance_table_formatting_function(df)
-        
-      })
+      # output$boxplot_change_manova_cluster_d1 = renderPlot({
+      #   full_data = i_pFEV_sm_d1_fl_r()
+      #   global_factor = 'cluster_d1'
+      #   title = paste('Change D1 values for ',length(unique(full_data$MRN))," Patients")
+      #   cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+      #   
+      #   boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+      #   
+      # })
+      # output$cluster_change_pairwise_manova_table_d1= renderDataTable({
+      #   data = i_pFEV_sm_d1_fl_r()
+      #   function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
+      #   m_factor = 'cluster_d1'
+      #   df = pairwise_manova_function(function_data,m_factor)
+      #   df
+      #   #View(df)
+      #   significance_table_formatting_function(df)
+      #   
+      # })
       
-      output$boxplot_pFEV_manova_cluster_d1 = renderPlot({
-        full_data = pFEV_lf_r()
-        global_factor = 'cluster_d1'
-        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
-        cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
-        
-        boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
-        
-      })
-      output$cluster_pFEV_pairwise_manova_table_d1= renderDataTable({
-        data = pFEV_lf_r()
-        function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
-        m_factor = 'cluster_d1'
-        df = pairwise_manova_function(function_data,m_factor)
-        df
-        significance_table_formatting_function(df)
-        
-      })
+      # output$boxplot_pFEV_manova_cluster_d1 = renderPlot({
+      #   full_data = pFEV_lf_r()
+      #   global_factor = 'cluster_d1'
+      #   title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+      #   cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+      #   
+      #   boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
+      #   
+      # })
+      # output$cluster_pFEV_pairwise_manova_table_d1= renderDataTable({
+      #   data = pFEV_lf_r()
+      #   function_data = data[data$variable %in% c(input$mix_clust_col_num,input$mix_clust_col_num_2),]
+      #   m_factor = 'cluster_d1'
+      #   df = pairwise_manova_function(function_data,m_factor)
+      #   df
+      #   significance_table_formatting_function(df)
+      #   
+      # })
       
       # pFEV --------
       

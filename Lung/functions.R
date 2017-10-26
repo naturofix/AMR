@@ -36,10 +36,11 @@ line_plot_function = function(plot_data,title,input){
 smooth_line_plot_function = function(plot_data,title,input){
   global_factor = 'Status'
   global_factor = input$global_factor
-  ggplot(plot_data, aes_string(x = 'time', y = 'value',group = global_factor, col = global_factor )) + 
-    geom_vline(xintercept = 0) +
+  ggplot(plot_data, aes_string(x = 'time', y = 'value', col = global_factor )) + 
+    #geom_vline(xintercept = 0) +
+    #geom_line(aes(group = 'MRN')) + 
     geom_smooth() +
-    geom_point() +
+    #geom_point() +
     #stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
     
     theme(axis.text.x = element_text(size=8, angle=90)) +
@@ -76,7 +77,7 @@ boxplot_function = function(full_data,title,input){
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
   ggplot(plot_data, aes(x = variable, y = value)) + 
     
-    geom_violin(aes_string(col = input$global_factor)) +
+    geom_boxplot(aes_string(col = input$global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
     theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
@@ -128,6 +129,10 @@ boxplot_i_summary_function = function(full_data,title,input){
 
 lm_function = function(function_data,factor,cols){
   df = data.frame(Factor = numeric(), Status = numeric(0))
+  df_b = data.frame(term = numeric(0),df = numeric(0), sumsq = numeric(0),
+                    meansq = numeric(0), statistic = numeric(0), p.value = numeric(0),
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+  df = df_b
   full_data=function_data[function_data$variable %in% cols,]
   factor_levels = unique(full_data[,factor])
   for(entry in factor_levels){
@@ -136,16 +141,14 @@ lm_function = function(function_data,factor,cols){
     x = as.numeric(as.character(data$variable))
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
-      a = anova(fit)
-      p = a$Pr[1]
-      df[paste(factor,entry),'Factor'] = factor
-      df[paste(factor,entry),'Status'] = entry
-      df[paste(factor,entry),'ano_All'] = signif(p,3)
-      l = lm(y~x)
-      i = coef(l)['(Intercept)']
-      m = coef(l)['x']
-      df[paste(factor,entry),'Int_ALL'] = signif(i,3)
-      df[paste(factor,entry),'slope_ALL'] = signif(m,3)
+      df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      #print(df_n)
+      if(dim(df_n)[1] > 0){
+        df_n$Factor = factor
+        df_n$Status = entry
+        df_n$comparison = 'All'
+        df = rbind(df,df_n)
+      }
     }
   }
   
@@ -157,14 +160,23 @@ lm_function = function(function_data,factor,cols){
     x = as.numeric(as.character(data$variable))
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
-      a = anova(fit)
-      p = a$Pr[1]
-      df[paste(factor,entry),'ano_Pre'] = signif(p,3)
-      l = lm(y~x)
-      i = coef(l)['(Intercept)']
-      m = coef(l)['x']
-      df[paste(factor,entry),'Int_Pre'] = signif(i,3)
-      df[paste(factor,entry),'slope_Pre'] = signif(m,3)
+      df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      #print(df_n)
+      if(dim(df_n)[1] > 0){
+        df_n$Factor = factor
+        df_n$Status = entry
+        df_n$comparison = 'Pre Treatment'
+        df = rbind(df,df_n)
+      }
+      #print(df)
+      # a = anova(fit)
+      # p = a$Pr[1]
+      # df[paste(factor,entry),'ano_Pre'] = signif(p,3)
+      # l = lm(y~x)
+      # i = coef(l)['(Intercept)']
+      # m = coef(l)['x']
+      # df[paste(factor,entry),'Int_Pre'] = signif(i,3)
+      # df[paste(factor,entry),'slope_Pre'] = signif(m,3)
     }
   }
   
@@ -178,19 +190,28 @@ lm_function = function(function_data,factor,cols){
     x = as.numeric(as.character(data$variable))
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
-      a = anova(fit)
-      p = a$Pr[1]
-      df[paste(factor,entry),'ano_Post'] = signif(p,3)
-      l = lm(y~x)
-      i = coef(l)['(Intercept)']
-      m = coef(l)['x']
-      df[paste(factor,entry),'Int_Post'] = signif(i,3)
-      df[paste(factor,entry),'slope_Post'] = signif(m,3)
+      df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      #print(df_n)
+      if(dim(df_n)[1] > 0){
+        df_n$Factor = factor
+        df_n$Status = entry
+        df_n$comparison = 'Post Treatment'
+        df = rbind(df,df_n)
+      }
+      # print(df)
+      # a = anova(fit)
+      # p = a$Pr[1]
+      # df[paste(factor,entry),'ano_Post'] = signif(p,3)
+      # l = lm(y~x)
+      # i = coef(l)['(Intercept)']
+      # m = coef(l)['x']
+      # df[paste(factor,entry),'Int_Post'] = signif(i,3)
+      # df[paste(factor,entry),'slope_Post'] = signif(m,3)
     }
   }
-  df = df[order(df$Status),]
-  df = df[,c('Factor','Status','ano_All','ano_Pre','ano_Post')]
-  
+  #df = df[order(df$Status),]
+  #df = df[,c('Factor','Status','ano_All','ano_Pre','ano_Post')]
+  #col_rearrange_function(df,3)
   return(df)
 }
 
@@ -308,6 +329,69 @@ slope_function = function(full_data,factor,cols){
   return(df)
 }
 
+slope_function_tidy = function(full_data,factor,input){
+  #df = data.frame(Factor = numeric())
+  df_b = data.frame(estimate = numeric(0),
+                    statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
+                    conf.low = numeric(0), conf.high = numeric(0), method = numeric(0),
+                    alternative = numeric(0),
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+  df = df_b
+  factor_levels = unique(full_data[,factor])
+  for(entry in factor_levels){
+    data = full_data[full_data[,factor] == entry,]
+    
+    mean_all = mean(data$slope_ALL,na.rm=T)
+    mean_pre = mean(data$slope_Pre,na.rm=T)
+    mean_post = mean(data$slope_Post,na.rm=T)
+    pre_num = length(data$slope_Pre[!is.na(data$slope_Pre)])
+    post_num = length(data$slope_Post[!is.na(data$slope_Post)])
+    pre_sd = sd(data$slope_Pre,na.rm=T)
+    post_sd = sd(data$slope_Post,na.rm=T)
+    paired = FALSE
+    if(pre_num == post_num){
+      if(!(FALSE %in% (is.na(data$slope_Pre) == is.na(data$slope_Pre)))){
+        paired = TRUE
+      }
+    }
+    df_n = tryCatch(tidy(t.test(as.numeric(data$slope_Pre),as.numeric(data$slope_Post),paired = paired)), error = function(e) e = df_b)
+    if(dim(df_n)[1] > 0){
+     #print(colnames(df_n))
+      #s = 0
+      #if(t_all$p.value < 0.05){
+      #  s = 1
+      #}
+      df_n$Factor = factor
+      df_n$Status = entry
+      df_n$comparison = paste0("(",input$pre_range[1],":0) vs (0:",input$post_range[2],")")
+      df = rbind(df,df_n[,colnames(df)])
+      #df[paste(factor,entry),'mean_slope_All'] = signif(mean_all,3)
+      #df[paste(factor,entry),'p value'] = signif(t_all$p.value,3)
+      
+      #df[paste(factor,entry),'mean_slope_Pre'] = signif(mean_pre,3)
+      #df[paste(factor,entry),'mean_slope_Post'] = signif(mean_post,3)
+      #df[paste(factor,entry),'conf_1'] = signif(t_all$conf.int[1],3)
+      #df[paste(factor,entry),'conf_2'] = signif(t_all$conf.int[2],3)
+      #df[paste(factor,entry),'pre_num'] = signif(pre_num,3)
+      #df[paste(factor,entry),'post_num'] = signif(post_num,3)
+      #df[paste(factor,entry),'pre_sd'] = signif(pre_sd,3)
+      #df[paste(factor,entry),'post_sd'] = signif(post_sd,3)
+      #df[paste(factor,entry),'Paired'] = paired
+      
+      #df[paste(factor,entry),'significant'] = s
+      
+      #df[paste(factor,entry),'function'] = 'slope_function'
+      #df[paste(factor,entry),'pre_data'] = paste(data$slope_Post,collapse = ', ')
+      #df[paste(factor,entry),'post_data'] = paste(data$slope_Post,collapse = ', ')
+    }
+    
+  }
+  
+  
+  return(df)
+}
+
+
 slope_fit_plot_function = function(data,cols,x_label,input){
   global_factor = input$global_factor
   plot_data = data[data$variable %in% cols,]
@@ -321,27 +405,37 @@ slope_fit_plot_function = function(data,cols,x_label,input){
 
 slope_boxplot_data_function = function(data,df,global_factor){
   slope_cols = c("slope_Pre","slope_Post")
-  data$significant = factor(df$significant[match(data[,global_factor],df$Status)])
+  #data$significant = factor(df$significant[match(data[,global_factor],df$Status)])
   data_l = melt(data, measure.vars = slope_cols)
   return(data_l)
 }
 
 slope_boxplot_function = function(data,global_factor){
-  sig_col = c("white", "blanchedalmond")
-  if(!(0 %in% data$significant)){
-    sig_col = c("blanchedalmond")
-  }
-  sig_col = c('white','gray73')
-  
+  #sig_col = c("white", "blanchedalmond")
+  #if(!(0 %in% data$significant)){
+  #  sig_col = c("blanchedalmond")
+  #}
+  #sig_col = c('white','gray73')
+  data$Status = data[,global_factor]
   ggplot(data)+
-    geom_boxplot(aes_string(col = global_factor,y='value',x = global_factor,fill='variable')) +
-    scale_fill_manual(values = sig_col)
+    geom_boxplot(aes_string(col = global_factor,y='value',x = 'variable')) +
+    facet_grid(. ~ Status) + 
+    labs(col = global_factor)
+    
+    
+    #scale_fill_manual(values = sig_col)
   
 }
 
 
 pp_t_test_function = function(full_data,factor,t1,t2){
-  df = data.frame(Factor = numeric(0))
+  #df = data.frame(Factor = numeric(0))
+  df_b = data.frame(estimate = numeric(0),
+                    statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
+                    conf.low = numeric(0), conf.high = numeric(0), method = numeric(0),
+                    alternative = numeric(0),
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+  df = df_b
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
   factor_levels = unique(full_data[,factor])
@@ -360,43 +454,57 @@ pp_t_test_function = function(full_data,factor,t1,t2){
         paired = TRUE
       }
     }
-    t = t.test(pre_data,post_data,paired = paired)
-    p = t$p.value
-    s = 0
-    if(p < 0.05){
-      s = 1
+    df_n = tryCatch(tidy(t.test(pre_data,post_data,paired = paired)), error = function(e) e = df_b)
+    if(dim(df_n)[1] > 0){
+      df$Factor = Factor
+      df$Status = entry
+      df$comparison = 'test'
+      df = rbind(df,df_n)
     }
-
-    
-    df[paste(factor,entry),'Factor'] = factor
-    df[paste(factor,entry),'Status'] = entry
-    df[paste(factor,entry),'p value'] = signif(p,3)
-    df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
-    df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
-    df[paste(factor,entry),'pre num'] = signif(pre_num,3)
-    df[paste(factor,entry),'post num'] = signif(post_num,3)
-    df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
-    df[paste(factor,entry),'post sd'] = signif(post_sd,3)
-    df[paste(factor,entry),'paired'] = paired
-    
-    s = 0
-    if(p < 0.05){
-      s = 1
-    }
-    df[paste(factor,entry),'significant'] = s
-    
-    df[paste(factor,entry),'function'] = 'pp_t_test_function'
-    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
-    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
-    
   }
-
+  #   t = t.test(pre_data,post_data,paired = paired)
+  #   p = t$p.value
+  #   s = 0
+  #   if(p < 0.05){
+  #     s = 1
+  #   }
+  # 
+  #   
+  #   df[paste(factor,entry),'Factor'] = factor
+  #   df[paste(factor,entry),'Status'] = entry
+  #   df[paste(factor,entry),'p value'] = signif(p,3)
+  #   df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
+  #   df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
+  #   df[paste(factor,entry),'pre num'] = signif(pre_num,3)
+  #   df[paste(factor,entry),'post num'] = signif(post_num,3)
+  #   df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
+  #   df[paste(factor,entry),'post sd'] = signif(post_sd,3)
+  #   df[paste(factor,entry),'paired'] = paired
+  #   
+  #   s = 0
+  #   if(p < 0.05){
+  #     s = 1
+  #   }
+  #   df[paste(factor,entry),'significant'] = s
+  #   
+  #   df[paste(factor,entry),'function'] = 'pp_t_test_function'
+  #   df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+  #   df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
+  #   
+  # }
+  df = col_rearrange_function(df,3)
   df = df[order(df$Status),]
   return(df)
 }
 
-pp_t_test_range_function = function(full_data,factor,pre1,pre2,post1,post2){
-  df = data.frame(Factor = numeric(0))
+pp_t_test_range_function = function(full_data,factor,pre1,pre2,post1,post2,input){
+  #df = data.frame(Factor = numeric(0))
+  df_b = data.frame(estimate = numeric(0),
+                    statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
+                    conf.low = numeric(0), conf.high = numeric(0), method = numeric(0),
+                    alternative = numeric(0),
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+  df = df_b
   col1 = factor(c(pre1:pre2))
   col2 = factor(c(post1:post2))
   factor_levels = unique(full_data[,factor])
@@ -414,43 +522,53 @@ pp_t_test_range_function = function(full_data,factor,pre1,pre2,post1,post2){
       if(!(FALSE %in% is.na(pre_data) == is.na(post_data))){
         paired = TRUE
       }
+    }    
+    df_n = tryCatch(tidy(t.test(pre_data,post_data,paired = paired)), error = function(e) e = df_b)
+    print(df_n)
+    if(dim(df_n)[1] > 0){
+      df_n$Factor = factor
+      df_n$Status = entry
+      df_n$comparison = paste0('(',input$pre_range[1],':',input$pre_range[2],') vs (',input$post_range[1],':',input$post_range[2],')')
+      df = rbind(df,df_n[,colnames(df)])
     }
-    t = t.test(pre_data,post_data,paired = paired)
-    p = t$p.value
-    s = 0
-    if(p < 0.05){
-      s = 1
-    }
-
-    
-    df[paste(factor,entry),'Factor'] = factor
-    df[paste(factor,entry),'Status'] = entry
-    df[paste(factor,entry),'p value'] = signif(p,3)
-    df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
-    df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
-    
-    df[paste(factor,entry),'pre num'] = signif(pre_num,3)
-    df[paste(factor,entry),'post num'] = signif(post_num,3)
-    df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
-    df[paste(factor,entry),'post sd'] = signif(post_sd,3)
-    df[paste(factor,entry),'paired'] = paired
-    
-    s = 0
-    if(p < 0.05){
-      s = 1
-    }
-    df[paste(factor,entry),'significant'] = s
-    
-    df[paste(factor,entry),'function'] = 'pp_t_test_range_function'
-    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
-    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
-    
-    
   }
-  
-  df = df[order(df$Status),]
+  #   t = t.test(pre_data,post_data,paired = paired)
+  #   p = t$p.value
+  #   s = 0
+  #   if(p < 0.05){
+  #     s = 1
+  #   }
+  # 
+  #   
+  #   df[paste(factor,entry),'Factor'] = factor
+  #   df[paste(factor,entry),'Status'] = entry
+  #   df[paste(factor,entry),'p value'] = signif(p,3)
+  #   df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
+  #   df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
+  #   
+  #   df[paste(factor,entry),'pre num'] = signif(pre_num,3)
+  #   df[paste(factor,entry),'post num'] = signif(post_num,3)
+  #   df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
+  #   df[paste(factor,entry),'post sd'] = signif(post_sd,3)
+  #   df[paste(factor,entry),'paired'] = paired
+  #   
+  #   s = 0
+  #   if(p < 0.05){
+  #     s = 1
+  #   }
+  #   df[paste(factor,entry),'significant'] = s
+  #   
+  #   df[paste(factor,entry),'function'] = 'pp_t_test_range_function'
+  #   df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+  #   df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
+  #   
+  #   
+  # }
+  #df = df[order(df$Status),]
   return(df)
 }
+
+
 
 boxplot_pp_function = function(full_data,t1,t2,global_factor){
   col1 = factor(c(t1:-1))
@@ -467,7 +585,7 @@ boxplot_pp_function = function(full_data,t1,t2,global_factor){
   return(p)
 }
 
-boxplot_pp_ranges_function = function(full_data,pre1,pre2,post1,post2,global_factor,df){
+boxplot_pp_ranges_function = function(full_data,pre1,pre2,post1,post2,global_factor){
   col1 = factor(c(pre1:pre2))
   col2 = factor(c(post1:post2))
   pre_data = full_data[full_data$variable %in% col1,]
@@ -479,7 +597,7 @@ boxplot_pp_ranges_function = function(full_data,pre1,pre2,post1,post2,global_fac
   # if(!(0 %in% pp_data$significant)){
   #   sig_col = c("blanchedalmond")
   # }
-  pp_data$significant = factor(df$significant[match(pp_data[,global_factor],df$Status)])
+  #pp_data$significant = factor(df$significant[match(pp_data[,global_factor],df$Status)])
   # p = ggplot(pp_data, aes_string(x = eval(global_factor),y = 'value',col='treat',fill='significant')) +
   #   geom_boxplot() + 
   #   scale_fill_manual(values = sig_col)
@@ -488,14 +606,20 @@ boxplot_pp_ranges_function = function(full_data,pre1,pre2,post1,post2,global_fac
 }
 
 t_boxplot_function = function(pp_data,global_factor){
-  sig_col = c("white", "blanchedalmond")
-  if(!(0 %in% pp_data$significant)){
-    sig_col = c("blanchedalmond")
-  }
+  #sig_col = c("white", "blanchedalmond")
+  #if(!(0 %in% pp_data$significant)){
+  #  sig_col = c("blanchedalmond")
+  #}
   #pp_data$significant = factor(df$significant[match(pp_data[,global_factor],df$Status)])
-  p = ggplot(pp_data, aes_string(x = eval(global_factor),y = 'value',col='treat',fill='significant')) +
-    geom_boxplot() + 
-    scale_fill_manual(values = sig_col)
+  print(colnames(pp_data))
+  print(global_factor)
+
+  pp_data$Status = pp_data[,global_factor]
+  p = ggplot(pp_data, aes_string(x = 'treat',y = 'value',col=global_factor)) +
+    facet_grid(. ~ Status) + 
+    labs(col = global_factor) +
+    geom_boxplot() 
+    #scale_fill_manual(values = sig_col)
   
   return(p)
 }
@@ -576,6 +700,12 @@ boxplot_pp_ratio_full_function = function(full_data,t1,t2){
 
 pp_t_test_zero_function = function(full_data,factor,t1,t2){
   df = data.frame(Factor = numeric(0))
+  df_b = data.frame(estimate = numeric(0),
+                    statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
+                    conf.low = numeric(0), conf.high = numeric(0), method = numeric(0),
+                    alternative = numeric(0),
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+  df = df_b
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
   factor_levels = unique(full_data[,factor])
@@ -603,53 +733,72 @@ pp_t_test_zero_function = function(full_data,factor,t1,t2){
         post_paired = TRUE
       }
     }
-    pre_t = t.test(na.omit(pre_data),na.omit(zero),paired = pre_paired)
-    post_t = t.test(na.omit(post_data),na.omit(zero),paired = post_paired)
-    p_pre = pre_t$p.value
-    p_post = post_t$p.value
-
-    
-    df[paste(factor,entry),'Factor'] = factor
-    df[paste(factor,entry),'Status'] = entry
-    df[paste(factor,entry),'pre p value'] = signif(p_pre,3)
-    df[paste(factor,entry),'post p value'] = signif(p_post,3)
-    
-    df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
-    df[paste(factor,entry),'zero mean'] = signif(mean(zero,na.rm=T),3)
-    df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
-    
-    df[paste(factor,entry),'pre num'] = signif(pre_num,3)
-    df[paste(factor,entry),'zero num'] = signif(zero_num,3)
-    df[paste(factor,entry),'post num'] = signif(post_num,3)
-    
-    df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
-    df[paste(factor,entry),'zero sd'] = signif(zero_sd,3)
-    df[paste(factor,entry),'post sd'] = signif(post_sd,3)
-    
-    df[paste(factor,entry),'pre paired'] = pre_paired
-    df[paste(factor,entry),'post paired'] = post_paired
-    pre_s = 0
-    if(p_pre < 0.05){
-      pre_s = 1
+    df_pre = tryCatch(tidy(t.test(na.omit(pre_data),na.omit(zero),paired = pre_paired)), error = function(e) e = df_b)
+   #print(df_pre)
+    if(dim(df_pre)[1] > 0){
+      df_pre$Factor = factor
+      df_pre$Status = entry
+      df_pre$comparison = paste0('Pre treatment (',t2,' vs 0)')
+      df = rbind(df,df_pre[,colnames(df)])
     }
-    post_s = 0
-    if(p_post < 0.05){
-      post_s = 1
+    df_post = tryCatch(tidy(t.test(na.omit(post_data),na.omit(zero),paired = post_paired)), error = function(e) e = df_b)
+   #print(df_post)
+    if(dim(df_post)[1] > 0){
+      df_post$Factor = factor
+      df_post$Status = entry
+      df_post$comparison = paste0('Post treatment (0 vs',t2,')')
+      df = rbind(df,df_post[,colnames(df)])
     }
-    df[paste(factor,entry),'pre_significant'] = pre_s
-    df[paste(factor,entry),'post_significant'] = post_s
     
-    
-    
-    df[paste(factor,entry),'function'] = 'pp_t_test_zero_function'
-    df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
-    df[paste(factor,entry),'zero_data'] = paste(zero,collapse = ', ')
-    df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
-    
-    
+    # pre_t = t.test(na.omit(pre_data),na.omit(zero),paired = pre_paired)
+    # post_t = t.test(na.omit(post_data),na.omit(zero),paired = post_paired)
+    # p_pre = pre_t$p.value
+    # p_post = post_t$p.value
+    # 
+    # 
+    # df[paste(factor,entry),'Factor'] = factor
+    # df[paste(factor,entry),'Status'] = entry
+    # df[paste(factor,entry),'pre p value'] = signif(p_pre,3)
+    # df[paste(factor,entry),'post p value'] = signif(p_post,3)
+    # 
+    # df[paste(factor,entry),'pre mean'] = signif(mean(pre_data,na.rm=T),3)
+    # df[paste(factor,entry),'zero mean'] = signif(mean(zero,na.rm=T),3)
+    # df[paste(factor,entry),'post mean'] = signif(mean(post_data,na.rm=T),3)
+    # 
+    # df[paste(factor,entry),'pre num'] = signif(pre_num,3)
+    # df[paste(factor,entry),'zero num'] = signif(zero_num,3)
+    # df[paste(factor,entry),'post num'] = signif(post_num,3)
+    # 
+    # df[paste(factor,entry),'pre sd'] = signif(pre_sd,3)
+    # df[paste(factor,entry),'zero sd'] = signif(zero_sd,3)
+    # df[paste(factor,entry),'post sd'] = signif(post_sd,3)
+    # 
+    # df[paste(factor,entry),'pre paired'] = pre_paired
+    # df[paste(factor,entry),'post paired'] = post_paired
+    # pre_s = 0
+    # if(p_pre < 0.05){
+    #   pre_s = 1
+    # }
+    # post_s = 0
+    # if(p_post < 0.05){
+    #   post_s = 1
+    # }
+    # df[paste(factor,entry),'pre_significant'] = pre_s
+    # df[paste(factor,entry),'post_significant'] = post_s
+    # 
+    # 
+    # 
+    # df[paste(factor,entry),'function'] = 'pp_t_test_zero_function'
+    # df[paste(factor,entry),'pre_data'] = paste(pre_data,collapse = ', ')
+    # df[paste(factor,entry),'zero_data'] = paste(zero,collapse = ', ')
+    # df[paste(factor,entry),'post_data'] = paste(post_data,collapse = ', ')
+    # 
+    # 
 
   }
-  df = df[order(df$Status),]
+  #df = col_rearrange_function(df,3)
+  #df = df[order(df$Status),]
+ #View(df)
   return(df)
 }
 boxplot_pp_zero_function = function(full_data,factor,t1,t2){
@@ -680,7 +829,7 @@ boxplot_pp_zero_function = function(full_data,factor,t1,t2){
 }
 
 
-boxplot_pp_zero_data_function = function(full_data,factor,t1,t2,df_s){
+boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   df = data.frame(Factor = numeric(0))
   df = data.frame(Factor = numeric(0), Status = numeric(0),pre = numeric(0),zero = numeric(),post = numeric(0))
   
@@ -696,41 +845,43 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2,df_s){
     df = rbind(df,df1)
   }
   df_m = melt(df)
-  sig_list = c()
-  for(i in c(1:dim(df_m)[1])){
-    row_entry = df_m[i,]
-    #print(row_entry)
-    if(row_entry$variable == 'pre'){
-      sig = df_s$pre_significant[df_s$Status == row_entry$Status]
-    }
-    if(row_entry$variable == 'post'){
-      sig = df_s$post_significant[df_s$Status == row_entry$Status]
-    }
-    if(row_entry$variable == 'zero'){
-      sig = '0'
-    }
-    sig_list = c(sig_list,sig)
-  }
-  #print(sig_list)
-  df_m$significant = factor(sig_list)
+  # sig_list = c()
+  # for(i in c(1:dim(df_m)[1])){
+  #   row_entry = df_m[i,]
+  #   #print(row_entry)
+  #   if(row_entry$variable == 'pre'){
+  #     sig = df_s$pre_significant[df_s$Status == row_entry$Status]
+  #   }
+  #   if(row_entry$variable == 'post'){
+  #     sig = df_s$post_significant[df_s$Status == row_entry$Status]
+  #   }
+  #   if(row_entry$variable == 'zero'){
+  #     sig = '0'
+  #   }
+  #   sig_list = c(sig_list,sig)
+  # }
+  # #print(sig_list)
+  # df_m$significant = factor(sig_list)
   #df_m$significant[df$variable == 'pre'] = factor(df_s$pre_significant[match(df_m$Status[df$variable == 'pre'],df_s$Status)])
   
   return(df_m)
 }
 
 boxplot_pp_zero_plot_function = function(df_m){
-  
+  #View(df_m)
   u = as.numeric(as.character(unique(df_m$Status)))
   u = factor(u[(order(u))])
-  sig_col = c("white", "blanchedalmond")
-  if(!(0 %in% df_m$significant)){
-    sig_col = c("blanchedalmond")
-  }
-  p = ggplot(df_m, aes(x = Status,y=value,col=variable,fill = significant)) +
+  #sig_col = c("white", "blanchedalmond")
+  #if(!(0 %in% df_m$significant)){
+  #  sig_col = c("blanchedalmond")
+  #}
+
+  p = ggplot(df_m, aes(x = variable,y=value,col=Status)) +
     geom_hline(yintercept=0)+
     geom_boxplot() +
-    scale_x_discrete(limits = u) +
-    scale_fill_manual(values = sig_col)
+    facet_grid(. ~ Status)
+    #scale_x_discrete(limits = u)
+    #scale_fill_manual(values = sig_col)
   
   return(p)
 }
@@ -900,6 +1051,48 @@ boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of 
 
 
 
+full_t_test_function = function(){
+  for(i in cols){
+   #print(paste(factor(-i)))
+   #print(full_data[,factor(-i)])
+    raw_data[,'0'] = full_data[,'0']
+    raw_data[,paste(factor(-i))] = full_data[,paste(factor(-i))]
+    
+    raw_data[,paste(factor(i))] = full_data[,paste(factor(i))]
+    
+    col1 = paste0(prefix,i)
+    col2 = paste0(prefix,-i)
+    raw_data[,col1] = full_data[,col1]
+    raw_data[,col2] = full_data[,col1]
+    #View(raw_data)
+    output$percentage_df = renderDataTable(raw_data)
+    
+    factor_levels = unique(full_data[,global_factor])
+    for(entry in factor_levels){
+      pre_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col1]
+      post_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col2]
+      df1 = data.frame(pre = pre_data,post = post_data)
+      df1$Factor = global_factor
+      df1$Status = entry
+      df1$time = i
+      plot_df = rbind(plot_df,df1)
+      
+      #print(pre_data)
+      #print(post_data)
+      df_n = tryCatch(tidy(t.test(pre_data,post_data)), error = function(e) e = df_b)
+      if(dim(df_n)[1] > 0){
+        df_n$Factor = global_factor
+        df_n$Status = entry
+        df_n$comparison = paste(-i,'vs',i)
+        df = rbind(df,df_n)
+      }
+      
+    }
+  }
+  df = col_rearrange_function(df,3)
+  
+}
+
 
 ###### CLUSTERING #########
 # clustering_function(data,retained_patients(),input$clutree_num,
@@ -921,7 +1114,7 @@ clustering_function = function(full_data,r_list,d_num,
     data = full_data[,paste(unlist(factor(c(-6:6))))]
     colnames(data)
     rownames(data)
-    View(data)
+    #View(data)
     data = data[complete.cases(data),]
     weights = rep(10,dim(data)[2])
     weights
@@ -932,8 +1125,8 @@ clustering_function = function(full_data,r_list,d_num,
   clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
   clust_col_list = c(clust_num_col_list,clust_fac_col_list)
   clust_col_list = clust_col_list[clust_col_list %in% colnames(full_data)]
-  print(colnames(full_data))
-  print(clust_col_list)
+ #print(colnames(full_data))
+ #print(clust_col_list)
   
   
   #t_data = full_data[r_list,clust_col_list]
@@ -1093,7 +1286,7 @@ chisq_within = function(data,input){
   chi_df = tidy(chisq_result)
   chi_df$Cluster = 'All'
   chi_df$Factor = 'All'
-  print(chi_df)
+ #print(chi_df)
   
   for(selected_factor in factor_list){
     sub_data = data[data$Factor == selected_factor,]
@@ -1114,15 +1307,7 @@ chisq_within = function(data,input){
   return(chi_df)
 }
 
-proportion_table_formating = function(df_3,col_range,colour){
-  df_3[,col_range] = apply(df_3[,col_range],2,function(x) as.numeric(x))
-  df_3[is.na(df_3)] = 0
-  datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,col_range]),
-                                                   background = styleColorBar(range(df_3[,col_range]), colour),
-                                                   backgroundSize = '98% 88%',
-                                                   backgroundRepeat = 'no-repeat',
-                                                   backgroundPosition = 'center')
-}
+
 
 dendrogram_plot_function = function(dendr,x_cluster,cut){
   dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
@@ -1276,14 +1461,24 @@ BOS_test_function = function(time,rx_date,bos_date,death_date,status){
   return(bos_status)
 }
 
+#time = t
+#rx_date = as.numeric(x[rx_i])
+#bos_date = as.numeric(x[BOS3_date_i])
+#death_date = as.numeric(x[d_date_i])
+#status = as.numeric(x[status_i]))))
+
+
 BOS_surv_test_function = function(time,rx_date,bos_date,death_date,status){
-  bos_data = min(bos_date,rx_date)
+  #print(time)
+  #print(rx_date)
+  bos_date = min(bos_date,rx_date)
   bos_status = 0
   if(rx_date < time){
     bos_status = 0
   }else{
     bos_status = BOS_test_function(time,rx_date,bos_date,death_date,status)
   }
+  #bos_status
   return(bos_status)
 }
 
@@ -1299,7 +1494,7 @@ BOS_patient_function = function(full_data){
   end_time = 50
   MRN = full_data$MRN
   #print(str(MRN))
-  d_date = full_data$MonthsToEvent
+  d_date = full_data$MonthsToDeath
   #print(str(d_date))
   rx = full_data$MonthSinceRx
   #print(str(rx))
@@ -1319,8 +1514,9 @@ BOS_patient_function = function(full_data){
   full_data$BOS2_date = BOS2_date
   full_data$BOS3_date = BOS3_date
   full_data$BOS3_surv_date = BOS3_surv_date
-
-
+  full_data$MonthsToDeath[is.na(full_data$MonthsToDeath)] = end_time
+  full_data$MonthSinceRx[is.na(full_data$MonthSinceRx)] = end_time
+  
   time = seq(-24,48,1)
   #str(time)
   bos_df = data.frame(time = time)
@@ -1328,8 +1524,8 @@ BOS_patient_function = function(full_data){
   BOS1_date_i = grep('BOS1_date', colnames(full_data))
   BOS2_date_i = grep('BOS2_date', colnames(full_data))
   BOS3_date_i = grep('BOS3_date', colnames(full_data))
-  BOS3_surv_date_i = grep('BOS1_surv_date', colnames(full_data))
-  d_date_i = grep('MonthsToEvent', colnames(full_data))
+  BOS3_surv_date_i = grep('BOS3_surv_date', colnames(full_data))
+  d_date_i = grep('MonthsToDeath', colnames(full_data))
   status_i = grep('Status', colnames(full_data))
   patient_status_df = data.frame(time = numeric(0))
   #print(rx_i)
@@ -1781,19 +1977,36 @@ manova_function = function(stat_data,global_factor,input){
 
 ######### FORMATTING ##############
 
-significance_table_formatting_function = function(df){
+proportion_table_formating = function(df_3,col_range,colour){
+  df_3[,col_range] = apply(df_3[,col_range],2,function(x) as.numeric(x))
+  df_3[is.na(df_3)] = 0
+  datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,col_range]),
+                                                   background = styleColorBar(range(df_3[,col_range]), colour),
+                                                   backgroundSize = '98% 88%',
+                                                   backgroundRepeat = 'no-repeat',
+                                                   backgroundPosition = 'center')
+}
+
+significance_table_formatting_function = function(df,mtc = 'none'){
   if('term' %in% colnames(df)){
     df = df[order(df$term),]
   }
+  if("Status" %in% colnames(df) & 'Factor' %in% colnames(df)){
+    df = df[order(df$Factor,df$Status),]
+  }
+  #df$significant = ifelse(df$p.value < 0.05,1,0)
+  df$p.value.original = df$p.value
+  df$p.value = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
   df$significant = ifelse(df$p.value < 0.05,1,0)
-  datatable(df, options = list(columnDefs = list(list(targets = grep('significant',colnames(df)), visible = FALSE)))) %>% formatStyle(
+  
+  datatable(df, options = list(pageLength = 500, columnDefs = list(list(targets = grep('significant',colnames(df)), visible = FALSE)))) %>% formatStyle(
     'p.value', 'significant',
     backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))
   ) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
 }
 
 table_formatting_function = function(df){
-  datatable(df) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
+  datatable(df, options = list(pageLength = 500)) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
 }
 
 col_rearrange_function = function(df,col_num){

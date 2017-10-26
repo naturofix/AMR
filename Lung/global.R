@@ -26,6 +26,7 @@ library(zoo)
 library(broom)
 library(ggsignif)
 
+enableBookmarking(store = "url")
 
 
 si = sessionInfo()
@@ -33,11 +34,35 @@ si = sessionInfo()
 source('functions.R')
 source('defaults.R')
 
+pre_values = c(-12,0)
+post_values = c(0,12)
+cluster_cols = c('D1_-4','D1_-3','D1_-2','D1_-1','D1_0','D1_1','D1_2','D1_3','D1_4')
+d_weight_1 = 0
+d_weight_2 = 0
+c_weight_1 = 20
+c_weight_2 = 5
+num_clusters = 2
+g_sheet = F
+
+defaults = 'David'
+defaults = F
+if(defaults == 'David'){
+  pre_values = c(-3,0)
+  post_values = c(0,3)
+  cluster_cols = c('D1_-3','D1_-1','D1_0')
+  d_weight_1 = 10
+  d_weight_2 = 5
+  c_weight_1 = 4
+  c_weight_2 = 10
+  num_clusters = 3
+  g_sheet = T
+}
+
 
 
 
 ############ UPLOAD DATA ####################
-g_sheet = F # decided is data is to be read from google sheets or not
+#g_sheet = F # decided is data is to be read from google sheets or not
 if(g_sheet == T){
   googlesheets::gs_auth(token = 'shiny_app_token.rds')
   
@@ -45,7 +70,7 @@ if(g_sheet == T){
   gs = gs_url("https://docs.google.com/spreadsheets/d/1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA/edit?usp=sharing_eil&ts=59b28497")
   sheet_list = gs_ws_ls(gs)
   sheet_list
-  clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
+  #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
   clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   
   colnames(clustering)
@@ -57,8 +82,7 @@ if(g_sheet == T){
   
 }
 
-#clustering = as_tibble(clustering)
-#clustering
+colnames(clustering)
 
 ### ALL COLUMNS #####
 all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
@@ -328,149 +352,6 @@ i_pFEV_sm_d2_fl$time = as.numeric(as.character(i_pFEV_sm_d2_fl$variable))
 before = colnames(pFEV_w)[c(1:25)]
 
 after = colnames(pFEV_w)[c(25:49)]
-
-
-
-
-########### LINEAR REGRESSION ###############
-
-# 
-#   df = data.frame(Factor = numeric(), Status = numeric(0))
-# 
-#   factor = 'MRN'
-# 
-#   cols = c(-6:6)
-# 
-#   full_data=pFEV_lf[pFEV_lf$variable %in% cols,]
-# 
-#   factor_levels = unique(full_data[,factor])
-# 
-#   entry = factor_levels[3]
-# 
-#   for(entry in factor_levels){
-#     data = full_data[full_data[,factor] == entry,]
-#     dim(data)
-#     y = as.numeric(data$value)
-#     x = as.numeric(as.character(data$variable))
-#     x
-#     y
-#     if(!all(is.na(y))){
-#       fit <- aov(y ~ x, data=data)
-#       fit
-#       summary(fit)
-#       a = anova(fit)
-#       a
-#       
-#       p = a$Pr[1]
-#       print(p)
-#       df[paste(factor,entry),'Factor'] = factor
-#       df[paste(factor,entry),'Status'] = entry
-#       df[paste(factor,entry),'ano_All'] = signif(p,3)
-#       str(data$variable)
-#       l = lm(y~x)
-#       summary(l)
-#       i = coef(l)['(Intercept)']
-#       m = coef(l)['x']
-#       df[paste(factor,entry),'Int_ALL'] = i
-#       df[paste(factor,entry),'slope_ALL'] = m
-#     }
-#   }
-#   df
-#   
-#   full_data=pFEV_lf[pFEV_lf$variable %in% before & pFEV_lf$variable %in% cols,]
-# 
-#   factor_levels = unique(full_data[,factor])
-#   factor_levels
-#   entry = factor_levels[2]
-# 
-#   for(entry in factor_levels){
-#     data = full_data[full_data[,factor] == entry,]
-#     dim(data)
-#     y = as.numeric(data$value)
-#     x = as.numeric(as.character(data$variable))
-#     x
-#     y
-#     if(!all(is.na(y))){
-#       fit <- aov(y ~ x, data=data)
-#       fit
-#       summary(fit)
-#       a = anova(fit)
-#       a
-#       
-#       p = a$Pr[1]
-#       print(p)
-#      #df[paste(factor,entry),'Factor'] = factor
-#       #df[paste(factor,entry),'Status'] = entry
-#       df[paste(factor,entry),'ano_Pre'] = signif(p,3)
-#       str(data$variable)
-#       l = lm(y~x)
-#       summary(l)
-#       i = coef(l)['(Intercept)']
-#       m = coef(l)['x']
-#       df[paste(factor,entry),'Int_Pre'] = i
-#       df[paste(factor,entry),'slope_Pre'] = m
-#     }
-#   }
-#   
-#   
-#   full_data=pFEV_lf[pFEV_lf$variable %in% after & pFEV_lf$variable %in% cols,]
-# 
-#   factor_levels = unique(full_data[,factor])
-#   factor_levels
-#   entry = factor_levels[2]
-# 
-#   for(entry in factor_levels){
-#     data = full_data[full_data[,factor] == entry,]
-#     dim(data)
-#     y = as.numeric(data$value)
-#     x = as.numeric(as.character(data$variable))
-#     x
-#     y
-#     if(!all(is.na(y))){
-#       fit <- aov(y ~ x, data=data)
-#       fit
-#       summary(fit)
-#       a = anova(fit)
-#       a
-#       
-#       p = a$Pr[1]
-#       print(p)
-#       #df[paste(factor,entry),'Factor'] = factor
-#       #df[paste(factor,entry),'Status'] = entry
-#       df[paste(factor,entry),'ano_Post'] = signif(p,3)
-#       str(data$variable)
-#       l = lm(y~x)
-#       summary(l)
-#       i = coef(l)['(Intercept)']
-#       m = coef(l)['x']
-#       df[paste(factor,entry),'Int_Post'] = i
-#       df[paste(factor,entry),'slope_Post'] = m
-#     }
-#   }
-#   df = df[order(df$Status),]
-#   df
-#   lm_MRN = df
-# 
-# as.numeric(full_fac$DeathDate)
-# 
-# full_fac$time_diff = full_fac$RxDate - full_fac$DeathDate
-# 
-# full_fac$SurvObj = with(full_fac, Surv(time_diff,Status == 'dead'))
-# km.as.one <- survfit(SurvObj ~ 1, data = full_fac, conf.type = "log-log")
-# km.as.one
-# plot(km.as.one)
-# 
-# km.by.sex <- survfit(SurvObj ~ NewCTChange, data = full_fac, conf.type = "log-log")
-# plot(km.by.sex)
-
-#km.by.sex <- survfit(SurvObj ~ sex, data = lung, conf.type = "log-log")
-
-## Show object
-#km.as.one
-
-
-
-########## NEW ##########
 
 
 

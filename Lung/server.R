@@ -2181,7 +2181,45 @@ shinyServer(function(input, output) {
       })
       
       
+  ### MANOVA ###
+      output$boxplot_pFEV_manova = renderPlot({
+        full_data = pFEV_lf_r()
+        title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
+        boxplot_function(full_data,title,input)
+      })
 
+      
+      output$selected_manova_table = renderDataTable({
+        data = pFEV_lf
+        data = pFEV_lf_r()
+        global_factor = 'HLAStrength'
+        global_factor = input$global_factor
+        cols = factor(c(-6,6))
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,global_factor)
+        significance_table_formatting_function(df)
+        
+      })
+      
+      output$full_manova_table = renderDataTable({
+        df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
+        df = df_b
+        data = pFEV_lf
+        data = pFEV_lf_r()
+        global_factor = 'HLAStrength'
+        global_factor = input$global_factor
+        cols = factor(c(-6,6))
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        for(factor in factor_list){
+          df_n = pairwise_manova_function(function_data,global_factor)
+          df = rbind(df,df_n)
+        }
+        
+        significance_table_formatting_function(df)
+        
+      })
   
   ##### CLUSTERING ###############
   

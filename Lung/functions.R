@@ -524,7 +524,7 @@ pp_t_test_range_function = function(full_data,factor,pre1,pre2,post1,post2,input
       }
     }    
     df_n = tryCatch(tidy(t.test(pre_data,post_data,paired = paired)), error = function(e) e = df_b)
-    print(df_n)
+    #print(df_n)
     if(dim(df_n)[1] > 0){
       df_n$Factor = factor
       df_n$Status = entry
@@ -611,8 +611,8 @@ t_boxplot_function = function(pp_data,global_factor){
   #  sig_col = c("blanchedalmond")
   #}
   #pp_data$significant = factor(df$significant[match(pp_data[,global_factor],df$Status)])
-  print(colnames(pp_data))
-  print(global_factor)
+  #print(colnames(pp_data))
+  #print(global_factor)
 
   pp_data$Status = pp_data[,global_factor]
   p = ggplot(pp_data, aes_string(x = 'treat',y = 'value',col=global_factor)) +
@@ -1183,7 +1183,7 @@ clust_comparison_total = function(df,clust_col){
   df_c = data.frame(cluster = num_clusters)
   rownames(df_c) = df_c$num_clusters
   total = dim(df)[1]
-  for(factor_name in colnames(full_fac_0)[-1]){
+  for(factor_name in factor_list){
     for(i in num_clusters){
       status = unique(df[,factor_name])
       status = status[order(status)]
@@ -1210,21 +1210,43 @@ clust_comparison_total = function(df,clust_col){
   return(data)
 }
 
-clust_comparison_within = function(df,clust_col){
+clust_comparison_within = function(df,clust_col,input){
   num_clusters = unique(df[,clust_col])
   num_clusters = num_clusters[(order(num_clusters))]
+  print(num_clusters)
+  num_clusters = input$cluster_select_clusters
+  print(num_clusters)
+  #print(num_clusters_s)
+  
+  
   #print(num_clusters)
   df_c = data.frame(cluster = num_clusters)
   rownames(df_c) = df_c$num_clusters
-
+  #print(dim(df))
   for(i in num_clusters){
     df_clust = df[df[,clust_col] == i,]
+    
+    #print(i)
+    #print(dim(df_clust))
     total = dim(df_clust)[1]
-    for(factor_name in colnames(full_fac_0)[-1]){
-      status = unique(df_clust[,factor_name])
+    for(factor_name in factor_list[order(factor_list)]){
+      status = paste(unique(df_clust[,factor_name]))
+      #print(factor_name)
+      #print(status)
+      #status[is.na(as.numeric(status))] = -2
       status = status[order(status)]
+      #print(status)
+      #print(df_clust[,factor_name])
       for(j in status){
-        num = length(df_clust[,factor_name][df_clust[,factor_name] == j])
+        #print(j)
+        #print(df_clust[,factor_name][df_clust[,factor_name] == j])
+        if(is.na(as.numeric(j))){
+          num = length(df_clust[,factor_name][is.na(df_clust[,factor_name])])
+        }else{
+          num = length(df_clust[,factor_name][df_clust[,factor_name] == j & !is.na(df_clust[,factor_name])])
+        }
+        #print(num)
+        #print(total)
         per = round((num/total)*100,2)
         df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
         df_c["Status",paste(factor_name,j,sep='_')] = j
@@ -1233,8 +1255,9 @@ clust_comparison_within = function(df,clust_col){
       }
     }
   }
-
+  
   df_tc = as.data.frame(t(df_c))
+  print(colnames(df_tc))
   data = df_tc[,c('Factor','Status',num_clusters)] # DBC --- colnames used in chisq functions
   data = data[c(2:dim(data)[1]),]
   data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
@@ -1937,17 +1960,83 @@ manova_function = function(stat_data,global_factor,input){
 
 ######### FORMATTING ##############
 
-proportion_table_formating = function(df_3,col_range,colour){
-  df_3[,col_range] = apply(df_3[,col_range],2,function(x) as.numeric(x))
-  df_3[is.na(df_3)] = 0
-  datatable(df_3,rownames = FALSE) %>% formatStyle(names(df_3[,col_range]),
-                                                   background = styleColorBar(range(df_3[,col_range]), colour),
+proportion_table_formating_factor = function(df,col_range,colour,mtc = 'none'){
+  df[,col_range] = apply(df[,col_range],2,function(x) as.numeric(x))
+  df[is.na(df)] = 0
+  #df$p.value.original = df$p.value
+  df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
+  
+ 
+  df$significant = ifelse(df[,mtc] < 0.05,1,0)
+  
+  
+  datatable(df, options = list(rownames = FALSE, pageLength = 500,
+                                                 columnDefs = list(list(targets = grep('significant',colnames(df)),
+                                                                        visible = FALSE)))) %>% 
+    formatStyle(names(df[,col_range]),
+                                                   background = styleColorBar(range(df[,col_range]), colour),
                                                    backgroundSize = '98% 88%',
                                                    backgroundRepeat = 'no-repeat',
-                                                   backgroundPosition = 'center')
+                                                   backgroundPosition = 'center') %>% 
+    formatStyle(
+      mtc, 'significant',
+      target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))) %>% 
+    
+    formatStyle(
+      mtc, 'significant',
+      #target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
+    formatSignif(colnames(select_if(df, is.numeric)),3)
+  
 }
 
+
+proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
+  df[,col_range] = apply(df[,col_range],2,function(x) as.numeric(x))
+  df[is.na(df)] = 0
+
+  #df$p.value.original = df$p.value
+  #df$p.value = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
+  datatable(df,options = list(rownames = FALSE, pageLength = 500)) %>% 
+    formatStyle(names(df[,col_range]),
+                                                   background = styleColorBar(range(df[,col_range]), colour),
+                                                   backgroundSize = '98% 88%',
+                                                   backgroundRepeat = 'no-repeat',
+                                                   backgroundPosition = 'center') %>%
+    formatSignif(colnames(select_if(df, is.numeric)),3)
+  
+}
+
+
 significance_table_formatting_function = function(df,mtc = 'none'){
+  if('term' %in% colnames(df)){
+    df = df[order(df$term),]
+  }
+  if("Status" %in% colnames(df) & 'Factor' %in% colnames(df)){
+    df = df[order(df$Factor,df$Status),]
+  }
+  #df$significant = ifelse(df$p.value < 0.05,1,0)
+  #df$p.value.original = df$p.value
+  df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
+  df$significant = ifelse(df[,mtc] < 0.05,1,0)
+  df = col_rearrange_function(df,2)
+  datatable(df, options = list(pageLength = 500,
+                               columnDefs = list(list(targets = grep('significant',colnames(df)),
+                                                      visible = FALSE)))) %>% 
+    formatStyle(
+      mtc, 'significant',
+      target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))) %>% 
+    formatStyle(
+      mtc, 'significant',
+      #target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
+    formatSignif(colnames(select_if(df, is.numeric)),3)
+}
+
+
+significance_table_formatting_function_backup = function(df,mtc = 'none'){
   if('term' %in% colnames(df)){
     df = df[order(df$term),]
   }

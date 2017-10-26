@@ -6,7 +6,7 @@ shinyUI(fluidPage(
     column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
  
     
-    column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'Both'),
+    column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
                               choiceValues = list("1", "2","0"
                               ),inline = F,selected = '0')),
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
@@ -210,7 +210,7 @@ shinyUI(fluidPage(
       ############## STAT ################
                     tabPanel('Statistics',
                              column(12,
-                                  radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'none', inline = T),
+                                  radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'BH', inline = T),
                                   tabsetPanel(selected = 'Pre Treatment vs Post Treatment',
                                     ### _pre vs post ####
                                     tabPanel('Pre Treatment vs Post Treatment',
@@ -400,6 +400,8 @@ shinyUI(fluidPage(
 
     #### CLUSTERING #####         
     tabPanel('Clustering',
+             tabsetPanel(
+               tabPanel('Dendograms',
              
              column(6,
                     selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = c("SignOfInflammation","BiopsyScore"),width = 600),
@@ -417,8 +419,7 @@ shinyUI(fluidPage(
              column(12,
                     numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
                 
-                    tabsetPanel(
-                         tabPanel('Dendograms',
+
                                 plotOutput('discrete_cluster_plot'),  
                                 plotOutput('mix_clu'),
                                 
@@ -431,33 +432,49 @@ shinyUI(fluidPage(
                                 plotOutput('boxplot_pFEV_cluster_full'),
                                 tags$h5('MANOVA'),
                                 dataTableOutput('selected_manova_table_cluster')
-                         ), # Dendogram
+                         )), # Dendogram
                     #### _chi-squared ####
                      tabPanel('Chi-squared',
                               tabsetPanel(
-                                  tabPanel('Selected',
-                                        tags$h3('Factor proportions across clusters by factor status'),
-                                        dataTableOutput('cluster_analyis_selected_table'),
-                                        dataTableOutput('chisq_cluster'),
-                                        
-                                        tags$h3('Factor proportions within clusters'),
-                                        dataTableOutput('cluster_analysis_within_table_selected_table'),
-                                        #uiOutput("cluster_select_factors"),
-                                        uiOutput("cluster_select_clusters"),
-                                        
-                                        verbatimTextOutput('test_text_c'),
-                                        dataTableOutput('chisq_cluster_within')
-                                  ),
-                                 tabPanel('Full',
-                                          tags$h3('Factor proportions across clusters by factor status'),
-                                          dataTableOutput('cluster_analysis'),
-                                          tags$h3('Factor proportions within clusters'),
-                                          dataTableOutput('cluster_analysis_within_table')
-                                 ))
-                     
-                     
-                     ) # chi-squared
-                    )) 
+                                   tabPanel('Factor',
+                                            tags$h5('Factor proportions across clusters by factor'),
+                                            
+                                            tabsetPanel(
+                                              tabPanel('Proportions',
+                                                       
+                                                  tags$h6('Chi-squared used to determines if the proportions of a specific factor criteria is randomly distributed between clusters. Proportions of each row sums to 100. Random would equate to equal propotions across clusters. Chi-squared tests if the deviation from random is significant.'),
+                                                  tabsetPanel(
+                                                    tabPanel('Selected',dataTableOutput('cluster_analyis_selected_table')),
+                                                    tabPanel('Full',dataTableOutput('cluster_analysis')))),
+                                              tabPanel('Stat',
+                                                       tags$h6('Chi-squared used to determines if the proportions between factor criteria are significantly different from each other.'),
+                                                       
+                                                       tabsetPanel(
+                                                         tabPanel('Selected',dataTableOutput('chisq_cluster')),
+                                                          tabPanel('Full',dataTableOutput('chisq_cluster_full')     
+                                                       )))
+                                            )),
+                                    tabPanel('Cluster',
+                                             tags$h5('Factor proportions within clusters'),
+                                             
+                                             uiOutput("cluster_select_clusters"),
+                                             tabsetPanel(
+                                               tabPanel('Proportions',
+                                                  tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
+                                                  tabsetPanel(
+                                                    tabPanel('Selected',dataTableOutput('cluster_analysis_within_table_selected_table')),
+                                                    tabPanel('Full',dataTableOutput('cluster_analysis_within_table'))
+                                               )),
+                                               tabPanel("Stat",
+                                                        tags$h6('Chi-squared used to determines if the factor criteria proportions between clusters are signficantly different from each factor. The clusters can be selected to determine if there are specific differences between clusters.'),
+                                                        
+                                                        tabsetPanel(
+                                                          tabPanel('Selected',dataTableOutput('chisq_cluster_within')),
+                                                          tabPanel('Full',dataTableOutput('chisq_cluster_within_full'))
+                                                        ))
+                                               ))
+                                 ))# chi-squared
+                    ) 
                   ), #Clustering
 
     ####### BOSS #######

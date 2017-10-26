@@ -45,7 +45,7 @@ num_clusters = 2
 g_sheet = F
 
 defaults = 'David'
-defaults = F
+#defaults = F
 if(defaults == 'David'){
   pre_values = c(-3,0)
   post_values = c(0,3)
@@ -69,11 +69,11 @@ if(g_sheet == T){
   key = "1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA"
   gs = gs_url("https://docs.google.com/spreadsheets/d/1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA/edit?usp=sharing_eil&ts=59b28497")
   sheet_list = gs_ws_ls(gs)
-  sheet_list
+  #sheet_list
   #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
   clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   
-  colnames(clustering)
+  #colnames(clustering)
   saveRDS(file = 'clustering_6_new.rds',object = clustering)
   #clustering2 = clustering
 }else{
@@ -82,7 +82,7 @@ if(g_sheet == T){
   
 }
 
-colnames(clustering)
+#colnames(clustering)
 
 ### ALL COLUMNS #####
 all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
@@ -118,7 +118,7 @@ non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols,continuo
 ### REMOVE DUPLICATE ROWS ####
 dup = duplicated(clustering[,1])
 dups = clustering[duplicated(clustering[,1]),1]
-dups
+#dups
 row_names = clustering[,1]
 row_names[dup] = paste(row_names[dup],'a',sep='_') 
 clustering = clustering[!is.na(row_names),]
@@ -182,7 +182,7 @@ full_fac = apply(full_fac,2, function(x) factor(x))
 ## numric column ##
 clust_num = clustering[,non_pFEV_continuous_columns]
 clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric((x))))
-str(clust_num)
+#str(clust_num)
 #clust_num
 
 
@@ -258,7 +258,7 @@ pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function
 term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
 for(term in discrete_term_columns){
   reason = data.frame(Name = clustering[,term],Number = as.numeric(processed_data[,term]))
-  reason
+  #reason
   reason = reason[order(reason$Number),]
   reason = reason[!duplicated(reason),]
   reason$Factor = term
@@ -270,7 +270,7 @@ for(term in discrete_term_columns){
 ####################### IMPUTE pFEV ####################### 
   
 pFEV_ts = as.ts(t(pFEV_w))
-pFEV_ts
+#pFEV_ts
 
 i_pFEV_ts = na.interpolation(pFEV_ts)
 
@@ -298,7 +298,7 @@ i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
 
 
 time = as.numeric(colnames(i_pFEV_ts))
-time
+#time
 i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
 colnames(i_pFEV_sm) = time
 

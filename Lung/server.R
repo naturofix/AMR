@@ -103,21 +103,14 @@ shinyServer(function(input, output) {
                 patient_list = patient_list[!(patient_list %in% input$remove_list)]
                 if(input$status_radio == '2'){
                   MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath < as.numeric(input$post_range[2])])
-                  #print('Dead MRN')
-                  #print(length(MRN))
-                  #print(MRN)
                   patient_list = patient_list[patient_list %in% MRN]
                 }
                 if(input$status_radio == '1'){
                   MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath > as.numeric(input$post_range[2]) | pFEV_wf$Status == '1'])
-                  #print('Alive MRN')
-                  #print(length(MRN))
-                  #print(MRN)
                   patient_list = patient_list[patient_list %in% MRN]
                 }
                 
-                patient_list
-                
+                patient_list                
                 })
             line_size = 2
             point_size = 4
@@ -415,7 +408,7 @@ shinyServer(function(input, output) {
     }
     data = o_data
     #data = data[data$Status %in% status_r(),]
-    data
+    #data
     ##View(data)
     data
   })
@@ -544,9 +537,9 @@ shinyServer(function(input, output) {
   change_data = reactive({
     d1_data = i_pFEV_sm_d1_f_c()
     d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
-    colnames(d1_data)
+    #colnames(d1_data)
     colnames(d1_data) = paste0('D1_',colnames(d1_data))
-    colnames(d1_data)
+    #colnames(d1_data)
     data = cbind(comp_data(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
     #data$MRN = rownames(data)
     #data = cbind(comp_data(),pFEV_2_zero()$ratio_data)
@@ -656,7 +649,7 @@ shinyServer(function(input, output) {
     }else{
       test_list$i_pFEV_sm_d2_f_r_cluster_d1 = TRUE
     }
-    paste(test_list)
+    #paste(test_list)
     
     if(!identical(pFEV_lf_r()$MRN, i_pFEV_lf_r()$MRN)){
       test_list$i_pFEV_lf_r_row = FALSE
@@ -924,11 +917,11 @@ shinyServer(function(input, output) {
                 factor = input$global_factor
                 cols = c(-6:6)
                 cols = factor(c(input$pre_range[1]:input$post_range[2]))
-                cols
+                #cols
                 #full_data=pFEV_lf[pFEV_lf$variable %in% cols,]
                 function_data = pFEV_lf_r()
                 df = lm_function(function_data,factor,cols)
-                df = df[order(df$Status),]
+                #df = df[order(df$Status),]
                 col_rearrange_function(df,3)
                 
               })
@@ -952,7 +945,7 @@ shinyServer(function(input, output) {
                   df = rbind(df,df_n)
                 }
                 #Veiw(df)
-                df
+                #df
                 df = col_rearrange_function(df,3)
                 significance_table_formatting_function(df,input$mtc)
                 #df = df[order(df$Status),]
@@ -969,7 +962,7 @@ shinyServer(function(input, output) {
               full_data = pFEV_lf_r()
               cols = c(-6:6)
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
-              cols
+              #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% cols,]
               ggplot(full_data, aes(x = variable, y = value)) + 
                 geom_boxplot(aes_string(col = factor)) +
@@ -983,7 +976,7 @@ shinyServer(function(input, output) {
               factor = input$global_factor
               cols = c(-6:6)
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
-              cols
+              #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% before & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
                 geom_boxplot(aes_string(col = factor)) +
@@ -997,7 +990,7 @@ shinyServer(function(input, output) {
               factor = input$global_factor
               cols = c(-6:6)
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
-              cols
+              #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% after & pFEV_lf_r()$variable %in% cols,] 
               ggplot(full_data, aes(x = variable, y = value)) + 
                 geom_boxplot(aes_string(col = factor)) +
@@ -1024,7 +1017,7 @@ shinyServer(function(input, output) {
           output$df_lm_table = renderDataTable({
             df = df_lm_sample()
             df = df[,c(1,(grep('cluster',colnames(df))+1):length(colnames(df)))]
-            df
+            #df
             table_formatting_function(df)
             })
 
@@ -1160,7 +1153,7 @@ shinyServer(function(input, output) {
                     global_factor = input$global_factor
                     pp_data = boxplot_pp_ranges_function(full_data,pre1,pre2,post1,post2,global_factor)
                     pp_data
-                    print(colnames(pp_data))
+                    #print(colnames(pp_data))
                     #View(pp_data)
                     pp_data
                   })
@@ -1420,7 +1413,7 @@ shinyServer(function(input, output) {
           
         })
         output$boxplot_pp_ratio_cluster = renderPlot({
-          title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          title = paste0('T test of ',input$data_select,' log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
           
           boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title)
         })
@@ -1694,11 +1687,11 @@ shinyServer(function(input, output) {
         #full_data = pFEV_wf_r()
         
         pre_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n < 0]
-        pre_times
+        #pre_times
         post_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n > 0]
         
         zero_data = full_data[,'0']
-        zero_data
+        #zero_data
         
         pre_data = full_data[,pre_times]
         post_data = full_data[,post_times]
@@ -1717,8 +1710,8 @@ shinyServer(function(input, output) {
         post_per_data = (post_data-zero_data)/zero_data*100
         colnames(post_per_data) = paste0('per2zero_',post_times)
         per_data = cbind(pre_per_data,post_per_data)
-        per_data
-        class(per_data)
+        #per_data
+        #class(per_data)
         list(ratio_data = ratio_data, per_data = per_data)
         
       })
@@ -1769,17 +1762,17 @@ shinyServer(function(input, output) {
       sym_data = reactive({ # calcuates the ratios and percentages of timepoints across zero, -12 compared to 12, -3 compared to 3
         full_data = comp_data()
         #full_data = pFEV_wf_r()
-        colnames(full_data)
+        #colnames(full_data)
         ratio_df = data.frame(MRN = full_data$MRN)
         i = 1
         for(i in sym_times_cols){
           #print(i)
           r1 = full_data[,as.character(-(i))]
-          r1
+          #r1
           r2 = full_data[,as.character((i))]
-          r2
-          log2(r2/r1)
-          as.character(i)
+          #r2
+          #log2(r2/r1)
+          #as.character(i)
           ratio_df[,paste0('ratio_',i)] = r2/r1
           ratio_df[,paste0('log2_',i)] = log2(r2/r1)
           ratio_df[,paste0('per_',i,'')] = (r2-r1)/r1*100
@@ -1795,9 +1788,9 @@ shinyServer(function(input, output) {
         full_data = pFEV_2_zero()$per_data
         #full_data = pFEV_wf_r()
         #View(full_data)
-        colnames(full_data)
+        #colnames(full_data)
         ratio_df = data.frame(MRN = comp_data()$MRN)
-        i = 1
+        #i = 1
         for(i in sym_times_cols){
           #print(i)
           pre = full_data[,paste0('per2zero_',as.character(-(i)))]
@@ -1807,7 +1800,7 @@ shinyServer(function(input, output) {
           #r2
           #print(r2)
           #print(log2(r2/r1))
-          as.character(i)
+          #as.character(i)
           #ratio = pre/post
           #print(ratio)
           #ratio[is.nan(as.numeric(ratio))] = NA
@@ -1835,7 +1828,7 @@ shinyServer(function(input, output) {
         full_data = pFEV_2_zero()$ratio_data
         #full_data = pFEV_wf_r()
         #View(full_data)
-        colnames(full_data)
+        #colnames(full_data)
         ratio_df = data.frame(MRN = comp_data()$MRN)
         i = 1
         for(i in sym_times_cols){
@@ -1847,7 +1840,7 @@ shinyServer(function(input, output) {
           #r2
           #print(r2)
           #print(log2(r2/r1))
-          as.character(i)
+          #as.character(i)
           ratio = pre-post
           #print(ratio)
           ratio[is.nan(as.numeric(ratio))] = NA
@@ -1950,7 +1943,7 @@ shinyServer(function(input, output) {
         full_data = change_data_w()
         global_factor = input$global_factor
         factor_list = unique(full_data[,global_factor])
-        factor_list
+        #factor_list
         entry = factor_list[1]
         sub_data = full_data[full_data[,global_factor] == entry,sym_cols()]
         mean_ratio_df = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
@@ -2005,7 +1998,7 @@ shinyServer(function(input, output) {
             anova_df = rbind(anova_df,anova_df_n)
           }
         }
-        anova_df
+        #anova_df
         df = col_rearrange_function(anova_df,2)
         df
         
@@ -2039,7 +2032,7 @@ shinyServer(function(input, output) {
       
       output$anova_pw_sym_ratio = renderDataTable({
         df =  anova_sym()
-        df
+        #df
         significance_table_formatting_function(df,input$mtc)
       })
       
@@ -2084,7 +2077,7 @@ shinyServer(function(input, output) {
                 j_data = time_data$value[time_data[,global_factor] == j_entry]
                 #j_data
                 t_df_n = tryCatch(tidy(t.test(i_data,j_data)), error = function(e) e = t_df_b)
-                t_df_n
+                #t_df_n
                 if(dim(t_df_n)[1] > 0){
                   
                   #colnames(t_df_n)
@@ -2100,7 +2093,7 @@ shinyServer(function(input, output) {
             
           }
         }
-        t_df
+        #t_df
         #colnames(t_df)
         df = col_rearrange_function(t_df,3)
         df
@@ -2163,7 +2156,7 @@ shinyServer(function(input, output) {
             
           }
         }
-        t_df
+        #t_df
         #colnames(t_df)
         df = col_rearrange_function(t_df,3)
         df
@@ -2204,7 +2197,7 @@ shinyServer(function(input, output) {
                 df = rbind(df,df_n)
               }
             }}}
-        df
+        #df
         significance_table_formatting_function(df,input$mtc)
         
       })
@@ -2245,7 +2238,7 @@ shinyServer(function(input, output) {
   
       discrete_cluster_D = reactive({
         full_data = change_data()
-        print(colnames(full_data))
+        #print(colnames(full_data))
         cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -2280,7 +2273,7 @@ shinyServer(function(input, output) {
               for(entry in unique(x_cluster$cluster)){
                 line_list  = x_cluster[x_cluster$cluster == entry,'label']
                 line = paste(line_list,collapse = (', '))
-                line
+                #line
                 x_cluster_table[entry,'num'] = length(line_list)
                 x_cluster_table[entry,'MRN'] = line
               }
@@ -2402,7 +2395,7 @@ shinyServer(function(input, output) {
             df = cluster_analysis_total()
             colour = 'lightgreen'
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
-            proportion_table_formating(df,col_range,colour)
+            proportion_table_formating_factor(df,col_range,colour,input$mtc)
           })
           cluster_analyis_selected_df = reactive({
             df = cluster_analysis_total()
@@ -2418,13 +2411,13 @@ shinyServer(function(input, output) {
 
             colour = 'lightgreen'
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
-            proportion_table_formating(df,col_range,colour) 
+            proportion_table_formating_factor(df,col_range,colour,input$mtc) 
           })
           
           ### __WITHIN ####
           cluster_analysis_within = reactive({
             df = pFEV_wf_r()
-            df_tc = clust_comparison_within(df,'cluster')
+            df_tc = clust_comparison_within(df,'cluster',input)
             df_tc
           })
 
@@ -2433,7 +2426,9 @@ shinyServer(function(input, output) {
             df = cluster_analysis_within()
             colour = 'lightblue'
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
-            proportion_table_formating(df,col_range,colour)
+            col_range = input$cluster_select_clusters
+            print(col_range)
+            proportion_table_formating_within(df,col_range,colour,input$mtc)
           })
           
           
@@ -2448,7 +2443,11 @@ shinyServer(function(input, output) {
             df = cluster_analysis_within_table_selected_df()
             colour = 'lightblue'
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
-            proportion_table_formating(df,col_range,colour)
+            print(col_range)
+            print(colnames(df))
+            col_range = input$cluster_select_clusters
+            print(col_range)
+            proportion_table_formating_within(df,col_range,colour,input$mtc)
           })
 
 
@@ -2456,29 +2455,34 @@ shinyServer(function(input, output) {
           
           
           output$cluster_select_clusters <- renderUI({
-            data = cluster_analysis_within_table_selected_df()
-            test_data = data[,c(3:dim(data)[2])]
-            clusters <- colnames(test_data)
+            #data = cluster_analysis_within_table_selected_df()
+            #test_data = data[,c(3:dim(data)[2])]
+            clusters <- seq(1,input$clutree_num,1)
             selectInput("cluster_select_clusters", "Choose Clusters to Test using ChiSQ", choices = clusters, selected = clusters,multiple = T)
           })
           output$chisq_cluster = renderDataTable({
             full_data = cluster_analyis_selected_df()
-            
             chi_df = chisq_total(full_data,input)
             chi_df
             significance_table_formatting_function(chi_df,input$mtc)
-            
-            
-            
+          })
+          output$chisq_cluster_full = renderDataTable({
+            full_data = cluster_analysis_total()
+            chi_df = chisq_total(full_data,input)
+            chi_df
+            significance_table_formatting_function(chi_df,input$mtc)
           })
           output$chisq_cluster_within = renderDataTable({
             data = cluster_analysis_within_table_selected_df()
-            
             chi_df = chisq_within(data,input)
             chi_df
             significance_table_formatting_function(chi_df,input$mtc)
-            
-            
+          })
+          output$chisq_cluster_within_full = renderDataTable({
+            data = cluster_analysis_within()
+            chi_df = chisq_within(data,input)
+            chi_df
+            significance_table_formatting_function(chi_df,input$mtc)
           })
         
  

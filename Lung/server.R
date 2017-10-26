@@ -2182,13 +2182,39 @@ shinyServer(function(input, output) {
       
       
   ### MANOVA ###
+      output$full_manova_table = renderDataTable({
+        data = pFEV_lf
+        cols = factor(c(-6,6))
+        data = pFEV_lf_r()
+        cols = factor(c(input$pre_range[1]:input$post_range[2]))
+        function_data = data[data$variable %in% cols,]
+        df = pairwise_manova_function(function_data,discrete_columns_4_comparison[1],input)
+        #print(discrete_columns_4_comparison[1])
+        #df
+        for(m_factor in discrete_columns_4_comparison[-1]){
+          #print(m_factor)
+          #print(unique(data[,m_factor]))
+          data[,m_factor][is.na(data[,m_factor])] = 'NA'
+          if(length(na.omit(data[,m_factor])) > 50){
+            if(length(na.omit(unique(data[,m_factor]))) > 1){
+              df_n = tryCatch(pairwise_manova_function(function_data,m_factor,input), error = function(e) e = data.frame(d = numeric(0)))
+              #print(df_n)
+              
+              if(dim(df_n)[1] > 0){
+                df = rbind(df,df_n)
+              }
+            }}}
+        df
+        significance_table_formatting_function(df,input$mtc)
+        
+      })
+
       output$boxplot_pFEV_manova = renderPlot({
         full_data = pFEV_lf_r()
         title = paste('pFEV values for ',length(unique(full_data$MRN))," Patients")
         boxplot_function(full_data,title,input)
       })
-
-      
+ 
       output$selected_manova_table = renderDataTable({
         data = pFEV_lf
         data = pFEV_lf_r()
@@ -2197,29 +2223,23 @@ shinyServer(function(input, output) {
         cols = factor(c(-6,6))
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
-        df = pairwise_manova_function(function_data,global_factor)
-        significance_table_formatting_function(df)
+        df = pairwise_manova_function(function_data,global_factor,input)
+        significance_table_formatting_function(df,input$mtc)
         
       })
-      
-      output$full_manova_table = renderDataTable({
-        df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
-        df = df_b
+      output$selected_manova_table_cluster = renderDataTable({
         data = pFEV_lf
         data = pFEV_lf_r()
-        global_factor = 'HLAStrength'
-        global_factor = input$global_factor
+        global_factor = 'cluster'
+        #global_factor = input$global_factor
         cols = factor(c(-6,6))
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
-        for(factor in factor_list){
-          df_n = pairwise_manova_function(function_data,global_factor)
-          df = rbind(df,df_n)
-        }
-        
-        significance_table_formatting_function(df)
+        df = pairwise_manova_function(function_data,global_factor,input)
+        significance_table_formatting_function(df,input$mtc)
         
       })
+      
   
   ##### CLUSTERING ###############
   

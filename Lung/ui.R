@@ -424,11 +424,13 @@ shinyUI(fluidPage(
                                 
 
                                 plotOutput('distance_density'),
-                                tags$h4('log2 ratio t test'),
+                                tags$h5('log2 ratio t test'),
                                 plotOutput('boxplot_pp_ratio_cluster'),
                                 
-                                tags$h4('Full Range'),
-                                 plotOutput('boxplot_pFEV_cluster_full')
+                                tags$h5('Full Range'),
+                                plotOutput('boxplot_pFEV_cluster_full'),
+                                tags$h5('MANOVA'),
+                                dataTableOutput('selected_manova_table_cluster')
                          ), # Dendogram
                     #### _chi-squared ####
                      tabPanel('Chi-squared',

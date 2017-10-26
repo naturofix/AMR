@@ -91,7 +91,7 @@ boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
   ggplot(plot_data, aes(x = variable, y = value)) + 
     
-    geom_violin(aes_string(col = global_factor)) +
+    geom_boxplot(aes_string(col = global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
     theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
@@ -1335,7 +1335,7 @@ dendrogram_plot_function = function(dendr,x_cluster,cut){
   p = ggplot() +
     geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) +
     geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
-              hjust = 1,angle = 90, size = 3, show.legend = F) +
+              hjust = 1,angle = 90, size = 5, show.legend = F) +
     scale_y_continuous(expand = c(.2, 0))+
     scale_color_discrete(breaks = clusters) +
     theme(axis.line.y = element_blank(),
@@ -1770,8 +1770,8 @@ BOS_factor_plot_smooth = function(m_bos,col_name,global_factor,x1,x2){
 }
 
 
-pairwise_manova_function = function(data,m_factor){
-  df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
+pairwise_manova_function = function(data,m_factor,input){
+  df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), Factor = numeric(0), comparison = numeric(0), range = numeric(0), numbers = numeric(0))
   if(dim(data)[1] > 1){
     
   factor_list = paste(unlist(unique(data[,m_factor])))
@@ -1783,7 +1783,10 @@ pairwise_manova_function = function(data,m_factor){
     eval(parse(text = cmd))
     df = tidy(res.man)
     if(num > 2){
+      df$Factor = m_factor
       df$comparison = 'All'
+      df$range = paste0('(',input$pre_range[1],':',input$post_range[2],')')
+      
       nums = lapply(factor_list, function(x) length(na.omit(data$value[data[,m_factor] == x])))
       df$numbers = paste(nums, collapse = ', ')
       for(i in c(1:num)){
@@ -1797,7 +1800,9 @@ pairwise_manova_function = function(data,m_factor){
             cmd = paste('df_n = tidy(manova(cbind(variable,value) ~ ',m_factor,', data = m_data))')
             
             try(eval(parse(text = cmd)))
+              df_n$Factor = m_factor
               df_n$comparison = paste(i_entry,'vs',j_entry)
+              df_n$range = paste0('(',input$pre_range[1],':',input$post_range[2],')')
               df_n$numbers = paste(length(m_data$value[m_data[,m_factor] == i_entry & !is.na(m_data$value)]),'vs',length(m_data$value[m_data[,m_factor] == j_entry  & !is.na(m_data$value)]))
               df = rbind(df,df_n)
 
@@ -1808,65 +1813,20 @@ pairwise_manova_function = function(data,m_factor){
       
       
     }else{
+      df$Factor = m_factor
+      #df$comparison = 'All'
       df$comparison = paste(factor_list[1],'vs',factor_list[2])
+      df$range = paste0('(',input$pre_range[1],':',input$post_range[2],')')
       df$numbers = paste(length(data$value[data[,m_factor] == factor_list[1]  & !is.na(data$value)]),'vs',length(data$value[data[,m_factor] == factor_list[2]  & !is.na(data$value)]))
 
     }
-    df$p.value = signif(df$p.value,3)
-
+    #df$p.value = signif(df$p.value,3)
+    df = col_rearrange_function(df,4)
     return(df)
   }
   }
 }
 
-pairwise_manova_function_backup = function(data,m_factor){
-  df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), comparison = numeric(0), numbers = numeric(0))
-  if(dim(data)[1] > 1){
-    
-    factor_list = paste(unlist(unique(data[,m_factor])))
-    factor_list = factor_list[order(factor_list)]
-    factor_list
-    num = length(factor_list)
-    if(num > 1){
-      cmd = paste('res.man = manova(cbind(time,value) ~ ',m_factor,', data = data)')
-      eval(parse(text = cmd))
-      df = tidy(res.man)
-      if(num > 2){
-        df$comparison = 'All'
-        nums = lapply(factor_list, function(x) length(na.omit(data$value[data[,m_factor] == x])))
-        df$numbers = paste(nums, collapse = ', ')
-        for(i in c(1:num)){
-          i_entry = factor_list[i]
-          for(j in c(1:num)){
-            j_entry = factor_list[j]
-            if(i < j){
-              m_data = data[data[,m_factor] %in% c(i_entry,j_entry),]
-              df_n = df_b
-              df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
-              cmd = paste('df_n = tidy(manova(cbind(time,value) ~ ',m_factor,', data = m_data))')
-              
-              try(eval(parse(text = cmd)))
-              df_n$comparison = paste(i_entry,'vs',j_entry)
-              df_n$numbers = paste(length(m_data$value[m_data[,m_factor] == i_entry & !is.na(m_data$value)]),'vs',length(m_data$value[m_data[,m_factor] == j_entry  & !is.na(m_data$value)]))
-              df = rbind(df,df_n)
-              
-              
-            }
-          }
-        }
-        
-        
-      }else{
-        df$comparison = paste(factor_list[1],'vs',factor_list[2])
-        df$numbers = paste(length(data$value[data[,m_factor] == factor_list[1]  & !is.na(data$value)]),'vs',length(data$value[data[,m_factor] == factor_list[2]  & !is.na(data$value)]))
-        
-      }
-      df$p.value = signif(df$p.value,3)
-      
-      return(df)
-    }
-  }
-}
 
 
 binary_t_test_function = function(pre_data,post_data,factor_list,global_factor,input){
@@ -1999,10 +1959,18 @@ significance_table_formatting_function = function(df,mtc = 'none'){
   df$p.value = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
   df$significant = ifelse(df$p.value < 0.05,1,0)
   
-  datatable(df, options = list(pageLength = 500, columnDefs = list(list(targets = grep('significant',colnames(df)), visible = FALSE)))) %>% formatStyle(
+  datatable(df, options = list(pageLength = 500,
+                               columnDefs = list(list(targets = grep('significant',colnames(df)),
+                                                      visible = FALSE)))) %>% 
+    formatStyle(
     'p.value', 'significant',
-    backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))
-  ) %>% formatSignif(colnames(select_if(df, is.numeric)),3)
+    target = 'row',
+    backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))) %>% 
+    formatStyle(
+      'p.value', 'significant',
+      #target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
+    formatSignif(colnames(select_if(df, is.numeric)),3)
 }
 
 table_formatting_function = function(df){

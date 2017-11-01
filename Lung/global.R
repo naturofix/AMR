@@ -45,7 +45,7 @@ num_clusters = 2
 g_sheet = F
 
 defaults = 'David'
-#defaults = F
+defaults = F
 if(defaults == 'David'){
   pre_values = c(-3,0)
   post_values = c(0,3)
@@ -82,13 +82,15 @@ if(g_sheet == T){
   
 }
 
-#colnames(clustering)
+colnames(clustering)
 
 ### ALL COLUMNS #####
 all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
 all_discrete_columns = c('MRN',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
 all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
+#Columns in program not in googlesheets
 all_columns[!all_columns %in% colnames(clustering)]
+#Columns in googlesheets not in program
 setdiff(colnames(clustering),all_columns)
 
 

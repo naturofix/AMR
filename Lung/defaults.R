@@ -26,7 +26,7 @@ continuous_columns = c("MFI","Change DSA","CRP peak","Eosinophil peak","FEV1Rati
 ### Discrete Columns ####
 discrete_numeric_columns = c("AltDxScore","DSA_HLAScore","HLAType","BiopsyScore",
                              "NewCTChange","AGrade","BGrade","ViralPCR",
-                             "BactCulture","Methylpred","IVAbx","HLAStrongWeak","HLAAffinity",
+                             "BactCulture","Methylpred","IVAbx","HLAStrongWeak","AMRClassification",
                              "C1Q","SignOfInflammation","CRPRaised","EosRaised","CTClassification"
                              ,"Ground glass","Consolidation","Pleural eff","CT3mnthPost",
                              "AMRPathScore","FOP","Airways","DAD","C4D","TPE","IVIG","Monoclonal")

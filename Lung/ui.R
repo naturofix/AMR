@@ -20,9 +20,17 @@ shinyUI(fluidPage(
     
     column(12,
     
-    tabsetPanel(selected = 'Clustering',
-    ############# TESTING ##############
-      # tabPanel('Testing',
+    tabsetPanel(selected = 'Testing',
+    ############ TESTING ##############
+    tabPanel('Testing',
+             
+             tags$h5('bizzare'),
+             #uiOutput('out_subset_list_1_select_1'),
+             #selectInput('test_1','test_1',c(1,2,3)),
+             
+             uiOutput("moreControls"),
+             #textOutput('test_text'),
+             tags$h5('more bizzare')),
       # 
       #          tabsetPanel(
       # 
@@ -148,7 +156,9 @@ shinyUI(fluidPage(
     #### PATIENT DATA ####
     
     tabPanel('Patient pFEV',
-             tabsetPanel(
+             #uiOutput('scale_slide_1'),
+             
+             tabsetPanel(selected = 'Exclude Patients',
                tabPanel('Missingness Plot',
                         tags$h5('Missing values in the pFEV data'),
                         plotOutput('missmap_plot'),
@@ -161,8 +171,18 @@ shinyUI(fluidPage(
                tabPanel('Exclude Patients',
             tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
             textOutput('auto_removed_patients'),
-             selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800)
-               ),
+            selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
+
+            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'Status'))
+            #uiOutput('scale_slide_1'),
+            #uiOutput('scale_slide_1')
+            #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
+            
+            #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
+            
+            ),
+            
              tabPanel('Plot all Patients',
                       HTML(paste('Plots take some time to render, please wait ...')),
              tabsetPanel(
@@ -210,6 +230,7 @@ shinyUI(fluidPage(
       ############## STAT ################
                     tabPanel('Statistics',
                              column(12,
+
                                   radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'BH', inline = T),
                                   tabsetPanel(selected = 'Pre Treatment vs Post Treatment',
                                     ### _pre vs post ####
@@ -479,6 +500,7 @@ shinyUI(fluidPage(
 
     ####### BOSS #######
     tabPanel('BOS',
+             
              column(12,sliderInput('bos_range','Timecourse Range',min = -24,max=48,step = 1,value = c(-24,24),width = 800)),
              
              tabsetPanel(

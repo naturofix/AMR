@@ -1,7 +1,7 @@
 
 
 
-
+library(shiny)
 shinyServer(function(input, output) {
   
 
@@ -122,6 +122,33 @@ shinyServer(function(input, output) {
                   plotname <- paste("plot", i, sep="")
                   plotOutput(plotname, height = 280, width = 250)
                 })
+                
+                
+              output$out_subset_list_1_select_1 = renderUI({
+                #print(input$subset_1)
+                #factor_list_1 = paste(unique(pFEV_wf[,'Status']))
+                #print(factor_list_1)
+                selectInput('subset_list_1_1','Select',factor_list,multiple = T,selected = factor_list)
+              })
+              
+              output$out_test_1 = renderUI({})
+                
+              outputOptions(output, "out_test_1", suspendWhenHidden = FALSE)
+              
+              output$out_test_1 = renderUI({
+                selectInput('test_2','test_2',c(1,2,3))
+              })
+              
+              #test_out = reactive({
+              output$moreControls <- renderUI({
+                tagList(
+                  sliderInput("n", "N", 1, 1000, 500),
+                  textInput("label", "Label")
+                )
+              })
+              #})
+              
+              output$test_text = renderPrint(print(input$test_2))
             
                 # Convert the list to a tagList - this is necessary for the list of items
                 # to display properly.

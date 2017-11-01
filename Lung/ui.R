@@ -20,17 +20,11 @@ shinyUI(fluidPage(
     
     column(12,
     
-    tabsetPanel(selected = 'Testing',
+    tabsetPanel(selected = 'Patient pFEV',
     ############ TESTING ##############
-    tabPanel('Testing',
+    #tabPanel('Testing',
              
-             tags$h5('bizzare'),
-             #uiOutput('out_subset_list_1_select_1'),
-             #selectInput('test_1','test_1',c(1,2,3)),
-             
-             uiOutput("moreControls"),
-             #textOutput('test_text'),
-             tags$h5('more bizzare')),
+
       # 
       #          tabsetPanel(
       # 
@@ -173,8 +167,18 @@ shinyUI(fluidPage(
             textOutput('auto_removed_patients'),
             selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
 
-            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'Status'))
-            #uiOutput('scale_slide_1'),
+            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,uiOutput('out_select_factor_1')),
+            column(12),
+            column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,uiOutput('out_select_factor_2')),
+            column(12),
+            column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,uiOutput('out_select_factor_3')),
+            column(12,
+            textOutput('num_patients')),
+            column(12,
+            textOutput('patients_text'))
             #uiOutput('scale_slide_1')
             #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
             

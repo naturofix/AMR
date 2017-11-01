@@ -45,7 +45,7 @@ num_clusters = 2
 g_sheet = F
 
 defaults = 'David'
-defaults = F
+#defaults = F
 if(defaults == 'David'){
   pre_values = c(-3,0)
   post_values = c(0,3)

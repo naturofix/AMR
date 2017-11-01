@@ -4,6 +4,12 @@
 library(shiny)
 shinyServer(function(input, output) {
   
+  output$moreControls <- renderUI({
+    tagList(
+      sliderInput("n", "N", 1, 1000, 500),
+      textInput("label", "Label")
+    )
+  })
 
   ########## TEXT OUTPUTS ##################
   
@@ -94,6 +100,32 @@ shinyServer(function(input, output) {
   
 
   ######### _DISPLAY PATIENTS INDIVIDUALL AND CHOOSE WHICH ONES TO REMOVE ############
+              
+              output$out_select_factor_1 = renderUI({
+                if(input$subset_1 != 'All'){
+                  select_factor_list = unique(pFEV_wf[,input$subset_1])
+                  select_factor_list = select_factor_list[order(select_factor_list)]
+                  selectInput('select_subset_1','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                }
+              })
+    
+              output$out_select_factor_2 = renderUI({
+                if(input$subset_2 != 'All'){
+                  select_factor_list = unique(pFEV_wf[,input$subset_2])
+                  select_factor_list = select_factor_list[order(select_factor_list)]
+                  
+                  selectInput('select_subset_2','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                }
+              })
+              
+              output$out_select_factor_3 = renderUI({
+                if(input$subset_3 != 'All'){
+                  select_factor_list = unique(pFEV_wf[,input$subset_3])
+                  select_factor_list = select_factor_list[order(select_factor_list)]
+                  selectInput('select_subset_3','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                }
+              })
+    
               output$auto_removed_patients = renderText(paste(excluded_patients_c,collapse = ', '))
               
               excluded_patients = reactive(patient_list[patient_list %in% input$remove_list])
@@ -110,8 +142,27 @@ shinyServer(function(input, output) {
                   patient_list = patient_list[patient_list %in% MRN]
                 }
                 
+                if(input$subset_1 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_1] %in% input$select_subset_1])
+                  patient_list = patient_list[patient_list %in% MRN]
+                }
+                
+                if(input$subset_2 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_2] %in% input$select_subset_2])
+                  patient_list = patient_list[patient_list %in% MRN]
+                }
+                
+                if(input$subset_3 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_3] %in% input$select_subset_3])
+                  patient_list = patient_list[patient_list %in% MRN]
+                }
+                
                 patient_list                
                 })
+              
+            output$num_patients = renderText(print(paste('Number of retained patients : ',length(retained_patients()))))
+            output$patients_text = renderText(print(retained_patients()))
+            
             line_size = 2
             point_size = 4
             sm_size = 1
@@ -123,33 +174,7 @@ shinyServer(function(input, output) {
                   plotOutput(plotname, height = 280, width = 250)
                 })
                 
-                
-              output$out_subset_list_1_select_1 = renderUI({
-                #print(input$subset_1)
-                #factor_list_1 = paste(unique(pFEV_wf[,'Status']))
-                #print(factor_list_1)
-                selectInput('subset_list_1_1','Select',factor_list,multiple = T,selected = factor_list)
-              })
               
-              output$out_test_1 = renderUI({})
-                
-              outputOptions(output, "out_test_1", suspendWhenHidden = FALSE)
-              
-              output$out_test_1 = renderUI({
-                selectInput('test_2','test_2',c(1,2,3))
-              })
-              
-              #test_out = reactive({
-              output$moreControls <- renderUI({
-                tagList(
-                  sliderInput("n", "N", 1, 1000, 500),
-                  textInput("label", "Label")
-                )
-              })
-              #})
-              
-              output$test_text = renderPrint(print(input$test_2))
-            
                 # Convert the list to a tagList - this is necessary for the list of items
                 # to display properly.
                 do.call(tagList, plot_output_list)

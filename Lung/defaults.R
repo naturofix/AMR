@@ -1,3 +1,29 @@
+pre_values = c(-12,0)
+post_values = c(0,12)
+cluster_cols = c('D1_-4','D1_-3','D1_-2','D1_-1','D1_0','D1_1','D1_2','D1_3','D1_4')
+d_weight_1 = 0
+d_weight_2 = 0
+c_weight_1 = 20
+c_weight_2 = 5
+num_clusters = 2
+g_sheet = F
+
+defaults = 'David'
+#defaults = F
+if(defaults == 'David'){
+  pre_values = c(-3,0)
+  post_values = c(0,3)
+  cluster_cols = c('D1_-3','D1_-1','D1_0')
+  d_weight_1 = 10
+  d_weight_2 = 5
+  c_weight_1 = 4
+  c_weight_2 = 10
+  num_clusters = 3
+  g_sheet = T
+}
+
+
+
 completeness = 20 # percentage of datapoints required to automatically include patients
 #patient_custom_exclude = c('4924475','5863880','5931655','5884461') # list of patients to exclude
 patient_custom_exclude = c('4941516', '4964463', '5863880', '5881350', '5884461', '5900493', '5928232', '5931655', '5931655_a', '4854594', '4941516', '5895629', '4905274', '4977337', '5876473', '5916182')

@@ -3,12 +3,10 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(3,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
+    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
  
     
-    column(1,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
-                              choiceValues = list("1", "2","0"
-                              ),inline = F,selected = '0')),
+
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
@@ -166,7 +164,12 @@ shinyUI(fluidPage(
             tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
             textOutput('auto_removed_patients'),
             selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
-
+            tags$h5(textOutput('status_text')),
+            column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
+                                  choiceValues = list("1", "2","0"
+                                  ),inline = T,selected = '0')),
+            tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
+            
             column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
             column(6,uiOutput('out_select_factor_1')),
             column(12),
@@ -175,7 +178,10 @@ shinyUI(fluidPage(
             column(12),
             column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
             column(6,uiOutput('out_select_factor_3')),
+            
+            
             column(12,
+                   tags$h5('Retained patient information'),
             textOutput('num_patients')),
             column(12,
             textOutput('patients_text'))

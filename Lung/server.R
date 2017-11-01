@@ -101,6 +101,8 @@ shinyServer(function(input, output) {
 
   ######### _DISPLAY PATIENTS INDIVIDUALL AND CHOOSE WHICH ONES TO REMOVE ############
               
+              output$status_text = renderText(paste0('Select patients by Status, if Dead is selected only those dead at the post-treatment day ',input$post_range[2],' are removed. This timepoint is adjusted using the post-treatment range slider.'))
+            
               output$out_select_factor_1 = renderUI({
                 if(input$subset_1 != 'All'){
                   select_factor_list = unique(pFEV_wf[,input$subset_1])

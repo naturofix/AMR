@@ -142,6 +142,9 @@ boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
   plot_data = full_data[full_data$variable %in% cols,]
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
   ggplot(plot_data, aes(x = variable, y = value)) + 
+    #vline(xinter)
+    #geom_vline(xintercept = 0) +
+    geom_vline(aes(xintercept = which(levels(plot_data$variable) == '0'))) +
     
     geom_boxplot(aes_string(col = global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +

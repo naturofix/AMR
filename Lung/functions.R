@@ -1,3 +1,55 @@
+
+source_https_2 <- function(url, ...) {
+  # load package
+  require(RCurl)
+  
+  # parse and evaluate each .R script
+  sapply(c(url, ...), function(u) {
+    eval(parse(text = getURL(u, followlocation = TRUE, cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))), envir = .GlobalEnv)
+  })
+}
+
+source_https_1 <- function(url, ...) {
+  ## Function for sourcing individual R scripts from GitHub
+  ## Author: Tony Breyal
+  ## Contributions: Kay Cichini
+  ## Original URL: http://tonybreyal.wordpress.com/2011/11/24/source_https-sourcing-an-r-script-from-github/
+  ## Load required package
+  require(RCurl)
+  ## Parse and evaluate each .R script
+  sapply(c(url, ...), function(u) {
+    eval(parse(text = getURL(u, followlocation = TRUE,
+                             cainfo = system.file("CurlSSL", "cacert.pem",
+                                                  package = "RCurl"))),
+         envir = .GlobalEnv)
+  })
+}
+
+source_https <- function(u, unlink.tmp.certs = FALSE) {
+  # load package
+  require(RCurl)
+  
+  # read script lines from website using a security certificate
+  if(!file.exists("cacert.pem")) download.file(url="http://curl.haxx.se/ca/cacert.pem", destfile = "cacert.pem")
+  script <- getURL(u, followlocation = TRUE, cainfo = "cacert.pem")
+  if(unlink.tmp.certs) unlink("cacert.pem")
+  
+  # parase lines and evealuate in the global environement
+  eval(parse(text = script), envir= .GlobalEnv)
+}
+
+source_github <- function(u) {
+  # load package
+  require(RCurl)
+  
+  # read script lines from website
+  script <- getURL(u, ssl.verifypeer = FALSE)
+  print(script)
+  
+  # parase lines and evaluate in the global environment
+  eval(parse(text = script))
+}
+
 roundUpNice <- function(x, nice=c(1,2,4,5,6,8,10)) {
   if(length(x) != 1) stop("'x' must be of length 1")
   10^floor(log10(x)) * nice[[which(x <= 10^floor(log10(x)) * nice)[[1]]]]

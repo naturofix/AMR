@@ -20,7 +20,7 @@ shinyUI(fluidPage(
     
     column(12,
     
-    tabsetPanel(selected = 'Patient pFEV',
+    tabsetPanel(selected = default_tab,
     ############ TESTING ##############
     #tabPanel('Testing',
              

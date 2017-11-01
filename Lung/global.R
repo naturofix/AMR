@@ -39,7 +39,7 @@ g_sheet = T
 
 
 defaults = 'David'
-defaults = 'Shaun'
+#defaults = 'Shaun'
 if(defaults == "Shaun"){
   source('defaults.R')
   

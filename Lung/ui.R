@@ -14,7 +14,7 @@ shinyUI(fluidPage(
     column(12,
            radioButtons("data_select", 'Select Data',
                         choiceNames = list('pFEV',"imputed", 'smoothed','D1', "D1 remove imputed", 'D2'),
-                        choiceValues = list("pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'pFEV')
+                        choiceValues = list("pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select)
            
     ),
     
@@ -167,13 +167,13 @@ shinyUI(fluidPage(
             textOutput('auto_removed_patients'),
             selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
 
-            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
             column(6,uiOutput('out_select_factor_1')),
             column(12),
-            column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
             column(6,uiOutput('out_select_factor_2')),
             column(12),
-            column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+            column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
             column(6,uiOutput('out_select_factor_3')),
             column(12,
             textOutput('num_patients')),
@@ -429,17 +429,17 @@ shinyUI(fluidPage(
                tabPanel('Dendograms',
              
              column(6,
-                    selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = c("SignOfInflammation","BiopsyScore"),width = 600),
-                    numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 20, step = 1),
-                    selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = c("NewCTChange","Ground glass","HLAType","HLAStrongWeak"),width = 600),
-                    numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 20, step = 1)
+                    selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = discrete_list_1,width = 600),
+                    numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 100, step = 1),
+                    selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
+                    numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1)
                     ),
               column(6,
-                    selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = cluster_cols,width = 600),
-                    numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 20, step = 1),
+                    selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
+                    numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
 
-                    selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = c("Eosinophil peak"),width = 600),
-                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 20, step = 1)
+                    selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1)
                     ),
              column(12,
                     numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),

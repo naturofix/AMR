@@ -39,12 +39,14 @@ g_sheet = T
 
 
 defaults = 'David'
-#defaults = 'Shaun'
+defaults = 'Shaun'
 if(defaults == "Shaun"){
   source('defaults.R')
   
   pre_values = c(-12,0)
   post_values = c(0,12)
+  data_select = 'pFEV'
+  
   cluster_cols = c('D1_-4','D1_-3','D1_-2','D1_-1','D1_0','D1_1','D1_2','D1_3','D1_4')
   d_weight_1 = 0
   d_weight_2 = 0

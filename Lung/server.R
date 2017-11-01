@@ -105,6 +105,11 @@ shinyServer(function(input, output) {
                 if(input$subset_1 != 'All'){
                   select_factor_list = unique(pFEV_wf[,input$subset_1])
                   select_factor_list = select_factor_list[order(select_factor_list)]
+                  if(select_subset_1 != 'All'){
+                    selected_factor_selected = select_subset_1
+                  }else{
+                    selected_factor_selected = select_factor_list
+                  }
                   selectInput('select_subset_1','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })
@@ -113,6 +118,11 @@ shinyServer(function(input, output) {
                 if(input$subset_2 != 'All'){
                   select_factor_list = unique(pFEV_wf[,input$subset_2])
                   select_factor_list = select_factor_list[order(select_factor_list)]
+                  if(select_subset_2 != 'All'){
+                    selected_factor_selected = select_subset_2
+                  }else{
+                    selected_factor_selected = select_factor_list
+                  }
                   
                   selectInput('select_subset_2','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
@@ -122,6 +132,11 @@ shinyServer(function(input, output) {
                 if(input$subset_3 != 'All'){
                   select_factor_list = unique(pFEV_wf[,input$subset_3])
                   select_factor_list = select_factor_list[order(select_factor_list)]
+                  if(select_subset_3 != 'All'){
+                    selected_factor_selected = select_subset_3
+                  }else{
+                    selected_factor_selected = select_factor_list
+                  }
                   selectInput('select_subset_3','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })

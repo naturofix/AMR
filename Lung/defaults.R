@@ -1,24 +1,36 @@
 #Patient Select Defaults
 completeness = 20 # percentage of datapoints required to automatically include patients
 patient_custom_exclude = c('4941516', '4964463', '5863880', '5881350', '5884461', '5900493', '5928232', '5931655', '5931655_a', '4854594', '4941516', '5895629', '4905274', '4977337', '5876473', '5916182')
+subset_1 = 'All'
+select_subset_1 = 'All'
+
+subset_2 = 'All'
+select_subset_2 = 'All'
+
+subset_3 = 'All'
+select_subset_3 = 'All'
 
 
 
 #Header Defaults
 pre_values = c(-3,0)
 post_values = c(0,3)
-
+## Data Select options : "pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'
+data_select = 'pFEV'
 
 
 # Clustering Defaults
 #discrete columns
-default_cluster_list = c("HLAType","HLAStrongWeak","NewCTChange","SignOfInflammation")
+
+discrete_list_1 = c("SignOfInflammation","BiopsyScore")
 d_weight_1 = 10
+discrete_list_2 = c("NewCTChange","Ground glass","HLAType","HLAStrongWeak")
 d_weight_2 = 5
 
 #continuous columns
-cluster_cols = c('D1_-3','D1_-1','D1_0')
+continuous_list_1 = c('D1_-3','D1_-1','D1_0')
 c_weight_1 = 4
+continuous_list_2 = c("Eosinophil peak")
 c_weight_2 = 10
 
 num_clusters = 3

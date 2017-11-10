@@ -52,7 +52,7 @@ bos_cols = c("BOS1mnth", "BOS2mnth", "BOS3mnth","BOS 3 free survival")
 
 change_cols = c("ChangeFEV1_12mth_prior", "ChangeFEV1_6mth_prior",  "ChangeFEV1_3mth_prior",  "ChangeFEV1_1mth_prior",  "ChangeFEV1_1mth_post",   "ChangeFEV1_3mth_post","ChangeFEV1_6mth_post")
 
-continuous_columns = c("MFI","Change DSA","CRP peak","Eosinophil peak","FEV1Ratio-3","FEV1Ratio0","FEV1Ratio+3","FinalFEV1Ratio","%Pred", "Best FEV1")
+continuous_columns = c("TotalMFI","Change DSA","CRP peak","Eosinophil peak","FEV1Ratio-3","FEV1Ratio0","FEV1Ratio+3","FinalFEV1Ratio","%Pred", "Best FEV1")
 
 
 ### Discrete Columns ####

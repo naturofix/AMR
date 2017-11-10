@@ -14,16 +14,17 @@ shinyServer(function(input, output) {
   ########## TEXT OUTPUTS ##################
   
   output$missing_columns = renderPrint({
-    paste('Columns in googlesheet not in app : ',paste(setdiff(colnames(clustering),all_columns),collapse = ', ')
-)
+    paste(all_columns[!all_columns %in% colnames(clustering)],collapse = ', ')
+    
   })
   
   output$additional_columns = renderPrint({
-    paste('Columns in app not in the googlesheet : ',paste(all_columns[!all_columns %in% colnames(clustering)]),collapse = ', ')
+    paste(setdiff(colnames(clustering),all_columns),collapse = ', ')
+    
   })
 
   output$duplicated_samples = renderPrint({
-    paste('Duplicated samples : ',paste(unique(dups),collapse = ', '))
+    paste(unique(dups),collapse = ', ')
   })
   
   output$processed_data_str = renderPrint({

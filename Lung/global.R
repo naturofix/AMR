@@ -59,7 +59,7 @@ if(defaults == "Shaun"){
 
 
 
-
+info_tab = 'Session Info'
 si = sessionInfo()
 enableBookmarking(store = "url")
 ############ UPLOAD DATA ####################
@@ -75,11 +75,11 @@ if(g_sheet == T){
   clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   
   #colnames(clustering)
-  saveRDS(file = 'clustering_6_new.rds',object = clustering)
+  saveRDS(file = 'clustering_7_new.rds',object = clustering)
   #clustering2 = clustering
 }else{
   #clustering = readRDS('clustering4.rds') ## OLD CLUSTERING FILE
-  clustering = readRDS('clustering_6_new.rds')
+  clustering = readRDS('clustering_7_new.rds')
   
 }
 
@@ -125,10 +125,16 @@ all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,
 all_discrete_columns = c('MRN',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
 all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
 #Columns in program not in googlesheets
-all_columns[!all_columns %in% colnames(clustering)]
-#Columns in googlesheets not in program
-setdiff(colnames(clustering),all_columns)
+missing_columns = all_columns[!all_columns %in% colnames(clustering)]
 
+#Columns in googlesheets not in program
+
+additional_columns = setdiff(colnames(clustering),all_columns)
+
+if(length(additional_columns) > 0){
+  info_tab = 'Sanity Check'
+  default_tab = 'R Info'
+}
 
 #### ORGANISING COLUMNS ############
 continuous_columns = order_columns(continuous_columns,colnames(clustering))
@@ -142,6 +148,8 @@ discrete_term_columns = order_columns(discrete_term_columns,colnames(clustering)
 
 all_continuous_columns = order_columns(all_continuous_columns,colnames(clustering))
 all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering)) 
+
+
 
 
 #### GROUPING COLUMNS ####
@@ -167,7 +175,7 @@ clustering$MRN = row_names
 
 
 
-
+if(length(missing_columns) == 0){
 
 
 
@@ -392,4 +400,11 @@ before = colnames(pFEV_w)[c(1:25)]
 after = colnames(pFEV_w)[c(25:49)]
 
 
-
+}else{
+  patient_list = c()
+  excluded_patients_c = c()
+  full_factor_columns = c()
+  info_tab = 'Sanity Check'
+  default_tab = 'R Info'
+  
+}

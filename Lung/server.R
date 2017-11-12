@@ -386,6 +386,10 @@ shinyServer(function(input, output) {
     data
   })
   
+
+  
+  
+  
   i_pFEV_wf_r = reactive({
     o_data = i_pFEV_wf
     m_data = pFEV_wf_r()
@@ -566,8 +570,6 @@ shinyServer(function(input, output) {
     data
     
   })
-  
-  
   select_cols = reactive({
     #print(input$data_select)
     #data = pFEV_wf_c()
@@ -602,53 +604,127 @@ shinyServer(function(input, output) {
     select_cols
     
   })
-  
-  
   change_data = reactive({
     d1_data = i_pFEV_sm_d1_f_c()
     d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
-    #colnames(d1_data)
     colnames(d1_data) = paste0('D1_',colnames(d1_data))
-    #colnames(d1_data)
     data = cbind(comp_data(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
-    #data$MRN = rownames(data)
-    #data = cbind(comp_data(),pFEV_2_zero()$ratio_data)
-    #data = cbind(comp_data(), sym_data())
-    #print(colnames(data))
-    ##View(data)
     data
     
   })
-  
   change_data_w = reactive({
-    #print(retained_patients())
     o_data = change_data()
     c_o_data = o_data
-    ##View(c_o_data)
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
     c_m_data = m_data
-    ##View(c_m_data)
-    #data$m_data_d1 = discrete_cluster_D_d1()$data
-    #data$m_data_d1$MRN = rownames(m_data_d1)
-    #c_m_data_d1 = m_data_d1
-    ##View(c_m_data_d1)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
-    
-    #data$cluster = discrete_cluster_D()$data$cluster
-    #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
-    #data = data[data$Status %in% status_r(),]
     data_l = data
-    ##View(data_l)
     data
     
   })
-  
   change_data_l = reactive({
     w_data = change_data_w()
     data = melt(w_data, measure.vars = select_cols())
+    data$time = as.numeric(as.character(data$variable))
+    data_w = data
+    ##View(data_l)
+    data
+  })
+  
+  comp_data_clust = reactive({
+    #print(input$data_select)
+    data = pFEV_wf_c()
+    
+    if(input$data_select_clust == 'pFEV'){
+      data = pFEV_wf_c()
+      
+    }
+    if(input$data_select_clust == 'imputed'){
+      data = i_pFEV_wf_c()
+    }
+    
+    if(input$data_select_clust == 'smoothed'){
+      o_data = i_pFEV_smf
+      #m_data = pFEV_wf_r()
+      data = o_data[o_data$MRN %in% retained_patients(),]
+    }
+    
+    if(input$data_select_clust == 'd1'){
+      data = i_pFEV_sm_d1_f_c()
+    }
+    if(input$data_select_clust == 'd1_ri'){
+      data = i_pFEV_sm_d1_f_c_ir()
+    }
+    
+    if(input$data_select_clust == 'd2'){
+      o_data = i_pFEV_sm_d2_f
+      #m_data = pFEV_wf_r()
+      data = o_data[o_data$MRN %in% retained_patients(),]
+    }
+    ##View(data)
+    
+    data
+    
+  })
+  select_cols_clust = reactive({
+    #print(input$data_select)
+    #data = pFEV_wf_c()
+    select_cols = colnames(pFEV_w)
+    if(input$data_select_clust == 'pFEV'){
+      #data = pFEV_wf_c()
+      select_cols = colnames(pFEV_w)
+      
+      
+    }
+    if(input$data_select_clust == 'imputed'){
+      #data = i_pFEV_wf_c()
+      select_cols = colnames(pFEV_w)
+      
+    }
+    if(input$data_select_clust == 'd1'){
+      #data = i_pFEV_sm_d1_f_c()
+      select_cols = colnames(i_pFEV_sm_d1)
+      
+    }
+    if(input$data_select_clust == 'd2'){
+      #data = i_pFEV_sm_d1_f_c()
+      select_cols = colnames(i_pFEV_sm_d2)
+      
+    }
+    if(input$data_select_clust == 'd1_ri'){
+      select_cols = colnames(i_pFEV_sm_d1)
+      
+    }
+    ##View(data)
+    
+    select_cols
+    
+  })
+  change_data_clust = reactive({
+    d1_data = i_pFEV_sm_d1_f_c()
+    d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
+    colnames(d1_data) = paste0('D1_',colnames(d1_data))
+    data = cbind(comp_data_clust(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
+    data
+    
+  })
+  change_data_w_clust = reactive({
+    o_data = change_data_clust()
+    c_o_data = o_data
+    m_data = discrete_cluster_D()$data
+    m_data$MRN = rownames(m_data)
+    c_m_data = m_data
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    data_l = data
+    data
+    
+  })
+  change_data_l_clust = reactive({
+    w_data = change_data_w_clust()
+    data = melt(w_data, measure.vars = select_cols_clust())
     data$time = as.numeric(as.character(data$variable))
     data_w = data
     ##View(data_l)
@@ -918,9 +994,10 @@ shinyServer(function(input, output) {
   })
   
   output$boxplot_pFEV_cluster_full = renderPlot({
-    full_data = pFEV_lf_r()
+    #full_data = pFEV_lf_r()
+    full_data = change_data_l_clust()
     global_factor = 'cluster'
-    title = paste(input$data_select,' values for ',length(unique(full_data$MRN))," Patients")
+    title = paste(input$data_select_clust,' values for ',length(unique(full_data$MRN))," Patients")
     cols = factor(c(input$pre_range[1]:input$post_range[2]))
 
     boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
@@ -1472,7 +1549,8 @@ shinyServer(function(input, output) {
           #print(df)
         })
         boxplot_pp_ratio_data_cluster = reactive({
-          full_data = pFEV_lf_r()
+          #full_data = pFEV_lf_r()
+          full_data = change_data_l_clust()
           df_s = pp_t_test_ratio_cluster()
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
@@ -1483,7 +1561,7 @@ shinyServer(function(input, output) {
           
         })
         output$boxplot_pp_ratio_cluster = renderPlot({
-          title = paste0('T test of ',input$data_select,' log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
+          title = paste0('T test of ',input$data_select_clust,' log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
           
           boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title)
         })
@@ -2291,8 +2369,9 @@ shinyServer(function(input, output) {
         
       })
       output$selected_manova_table_cluster = renderDataTable({
-        data = pFEV_lf
-        data = pFEV_lf_r()
+        #data = pFEV_lf
+        #data = pFEV_lf_r()
+        data = change_data_l_clust()
         global_factor = 'cluster'
         #global_factor = input$global_factor
         cols = factor(c(-6,6))

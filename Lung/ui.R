@@ -392,6 +392,11 @@ shinyUI(fluidPage(
                                 
 
                                 plotOutput('distance_density'),
+                    
+                    radioButtons("data_select_clust", 'Select Data applied to plots below',
+                                 choiceNames = list('pFEV',"imputed", 'smoothed','D1', "D1 remove imputed", 'D2'),
+                                 choiceValues = list("pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
+                    
                                 tags$h5('log2 ratio t test'),
                                 plotOutput('boxplot_pp_ratio_cluster'),
                                 

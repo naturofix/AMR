@@ -36,7 +36,7 @@ c_weight_2 = 10
 num_clusters = 3
   
 # Tabs : Data Tables, Patient pFEV, Plots, Statistics, Clustering, BOS, R Session Info
-default_tab = 'Patient pFEV'
+default_tab = 'Clustering'
 
 
 ### Columns Extracted from the Google Sheet  ###

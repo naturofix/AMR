@@ -32,9 +32,9 @@ library(ggsignif)
 
 
 source('functions.R')
-#source('defaults.R')
+source('defaults.R')
 library(devtools)
-source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
+#source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
 g_sheet = T
 
 
@@ -227,7 +227,7 @@ full_fac = apply(full_fac,2, function(x) factor(x))
 
 ## numric column ##
 clust_num = clustering[,non_pFEV_continuous_columns]
-clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric((x))))
+clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric(sub('%','',x))))
 #str(clust_num)
 #clust_num
 

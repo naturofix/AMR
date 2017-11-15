@@ -23,15 +23,15 @@ data_select = 'pFEV'
 #discrete columns
 
 discrete_list_1 = c("SignOfInflammation","BiopsyScore")
-d_weight_1 = 10
-discrete_list_2 = c("NewCTChange","Ground glass","HLAType","HLAStrongWeak")
+d_weight_1 = 1
+discrete_list_2 = c("NewCTChange","Ground glass","HLAType","HLAStrongWeak",'C1Q',"CTClassification")
 d_weight_2 = 5
 
 #continuous columns
-continuous_list_1 = c('D1_-3','D1_-1','D1_0')
-c_weight_1 = 4
-continuous_list_2 = c("Eosinophil peak")
-c_weight_2 = 10
+continuous_list_1 = c('D1_-2','D1_-1','D1_0')
+c_weight_1 = 5
+continuous_list_2 = c('D1_-5','D1_-4','D1_-3',"CRP peak","Eosinophil peak")
+c_weight_2 = 1
 
 num_clusters = 3
   

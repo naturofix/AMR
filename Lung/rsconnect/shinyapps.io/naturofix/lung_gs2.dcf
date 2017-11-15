@@ -1,0 +1,13 @@
+name: lung_gs2
+title: Lung_GS2
+username:
+account: naturofix
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 227736
+bundleId: 1071247
+url: https://naturofix.shinyapps.io/lung_gs2/
+when: 1510492664.45842
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rapp.history|SessionInfo.log|SessionInfo.tex|clustering.rds|clustering_6_new.rds|clustering_7_new.rds

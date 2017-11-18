@@ -2073,7 +2073,7 @@ significance_table_formatting_function = function(df,mtc = 'none'){
   }
   #df$significant = ifelse(df$p.value < 0.05,1,0)
   #df$p.value.original = df$p.value
-  df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
+  df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(na.omit(df$p.value)))
   df$significant = ifelse(df[,mtc] < 0.05,1,0)
   df = col_rearrange_function(df,2)
   datatable(df, options = list(pageLength = 500,

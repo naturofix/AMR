@@ -402,8 +402,12 @@ shinyUI(fluidPage(
                                 
                                 tags$h5('Full Range'),
                                 plotOutput('boxplot_pFEV_cluster_full'),
-                                tags$h5('MANOVA'),
-                                dataTableOutput('selected_manova_table_cluster')
+                                tags$h5(textOutput('manova_clustering_text')),
+                                dataTableOutput('selected_manova_table_cluster'),
+                                
+                                tags$h5('ANOVA of continuous variables across clusters'),
+                                dataTableOutput('continuous_manova_cluster')
+                    
                          )), # Dendogram
                     #### _chi-squared ####
                      tabPanel('Chi-squared',
@@ -445,7 +449,19 @@ shinyUI(fluidPage(
                                                           tabPanel('Full',dataTableOutput('chisq_cluster_within_full'))
                                                         ))
                                                ))
-                                 ))# chi-squared
+                                 )),# chi-squared
+             tabPanel('ANOVA',
+                      column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
+                      
+                      column(6,uiOutput("cluster_select_clusters_anova")),
+                      tabsetPanel(
+                        tabPanel('Individual',
+                                 plotOutput('anova_cluster_plot'),
+                                 dataTableOutput('continuous_manova_single')
+                                ),
+                        tabPanel('Full',dataTableOutput('continuous_manova_full'))
+                      )
+                      )
                     ) 
                   ), #Clustering
 
@@ -496,66 +512,71 @@ shinyUI(fluidPage(
                    tags$h5('Samples with multiple rows in the data were appended with _a'),
                    verbatimTextOutput('duplicated_samples')
                    #verbatimTextOutput("processed_data_str")
-          )))
+          )
           
-          #tabPanel('Testing',
-                   
-                   
-                   # 
-
-                     #            tabPanel('text',
-                     #                     verbatimTextOutput('test_text_1'),
-                     #                     verbatimTextOutput('test_text_2'),
-                     #                     verbatimTextOutput('test_text_3')
-                     #            ),
-                     #            tabPanel('More Stats',
-                     #                     column(3,selectInput('binary_factor','Binary Factor',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
-                     #                     column(3,selectInput('add_factor','Additional Factors',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'HLAType')),
-                     #                     column(12,
-                     #                     tabsetPanel(
-                     #                       tabPanel('Discrete Variables',
-                     #                                plotOutput('mosaic_xt'),
-                     #                                verbatimTextOutput('chisq_xt'),
-                     #                                verbatimTextOutput('fishe_xt')
-                     #                                 
-                     #                                 
-                     #                                 ),
-                     #            tabPanel('Logistic Regression',
-                     #                              column(12,
-                     #                                     plotOutput('lg_scatter'),
-                     #                                     verbatimTextOutput('logistic_regression_text'),
-                     #                                     dataTableOutput('logistic_regression_table'),
-                     #                                     plotOutput('logistic_regression_p_hist')
-                     #                              )
-                     #            )
-                     #                     )
-                     #                              
-                     #                     )         
-                     #                     
-                     #            ),
-                     #            tabPanel('Cover Plot',
-                     #                     plotOutput('cover_plot')
-                     #                     ),
-                     #            tabPanel('Plot',
-                     #                     HTML(paste('takes time to generate, please wait ...')),
-                     #                     plotOutput('test_plot_1'),
-                     #                     plotOutput('test_plot_2')
-                     #                     ),
-                     # 
-                     #           tabPanel('table',
-                     #                   dataTableOutput('test_table_1'),
-                     #                   dataTableOutput('test_table_2'),
-                     #                   dataTableOutput('test_table_3')
-                     #                    ),
-                     #           tabPanel('Cluster Column Test',
-                     #                    dataTableOutput('cluster_test')
-                     #                    )
-                     #          )),
+          # tabPanel('Testing',
+          #          
+          #          tabsetPanel(selected = 'Plot',
+          #          
+          #          
+          # 
+          # 
+          #                       tabPanel('text',
+          #                                verbatimTextOutput('test_text_1'),
+          #                                verbatimTextOutput('test_text_2'),
+          #                                verbatimTextOutput('test_text_3')
+          #                       ),
+          #                       tabPanel('More Stats',
+          #                                column(3,selectInput('binary_factor','Binary Factor',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'Status')),
+          #                                column(3,selectInput('add_factor','Additional Factors',c(full_factor_columns,'cluster','cluster_d1'),multiple = F,selected = 'HLAType')),
+          #                                column(12,
+          #                                tabsetPanel(
+          #                                  tabPanel('Discrete Variables',
+          #                                           plotOutput('mosaic_xt'),
+          #                                           verbatimTextOutput('chisq_xt'),
+          #                                           verbatimTextOutput('fishe_xt')
+          # 
+          # 
+          #                                            ),
+          #                       tabPanel('Logistic Regression',
+          #                                         column(12,
+          #                                                plotOutput('lg_scatter'),
+          #                                                verbatimTextOutput('logistic_regression_text'),
+          #                                                dataTableOutput('logistic_regression_table'),
+          #                                                plotOutput('logistic_regression_p_hist')
+          #                                         )
+          #                       )
+          #                                )
+          # 
+          #                                )
+          # 
+          #                       ),
+          #                       tabPanel('Cover Plot',
+          #                                
+          #                                plotOutput('cover_plot')
+          #                                ),
+          #                       tabPanel('Plot',
+          # 
+          #                                HTML(paste('takes time to generate, please wait ...')),
+          #                                
+          #                                plotOutput('test_plot_1'),
+          #                                plotOutput('test_plot_2')
+          #                                ),
+          # 
+          #                      tabPanel('table',
+          #                              dataTableOutput('test_table_1'),
+          #                              dataTableOutput('test_table_2'),
+          #                              dataTableOutput('test_table_3')
+          #                               ),
+          #                      tabPanel('Cluster Column Test',
+          #                               dataTableOutput('cluster_test')
+          #                               )
+          #                     ))
                      
                      
                    
           
-          
+          ))
 
   #### END #########
 )

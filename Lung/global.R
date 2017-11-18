@@ -37,6 +37,7 @@ library(devtools)
 #source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
 g_sheet = T
 
+info_tab = 'Session Info'
 
 defaults = 'David'
 #defaults = 'Shaun'
@@ -52,14 +53,16 @@ if(defaults == "Shaun"){
   d_weight_2 = 0
   c_weight_1 = 20
   c_weight_2 = 5
-  num_clusters = 2
+  num_clusters = 4
   g_sheet = F
+  default_tab = 'R Info'
+  
+  info_tab = 'Testing'
+  
 }
 
 
 
-
-info_tab = 'Session Info'
 si = sessionInfo()
 enableBookmarking(store = "url")
 ############ UPLOAD DATA ####################
@@ -83,7 +86,38 @@ if(g_sheet == T){
   
 }
 
+edit_colname_function = function(col_names){
+  edit_list = c(' ','%')
+  for(e in edit_list){
+    col_names = gsub(e,'_',col_names)
+  }
+  return(col_names)
+}
+
 colnames(clustering)
+
+
+rename_columns = F
+if(rename_columns == T){
+  colnames(clustering) =  edit_colname_function(colnames(clustering))
+  
+  custom_colnames_list = c("date_columns","continuous_date_columns","pFEV_cols","bos_cols","change_cols","continuous_columns","discrete_numeric_columns","discrete_term_columns")
+  for(col_name in custom_colnames_list){
+    cmd = paste('col_names = ',col_name)
+    print(cmd)
+    eval(parse(text=cmd))
+    print(col_names)
+    col_names = edit_colname_function(col_names)
+    print(col_names)
+    cmd = paste(col_name, ' = col_names')
+    print(cmd)
+    eval(parse(text=cmd))
+  }
+}
+
+
+
+
 
 
 factor_list = c(discrete_numeric_columns,discrete_term_columns,'cluster') 
@@ -408,3 +442,4 @@ after = colnames(pFEV_w)[c(25:49)]
   default_tab = 'R Info'
   
 }
+

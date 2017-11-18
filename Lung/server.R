@@ -60,6 +60,8 @@ shinyServer(function(input, output) {
   
   output$t_d1_text = renderText(paste('(',input$pre_range[1],' to ',input$pre_range[2],') vs (',input$post_range[1],' to ',input$post_range[2],')'))
   output$slope_d1_text = renderText(paste('(',input$pre_range[1],' to 0 ) vs ( 0 to ',input$post_range[2],')'))
+  output$manova_clustering_text = renderText(paste('MANOVA for ',input$data_select_clust,'data'))
+  
   
   ########## DATA TABLES #####################
   
@@ -1804,7 +1806,7 @@ shinyServer(function(input, output) {
       })
       
       ###### _RATIOS AND PERCENTAGES #######
-      output$pFEV_mean_table = renderTable({
+      mean_df = reactive({
         full_data = pFEV_wf
         full_data = pFEV_wf_r()
         global_factor = 'Status'
@@ -1813,13 +1815,13 @@ shinyServer(function(input, output) {
         #data = full_data[,pFEV_numeric_colnames_f]
         factor_list = unique(full_data[,global_factor])
         #print(factor_list)
-        data = full_data[,pFEV_numeric_colnames_f]
-        mean_df = data.frame('pFEV' = pFEV_numeric_colnames_f)
+        data = full_data[,clustering_continuous_columns]
+        mean_df = data.frame('pFEV' = clustering_continuous_columns)
         mean_list = as.data.frame(apply(data,2,function(x) mean(x,na.rm=T)))
         colnames(mean_list) = 'Mean for all'
         mean_df = cbind(mean_df,mean_list)
         for(entry in factor_list){
-          sub_data = full_data[full_data[,global_factor] == entry,pFEV_numeric_colnames_f]
+          sub_data = full_data[full_data[,global_factor] == entry,clustering_continuous_columns]
           sub_mean_list = data.frame(apply(sub_data,2,function(x) mean(x,na.rm=T)))
           colnames(sub_mean_list) = paste('Mean for',global_factor, entry)
           #print(sub_mean_list)
@@ -1828,6 +1830,10 @@ shinyServer(function(input, output) {
         mean_df
         
         #(mean_df['0',2] - mean_df[,2])/ mean_df['0',2]* 100
+      })
+      
+      output$pFEV_mean_table = renderTable({
+        mean_df()
       })
       
       pFEV_2_zero = reactive({
@@ -2609,6 +2615,13 @@ shinyServer(function(input, output) {
             clusters <- seq(1,input$clutree_num,1)
             selectInput("cluster_select_clusters", "Choose Clusters to Test using ChiSQ", choices = clusters, selected = clusters,multiple = T)
           })
+          
+          output$cluster_select_clusters_anova <- renderUI({
+            #data = cluster_analysis_within_table_selected_df()
+            #test_data = data[,c(3:dim(data)[2])]
+            clusters <- seq(1,input$clutree_num,1)
+            selectInput("cluster_select_clusters_anova", "Choose Clusters to Test", choices = clusters, selected = clusters,multiple = T)
+          })
           output$chisq_cluster = renderDataTable({
             full_data = cluster_analyis_selected_df()
             chi_df = chisq_total(full_data,input)
@@ -2632,6 +2645,75 @@ shinyServer(function(input, output) {
             chi_df = chisq_within(data,input)
             chi_df
             significance_table_formatting_function(chi_df,input$mtc)
+          })
+          
+          ##### MANOVA #####
+          
+          output$anova_cluster_plot = renderPlot({
+            global_factor = input$continuous_variable
+            full_data = change_data_w()
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            plot_data = melt(cluster_data,measure.vars = global_factor)
+            ggplot(plot_data, aes(x = cluster,y = value,col=cluster)) +
+              geom_boxplot()
+          })
+          
+          output$continuous_manova_single = renderDataTable({
+            full_data = change_data_w()
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            global_factor = input$continuous_variable
+            x = cluster_data[,input$continuous_variable]
+            y = cluster_data[,'cluster']
+            df = tidy(aov(x ~ y))
+            df$term[1] = global_factor
+            significance_table_formatting_function(df,input$mtc)
+          })
+          
+          output$continuous_manova_full = renderDataTable({
+            full_data = change_data_w()
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            
+            x = cluster_data[,clustering_continuous_columns[1]]
+            y = cluster_data[,'cluster']
+            df = tidy(aov(x ~ y))
+            df$term[1] = clustering_continuous_columns[1]
+            df = df[1,]
+            
+            for(global_factor in clustering_continuous_columns[c(2:length(clustering_continuous_columns))]){
+              x = cluster_data[,global_factor]
+              y = cluster_data[,'cluster']
+              df_n = tidy(aov(x ~ y))
+              df_n$term[1] = global_factor
+              df = rbind(df,df_n[1,])
+              
+            }
+            significance_table_formatting_function(df,input$mtc)
+
+          })
+          
+          output$continuous_manova_cluster = renderDataTable({
+            full_data = change_data_w()
+            cluster_data = full_data
+            
+            selected_columns = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
+            print(selected_columns)
+            
+            x = cluster_data[,selected_columns[1]]
+            y = cluster_data[,'cluster']
+            df = tidy(aov(x ~ y))
+            df$term[1] = selected_columns[1]
+            df = df[1,]
+            
+            for(global_factor in selected_columns[c(2:length(selected_columns))]){
+              x = cluster_data[,global_factor]
+              y = cluster_data[,'cluster']
+              df_n = tidy(aov(x ~ y))
+              df_n$term[1] = global_factor
+              df = rbind(df,df_n[1,])
+              
+            }
+            significance_table_formatting_function(df,input$mtc)
+            
           })
         
  

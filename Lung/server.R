@@ -2687,7 +2687,7 @@ shinyServer(function(input, output) {
               df = rbind(df,df_n[1,])
               
             }
-            significance_table_formatting_function(df,input$mtc)
+            significance_table_formatting_function(df,input$mtc,F)
 
           })
           

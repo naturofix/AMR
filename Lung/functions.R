@@ -2064,27 +2064,31 @@ proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
 }
 
 
-significance_table_formatting_function = function(df,mtc = 'none'){
-  if('term' %in% colnames(df)){
-    df = df[order(df$term),]
-  }
-  if("Status" %in% colnames(df) & 'Factor' %in% colnames(df)){
-    df = df[order(df$Factor,df$Status),]
+significance_table_formatting_function = function(df,mtc = 'none',sort = T){
+  if(sort == T){
+    if('term' %in% colnames(df)){
+      df = df[order(df$term),]
+    }
+    if("Status" %in% colnames(df) & 'Factor' %in% colnames(df)){
+      df = df[order(df$Factor,df$Status),]
+    }
   }
   #df$significant = ifelse(df$p.value < 0.05,1,0)
   #df$p.value.original = df$p.value
   df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(na.omit(df$p.value)))
-  df$significant = ifelse(df[,mtc] < 0.05,1,0)
+  df$significant = ifelse(df[,'p.value'] < 0.05,1,0)
+  
+  df$mtc_significant = ifelse(df[,mtc] < 0.05,1,0)
   df = col_rearrange_function(df,2)
   datatable(df, options = list(pageLength = 500,
-                               columnDefs = list(list(targets = grep('significant',colnames(df)),
+                               columnDefs = list(list(targets = c(grep('significant',colnames(df),grep('significant',colnames(df)))),
                                                       visible = FALSE)))) %>% 
     formatStyle(
-      mtc, 'significant',
+      'p.value', 'significant',
       target = 'row',
       backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))) %>% 
     formatStyle(
-      mtc, 'significant',
+      mtc, 'mtc_significant',
       #target = 'row',
       backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
     formatSignif(colnames(select_if(df, is.numeric)),3)

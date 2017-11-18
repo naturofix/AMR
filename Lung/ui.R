@@ -451,11 +451,13 @@ shinyUI(fluidPage(
                                                ))
                                  )),# chi-squared
              tabPanel('ANOVA',
-                      column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
+                      #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
                       
-                      column(6,uiOutput("cluster_select_clusters_anova")),
+                      column(12,uiOutput("cluster_select_clusters_anova")),
                       tabsetPanel(
                         tabPanel('Individual',
+                                 selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
+                                 
                                  plotOutput('anova_cluster_plot'),
                                  dataTableOutput('continuous_manova_single')
                                 ),

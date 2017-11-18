@@ -55,9 +55,9 @@ if(defaults == "Shaun"){
   c_weight_2 = 5
   num_clusters = 4
   g_sheet = F
-  default_tab = 'R Info'
   
-  info_tab = 'Testing'
+  #default_tab = 'R Info'
+  #info_tab = 'Testing'
   
 }
 
@@ -149,7 +149,7 @@ sym_list = c('sym_ratio_colnames' ,'sym_log_ratio_colnames','sym_per_colnames')
 sym_prefix_list = c("ratio_",'log2_','per_')
 rel_list = c('sym_rel_ratio_colnames','sym_rel_log_ratio_colnames','sym_rel_per_colnames')
 rel_prefix_list = c('per_rel_')
-clustering_continuous_columns = c(pFEV_numeric_colnames_f,d1_colnames,continuous_columns,continuous_date_columns,sym_ratio_colnames,log2zero_ratio_colnames,sym_rel_per_colnames)
+clustering_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_numeric_colnames_f,d1_colnames,log2zero_ratio_colnames,sym_rel_per_colnames,sym_ratio_colnames)
 
 
 

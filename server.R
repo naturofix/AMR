@@ -148,11 +148,16 @@ shinyServer(function(input, output) {
     
               output$auto_removed_patients = renderText(paste(excluded_patients_c,collapse = ', '))
               
-              excluded_patients = reactive(patient_list[patient_list %in% input$remove_list])
+              excluded_patients = reactive({
+                patient_list = patient_list[patient_list %in% input$remove_list]
+                #saveRDS(patient_list,'www/pre_exclude_list.rds')
+                patient_list
+                })
             
-              retained_patients = reactive({
-                
-                patient_list = patient_list[!(patient_list %in% input$remove_list)]
+              pre_retained_patients = reactive({
+                remove_list = patient_list[patient_list %in% input$remove_list]
+                saveRDS(remove_list,'www/pre_exclude_list.rds')
+                patient_list = patient_list[!(patient_list %in% remove_list)]
                 if(input$status_radio == '2'){
                   MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath < as.numeric(input$post_range[2])])
                   patient_list = patient_list[patient_list %in% MRN]
@@ -180,8 +185,11 @@ shinyServer(function(input, output) {
                 patient_list                
                 })
               
-            output$num_patients = renderText(print(paste('Number of retained patients : ',length(retained_patients()))))
-            output$patients_text = renderText(print(retained_patients()))
+            output$pre_num_patients = renderText(print(paste('Number of retained patients : ',length(pre_retained_patients()))))
+            output$pre_patients_text = renderText(print(pre_retained_patients()))
+            
+            output$post_num_patients = renderText(print(paste('Number of retained patients : ',length(post_retained_patients()))))
+            output$post_patients_text = renderText(print(post_retained_patients()))
             
             line_size = 2
             point_size = 4
@@ -189,8 +197,8 @@ shinyServer(function(input, output) {
               
             ####### __retained ###########
               output$plots <- renderUI({
-                plot_output_list <- lapply(1:length(retained_patients()), function(i) {
-                  plotname <- paste("plot", i, sep="")
+                plot_output_list <- lapply(retained_patients(), function(i) {
+                  plotname <- paste("plot", i, sep="_")
                   plotOutput(plotname, height = 280, width = 250)
                 })
                 
@@ -199,62 +207,62 @@ shinyServer(function(input, output) {
                 # to display properly.
                 do.call(tagList, plot_output_list)
               })
-              r_list = isolate(retained_patients())
-              for (i in 1:length(r_list)) {
-            
-                # Need local so that each item gets its own number. Without it, the value
-                # of i in the renderPlot() will be the same across all instances, because
-                # of when the expression is evaluated.
-                local({
-                  my_i <- i
-                  plotname <- paste("plot", my_i, sep="")
-            
-                  #my_i = 1
-                  output[[plotname]] <- renderPlot({
-                    #t_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% i_pFEV_lf_r()$MRN[1],]
-                    i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% retained_patients()[my_i],]
-                    sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% retained_patients()[my_i],]
-                    #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
-                    #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
-                    if(dim(sm_data)[1] > 0){
-                      ggplot(NULL) +
-                        geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
-            
-                        geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
-                        geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
-                        #geom_line(data = )
-                        #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-                        scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-            
-                        geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='green',size = sm_size)+
-            
-                        theme(axis.text.x = element_text(size=8, angle=90)) +
-                        theme(legend.position="none") +
-                        ggtitle(paste0(retained_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
-                    }else{
-                      ggplot(NULL) +
-                        geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
-                        geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
-                        geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
-                        #geom_line(data = )
-                        #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-                        scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-            
-                        #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN,col='green'))+
-            
-                        theme(axis.text.x = element_text(size=8, angle=90)) +
-                        theme(legend.position="none") +
-                        ggtitle(retained_patients()[my_i])
-                    }
-            
-                  },width = 600)
-                })
-              }
+              # r_list = isolate(pre_retained_patients())
+              # for (i in 1:length(r_list)) {
+              # 
+              #   # Need local so that each item gets its own number. Without it, the value
+              #   # of i in the renderPlot() will be the same across all instances, because
+              #   # of when the expression is evaluated.
+              #   local({
+              #     my_i <- i
+              #     plotname <- paste("plot", my_i, sep="")
+              # 
+              #     #my_i = 1
+              #     output[[plotname]] <- renderPlot({
+              #       #t_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% i_pFEV_lf_r()$MRN[1],]
+              #       i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% retained_patients()[my_i],]
+              #       sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% retained_patients()[my_i],]
+              #       #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
+              #       #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
+              #       if(dim(sm_data)[1] > 0){
+              #         ggplot(NULL) +
+              #           geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              # 
+              #           geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #           #geom_line(data = )
+              #           #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              # 
+              #           geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='green',size = sm_size)+
+              # 
+              #           theme(axis.text.x = element_text(size=8, angle=90)) +
+              #           theme(legend.position="none") +
+              #           ggtitle(paste0(retained_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #       }else{
+              #         ggplot(NULL) +
+              #           geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              #           geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #           #geom_line(data = )
+              #           #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              # 
+              #           #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN,col='green'))+
+              # 
+              #           theme(axis.text.x = element_text(size=8, angle=90)) +
+              #           theme(legend.position="none") +
+              #           ggtitle(retained_patients()[my_i])
+              #       }
+              # 
+              #     },width = 600)
+              #   })
+              # }
             
             ########## __excluded ###############
               output$excluded_plots <- renderUI({
-                plot_output_list <- lapply(1:length(excluded_patients()), function(i) {
-                  plotname <- paste("excluded_plot", i, sep="")
+                plot_output_list <- lapply(excluded_patients(), function(i) {
+                  plotname <- paste("plot", i, sep="_")
                   plotOutput(plotname, height = 280, width = 250)
                 })
             
@@ -263,16 +271,192 @@ shinyServer(function(input, output) {
                 do.call(tagList, plot_output_list)
               })
             
-              e_list = isolate(excluded_patients())
-              for (i in 1:length(e_list)) {
-            
+              # pre_list = isolate(excluded_patients())
+              # for (i in 1:length(pre_list)) {
+              # 
+              #   # Need local so that each item gets its own number. Without it, the value
+              #   # of i in the renderPlot() will be the same across all instances, because
+              #   # of when the expression is evaluated.
+              #   local({
+              #     my_i <- i
+              #     plotname <- paste("excluded_plot", my_i, sep="")
+              # 
+              #     #my_i = 2
+              #     #print(excluded_patients()[my_i])
+              #     output[[plotname]] <- renderPlot({
+              #       #t_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% i_pFEV_lf_r()$MRN[1],]
+              #       #print(excluded_patients()[my_i])
+              #       #o_data = pFEV_lf_r()[pFEV_lf_r()$MRN %in% patient_list[my_i],]
+              #       #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% patient_list[my_i],]
+              #       #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% patient_list[my_i],]
+              #       i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% excluded_patients()[my_i],]
+              #       sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% excluded_patients()[my_i],]
+              #       o_data = pFEV_lf[pFEV_lf$MRN %in% excluded_patients()[my_i],]
+              #       
+              #       #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
+              #       #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
+              #       if(dim(sm_data)[1]>0){
+              #         ggplot(NULL) +
+              #           geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              #           
+              #           geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #           
+              #           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #           geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='green',size = sm_size)+
+              #           
+              #           
+              #           theme(axis.text.x = element_text(size=8, angle=90)) +
+              #           theme(legend.position="none") +
+              #           ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #       }else{
+              #       
+              #       if(dim(i_data)[1]>0){
+              #         ggplot(NULL) +
+              #           geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              # 
+              #           geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              # 
+              #           #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='blue',size = 0.7)+
+              # 
+              #           theme(axis.text.x = element_text(size=8, angle=90)) +
+              #           theme(legend.position="none") +
+              #           ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #         
+              #         }else{
+              #           ggplot(NULL) +
+              #             geom_vline(data = o_data,aes(xintercept = which(levels(o_data$variable) %in% '0'))) +
+              #             
+              #             geom_line(data = o_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #             geom_point(data = o_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #             #geom_line(data = )
+              #             #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #             scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #             
+              #             #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN,col='green'))+
+              #             
+              #             theme(axis.text.x = element_text(size=8, angle=90)) +
+              #             theme(legend.position="none") +
+              #             ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #           
+              #         }
+              #       }
+              # 
+              # 
+              #     },width = 600)
+              #   })
+              # }
+              # 
+              excluded_patients_post = reactive({ 
+                patient_list = input$post_cluster_select
+                patient_list
+                })
+              
+              output$excluded_plots_post <- renderUI({
+                plot_output_list <- lapply(excluded_patients_post(), function(i) {
+                  plotname <- paste("plot", i, sep="_")
+                  plotOutput(plotname, height = 280, width = 250)
+                })
+                
+                # Convert the list to a tagList - this is necessary for the list of items
+                # to display properly.
+                do.call(tagList, plot_output_list)
+              })
+              
+        
+              
+              # post_list = isolate(excluded_patients_post())
+              # for (i in 1:length(post_list)) {
+              #   
+              #   # Need local so that each item gets its own number. Without it, the value
+              #   # of i in the renderPlot() will be the same across all instances, because
+              #   # of when the expression is evaluated.
+              #   local({
+              #     my_i <- i
+              #     plotname <- paste("plot", my_i, sep="")
+              #     
+              #     #my_i = 2
+              #     #print(excluded_patients()[my_i])
+              #     output[[plotname]] <- renderPlot({
+              #       #t_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% i_pFEV_lf_r()$MRN[1],]
+              #       #print(excluded_patients()[my_i])
+              #       #o_data = pFEV_lf_r()[pFEV_lf_r()$MRN %in% patient_list[my_i],]
+              #       #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% patient_list[my_i],]
+              #       #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% patient_list[my_i],]
+              #       i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% excluded_patients_post()[my_i],]
+              #       sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% excluded_patients_post()[my_i],]
+              #       o_data = pFEV_lf[pFEV_lf$MRN %in% excluded_patients_post()[my_i],]
+              #       
+              #       #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
+              #       #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
+              #       if(dim(sm_data)[1]>0){
+              #         ggplot(NULL) +
+              #           geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              #           
+              #           geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #           
+              #           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #           geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='green',size = sm_size)+
+              #           
+              #           
+              #           theme(axis.text.x = element_text(size=8, angle=90)) +
+              #           theme(legend.position="none") +
+              #           ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #       }else{
+              #         
+              #         if(dim(i_data)[1]>0){
+              #           ggplot(NULL) +
+              #             geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+              #             
+              #             geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #             geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #             scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #             
+              #             #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='blue',size = 0.7)+
+              #             
+              #             theme(axis.text.x = element_text(size=8, angle=90)) +
+              #             theme(legend.position="none") +
+              #             ggtitle(paste0(excluded_patients_post()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #           
+              #         }else{
+              #           ggplot(NULL) +
+              #             geom_vline(data = o_data,aes(xintercept = which(levels(o_data$variable) %in% '0'))) +
+              #             
+              #             geom_line(data = o_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+              #             geom_point(data = o_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+              #             #geom_line(data = )
+              #             #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #             scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+              #             
+              #             #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN,col='green'))+
+              #             
+              #             theme(axis.text.x = element_text(size=8, angle=90)) +
+              #             theme(legend.position="none") +
+              #             ggtitle(paste0(excluded_patients_post()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+              #           
+              #         }
+              #       }
+              #       
+              #       
+              #     },width = 600)
+              #   })
+              # }
+              
+              ####### PLOT ALL ########
+              
+              #post_list = isolate(excluded_patients_post())
+              for (i in 1:length(patient_list)) {
+                
                 # Need local so that each item gets its own number. Without it, the value
                 # of i in the renderPlot() will be the same across all instances, because
                 # of when the expression is evaluated.
                 local({
-                  my_i <- i
-                  plotname <- paste("excluded_plot", my_i, sep="")
-            
+                  my_i <- patient_list[i]
+                  plotname <- paste("plot", my_i, sep="_")
+                  
                   #my_i = 2
                   #print(excluded_patients()[my_i])
                   output[[plotname]] <- renderPlot({
@@ -281,9 +465,9 @@ shinyServer(function(input, output) {
                     #o_data = pFEV_lf_r()[pFEV_lf_r()$MRN %in% patient_list[my_i],]
                     #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% patient_list[my_i],]
                     #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% patient_list[my_i],]
-                    i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% excluded_patients()[my_i],]
-                    sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% excluded_patients()[my_i],]
-                    o_data = pFEV_lf[pFEV_lf$MRN %in% excluded_patients()[my_i],]
+                    i_data = i_pFEV_lf[i_pFEV_lf$MRN == my_i,]
+                    sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN == my_i,]
+                    o_data = pFEV_lf[pFEV_lf$MRN == my_i,]
                     
                     #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
                     #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
@@ -300,23 +484,23 @@ shinyServer(function(input, output) {
                         
                         theme(axis.text.x = element_text(size=8, angle=90)) +
                         theme(legend.position="none") +
-                        ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+                        ggtitle(my_i)
                     }else{
-                    
-                    if(dim(i_data)[1]>0){
-                      ggplot(NULL) +
-                        geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
-            
-                        geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
-                        geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
-                        scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
-            
-                        #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='blue',size = 0.7)+
-            
-                        theme(axis.text.x = element_text(size=8, angle=90)) +
-                        theme(legend.position="none") +
-                        ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
                       
+                      if(dim(i_data)[1]>0){
+                        ggplot(NULL) +
+                          geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+                          
+                          geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+                          geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
+                          scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
+                          
+                          #geom_line(data = sm_data, aes(x = variable, y = value,group = MRN),col='blue',size = 0.7)+
+                          
+                          theme(axis.text.x = element_text(size=8, angle=90)) +
+                          theme(legend.position="none") +
+                          ggtitle(my_i)
+                        
                       }else{
                         ggplot(NULL) +
                           geom_vline(data = o_data,aes(xintercept = which(levels(o_data$variable) %in% '0'))) +
@@ -331,12 +515,12 @@ shinyServer(function(input, output) {
                           
                           theme(axis.text.x = element_text(size=8, angle=90)) +
                           theme(legend.position="none") +
-                          ggtitle(paste0(excluded_patients()[my_i],' (',i_data$pFEV_na[my_i],'%)'))
+                          ggtitle(my_i)
                         
                       }
                     }
-            
-            
+                    
+                    
                   },width = 600)
                 })
               }
@@ -354,26 +538,87 @@ shinyServer(function(input, output) {
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_2_zero()$per_data, pFEV_sym())
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_sym())
     
-    data = o_data[o_data$MRN %in% retained_patients(),]
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
     #data = data[data$Status %in% status_r(),]
     ##View(data)
     data
   })  
               
-  pFEV_wf_r = reactive({
+  pFEV_wf_r_post_clustering = reactive({
     #print(retained_patients())
     o_data = pFEV_wf_c()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
     #data$m_data_d1 = discrete_cluster_D_d1()$data
     #data$m_data_d1$MRN = rownames(m_data_d1)
-    data = o_data[o_data$MRN %in% retained_patients(),]
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
     
     #data$cluster = discrete_cluster_D()$data$cluster
     #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
     #data = data[data$Status %in% status_r(),]
+    data = change_data_w()
+    
+    data
+    
+  })
+  
+  output$post_hist = renderPlot({
+    death_list = death_list()
+    death_list = death_list[post_retained_patients()]
+    breaks = (max(death_list) - min(death_list))
+    h = hist(death_list, breaks = breaks, main = 'Frequency at which patients stop having pFEV values', xlab = '', xaxt = 'n', xlim = c(0,24))
+    labels = c(0:24)
+    at = labels - 0.5
+    axis(1, at =  at, labels = labels, tick = FALSE, padj= -1.5)
+  },height = 200)
+  
+  output$pre_hist = renderPlot({
+    death_list = death_list()
+    death_list = death_list[pre_retained_patients()]
+    breaks = (max(death_list) - min(death_list))
+    
+    
+    hist(death_list,breaks = breaks, main = 'Frequency at which patients stop having pFEV values', xlab = '', xaxt = 'n')
+    labels = c(-24:24)
+    at = labels - 0.5
+    axis(1, at =  at, labels = labels, tick = FALSE, padj= -1.5)
+    
+  },height = 200)
+  
+  dead_patients = reactive({
+    retained_patients = pre_retained_patients()
+    death_list = death_list()
+    dead_list = names(death_list[death_list < input$death_cutoff])
+    retained_list = retained_patients[retained_patients %in% dead_list]
+    retained_list
+  })
+  
+  output$post_select_ui = renderUI({
+    selected_list = unique(c(post_exclude_list,dead_patients()))
+    selected_list = selected_list[order(selected_list)]
+    selectInput('post_cluster_select','Select Additional Sample to Exclude',pre_retained_patients(),multiple = T,selected = selected_list)
+  })
+  
+  post_retained_patients = reactive({
+    retained_patients = pre_retained_patients()
+    remove_list = input$post_cluster_select
+    saveRDS(remove_list, 'www/post_exclude_list.rds')
+    retained_patients = retained_patients[! retained_patients %in% remove_list]
+    retained_patients
+  })
+  
+  retained_patients = reactive(post_retained_patients())
+  
+  output$post_retained_text = renderText(paste(post_retained_patients()))
+              
+  pFEV_wf_r = reactive({
+    o_data = pFEV_wf_c()
+    m_data = discrete_cluster_D()$data
+    m_data$MRN = rownames(m_data)
+    data = o_data[o_data$MRN %in% retained_patients(),]
+    data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data = change_data_w()
     data
     
@@ -404,9 +649,58 @@ shinyServer(function(input, output) {
   
   i_pFEV_wf_c = reactive({
     o_data = i_pFEV_wf
-    data = o_data[o_data$MRN %in% retained_patients(),]
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
     #data = data[data$Status %in% status_r(),]
     data
+  })
+  
+  last_index = reactive({
+    o_data = pFEV_wf
+    pFEV_data = o_data[,p_cols]
+    last_index = apply(pFEV_data,1, function(x) max(which(!is.na(x))))
+    last_index
+  })
+  
+  death_list = reactive({
+    last_index = last_index()
+    death_list = as.numeric(p_cols[last_index])
+    names(death_list) = names(last_index)
+    death_list[is.na(death_list)] = min(as.numeric(p_cols))
+    death_list
+  })
+  
+  
+  
+  i_pFEV_wf_c_NA = reactive({
+    o_data = pFEV_wf
+    pFEV_data = o_data[,p_cols]
+    #last_index = apply(pFEV_data,1, function(x) max(which(!is.na(x))))
+    last_index = last_index()
+    full_index = dim(pFEV_data)[2]
+    sample_list = c(1:dim(pFEV_data)[1])
+
+
+    
+    
+    i_data = i_pFEV_wf
+
+    i_pFEV_data = i_data[,p_cols]
+
+    for(x in sample_list){
+
+      if(last_index[x] != full_index){
+        if(is.finite(last_index[x])){
+          i_pFEV_data[x,c(last_index[x]:full_index)] = NA
+        }
+      }
+      
+    }
+    
+
+    o_data[,p_cols] = i_pFEV_data
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
+    data
+    
   })
   
   
@@ -447,7 +741,7 @@ shinyServer(function(input, output) {
   
   i_pFEV_sm_d1_f_c = reactive({
     o_data = i_pFEV_sm_d1_f
-    data = o_data[o_data$MRN %in% retained_patients(),]
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
     #data = data[data$Status %in% status_r(),]
     ##View(data)
     data
@@ -549,10 +843,14 @@ shinyServer(function(input, output) {
       data = i_pFEV_wf_c()
     }
     
+    if(input$data_select == 'imputed_NA'){
+      data = i_pFEV_wf_c_NA()
+    }
+    
     if(input$data_select == 'smoothed'){
       o_data = i_pFEV_smf
       #m_data = pFEV_wf_r()
-      data = o_data[o_data$MRN %in% retained_patients(),]
+      data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
     
     if(input$data_select == 'd1'){
@@ -565,7 +863,7 @@ shinyServer(function(input, output) {
     if(input$data_select == 'd2'){
       o_data = i_pFEV_sm_d2_f
       #m_data = pFEV_wf_r()
-      data = o_data[o_data$MRN %in% retained_patients(),]
+      data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
     ##View(data)
     
@@ -647,10 +945,14 @@ shinyServer(function(input, output) {
       data = i_pFEV_wf_c()
     }
     
+    if(input$data_select_clust == 'imputed_NA'){
+      data = i_pFEV_wf_c_NA()
+    }
+    
     if(input$data_select_clust == 'smoothed'){
       o_data = i_pFEV_smf
       #m_data = pFEV_wf_r()
-      data = o_data[o_data$MRN %in% retained_patients(),]
+      data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
     
     if(input$data_select_clust == 'd1'){
@@ -663,7 +965,7 @@ shinyServer(function(input, output) {
     if(input$data_select_clust == 'd2'){
       o_data = i_pFEV_sm_d2_f
       #m_data = pFEV_wf_r()
-      data = o_data[o_data$MRN %in% retained_patients(),]
+      data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
     ##View(data)
     
@@ -718,7 +1020,7 @@ shinyServer(function(input, output) {
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
     c_m_data = m_data
-    data = o_data[o_data$MRN %in% retained_patients(),]
+    data = o_data[o_data$MRN %in% pre_retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data_l = data
     data
@@ -2394,7 +2696,7 @@ shinyServer(function(input, output) {
       discrete_cluster_D = reactive({
         full_data = change_data()
         #print(colnames(full_data))
-        cluster_data_list = clustering_function(full_data,retained_patients(),input$clutree_num,
+        cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
         #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
@@ -2805,6 +3107,15 @@ shinyServer(function(input, output) {
           })
           
           output$boss_factor_table = renderDataTable(bos_factor())
+          
+          
+          output$boss_factor_table_select = renderDataTable({
+            df = bos_factor()
+            df = df[df$time == input$bos_time_select & df$variable == input$boss_select,]
+            table_formatting_function(df)
+            })
+          
+          
           
           output$bos1_factor_plot = renderPlot({
             x1 = as.numeric(input$bos_range[1])

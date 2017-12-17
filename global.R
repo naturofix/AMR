@@ -41,6 +41,9 @@ info_tab = 'Session Info'
 
 defaults = 'David'
 #defaults = 'Shaun'
+
+
+#post_exclude_list
 if(defaults == "Shaun"){
   source('defaults.R')
   
@@ -61,7 +64,8 @@ if(defaults == "Shaun"){
   
 }
 
-
+patient_custom_exclude = readRDS('www/pre_exclude_list.rds')
+post_exclude_list = readRDS('www/post_exclude_list.rds')
 
 si = sessionInfo()
 enableBookmarking(store = "url")

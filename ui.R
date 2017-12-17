@@ -11,8 +11,8 @@ shinyUI(fluidPage(
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
            radioButtons("data_select", 'Select Data',
-                        choiceNames = list('pFEV',"imputed", 'smoothed','D1', "D1 remove imputed", 'D2'),
-                        choiceValues = list("pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select)
+                        choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
+                        choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select)
            
     ),
     
@@ -84,9 +84,10 @@ shinyUI(fluidPage(
     #### PATIENT DATA ####
     
     tabPanel('Patient pFEV',
+        #tabPanel('Pre Clustering Selection',
              #uiOutput('scale_slide_1'),
              
-             tabsetPanel(selected = 'Exclude Patients',
+             tabsetPanel(
                tabPanel('Missingness Plot',
                         tags$h5('Missing values in the pFEV data'),
                         plotOutput('missmap_plot'),
@@ -96,50 +97,103 @@ shinyUI(fluidPage(
                         selectInput('mrn_select_i','MRN',patient_list,multiple = T, selected = patient_list[1], width = 800),
                         plotOutput('individual_patients')
                ),
-               tabPanel('Exclude Patients',
-            tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
-            textOutput('auto_removed_patients'),
-            selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
-            tags$h5(textOutput('status_text')),
-            column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
-                                  choiceValues = list("1", "2","0"
-                                  ),inline = T,selected = '0')),
-            tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
-            
-            column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
-            column(6,uiOutput('out_select_factor_1')),
-            column(12),
-            column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
-            column(6,uiOutput('out_select_factor_2')),
-            column(12),
-            column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
-            column(6,uiOutput('out_select_factor_3')),
-            
-            
-            column(12,
-                   tags$h5('Retained patient information'),
-            textOutput('num_patients')),
-            column(12,
-            textOutput('patients_text'))
-            #uiOutput('scale_slide_1')
-            #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
-            
-            #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
-            #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
-            
-            ),
+               tabPanel('Pre Clustering Selection',
+                  tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
+                  textOutput('auto_removed_patients'),
+                  selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
+                  
+                  plotOutput('pre_hist',height = 200),
+                  
+                  tags$h5(textOutput('status_text')),
+                  column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
+                                        choiceValues = list("1", "2","0"
+                                        ),inline = T,selected = '0')),
+                  tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
+                  
+                  column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
+                  column(6,uiOutput('out_select_factor_1')),
+                  column(12),
+                  column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
+                  column(6,uiOutput('out_select_factor_2')),
+                  column(12),
+                  column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
+                  column(6,uiOutput('out_select_factor_3')),
+                  
+                  
+                  column(12,
+                         tags$h5('Retained patient information'),
+                  textOutput('pre_num_patients')),
+                  column(12,
+                  textOutput('pre_patients_text'))
+                  #uiOutput('scale_slide_1')
+                  #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
+                  
+                  #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+                  #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
+                  
+              ),
+              
+              tabPanel('Post Clustering Selection',
+                       sliderInput('death_cutoff','Exclude Patients that no longer have pFEV measures at ... ',min = 0,max=24,step = 1,value = 0,width = 800),
+                       
+                       uiOutput('post_select_ui'),
+                       
+                       plotOutput('post_hist',height = 200),
+                       
+                       #textOutput('post_retained_text'),
+                       
+                      textOutput('post_num_patients'),
+              
+                      textOutput('post_patients_text')
+                       #tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
+                       #textOutput('auto_removed_patients'),
+                       #selectInput('post_remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
+                       #tags$h5(textOutput('status_text')),
+                       #column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
+                      #                        choiceValues = list("1", "2","0"
+                      #                        ),inline = T,selected = '0')),
+                      # tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
+                       
+                      # column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
+                      # column(6,uiOutput('out_select_factor_1')),
+                      # column(12),
+                      # column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
+                      # column(6,uiOutput('out_select_factor_2')),
+                      # column(12),
+                      # column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
+                      # column(6,uiOutput('out_select_factor_3')),
+                       
+                       
+                      # column(12,
+                      #        tags$h5('Retained patient information'),
+                      #        textOutput('num_patients')),
+                      # column(12,
+                      #        textOutput('patients_text'))
+                       #uiOutput('scale_slide_1')
+                       #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
+                       
+                       #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
+                       #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
+                       #tags$h5('test')
+              ),
             
              tabPanel('Plot all Patients',
                       HTML(paste('Plots take some time to render, please wait ...')),
+                      tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+                      
              tabsetPanel(
                
                
                #   #HTML(paste('Plots take some time to render, please wait ...')),
-               tabPanel('Excluded',column(12,uiOutput('excluded_plots'))),
+               tabPanel('Excluded - pre cluster',column(12,uiOutput('excluded_plots'))),
                #   
+               tabPanel('Excluded - post clustering',column(12,uiOutput('excluded_plots_post'))),
+               
                tabPanel('Retained',column(12,uiOutput("plots")))
                #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
              )))
+    
+    #tabPanel('Post Clustering Selection')
     ),
     
   ##### PLOTS ######
@@ -394,8 +448,8 @@ shinyUI(fluidPage(
                                 plotOutput('distance_density'),
                     
                     radioButtons("data_select_clust", 'Select Data applied to plots below',
-                                 choiceNames = list('pFEV',"imputed", 'smoothed','D1', "D1 remove imputed", 'D2'),
-                                 choiceValues = list("pFEV", "imputed",'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
+                                 choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
+                                 choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
                     
                                 tags$h5('log2 ratio t test'),
                                 plotOutput('boxplot_pp_ratio_cluster'),
@@ -482,11 +536,18 @@ shinyUI(fluidPage(
                         plotOutput('bos3_surv_factor_plot')
                         #plotOutput('boss_3_factor_l')
                ),
-               tabPanel('Tables',
+               tabPanel('Tables', tabsetPanel(
+                    tabPanel('Selected',
+                             column(6,selectInput('boss_select','Select',c('BOS1_free','BOS2_free','BOS3_free','BOS3_surv_free'),selected = 'BOS3_surv_free')),
+                             column(6,sliderInput('bos_time_select','Time',min = -24,max=48,step = 1,value = 6,width = 800)),
+                             dataTableOutput('boss_factor_table_select')
+                             
+                             ),
+                    tabPanel('Full',
                         dataTableOutput('bos_df'),
                         dataTableOutput('boss_factor_table'),
                         dataTableOutput('bos_patient_status')
-                        ),
+                        ))),
                tabPanel('Smooth',
                         plotOutput('bos_plots_smooth'),
                         plotOutput('bos1_factor_plot_smooth'),

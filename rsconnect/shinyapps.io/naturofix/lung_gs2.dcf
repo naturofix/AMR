@@ -5,9 +5,9 @@ account: naturofix
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 227736
-bundleId: 1139403
+bundleId: 1175592
 url: https://naturofix.shinyapps.io/lung_gs2/
-when: 1513527070.47535
+when: 1515942472.1635
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .Rapp.history|clustering.rds|clustering_6_new.rds|clustering_7_new.rds
+ignoredFiles: .Rapp.history|clustering.rds|clustering_6_new.rds|clustering_7_new.rds|www/post_exclude_list.rds|www/pre_exclude_list.rds

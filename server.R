@@ -4,6 +4,8 @@
 library(shiny)
 shinyServer(function(input, output) {
   
+  r_values = reactiveValues(init = 0)
+  
   output$moreControls <- renderUI({
     tagList(
       sliderInput("n", "N", 1, 1000, 500),
@@ -145,7 +147,8 @@ shinyServer(function(input, output) {
                   selectInput('select_subset_3','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })
-    
+              output$auto_removed_duplicates = renderText(paste(duplicated_list,collapse = ', '))
+              
               output$auto_removed_patients = renderText(paste(excluded_patients_c,collapse = ', '))
               
               excluded_patients = reactive({
@@ -153,11 +156,55 @@ shinyServer(function(input, output) {
                 #saveRDS(patient_list,'www/pre_exclude_list.rds')
                 patient_list
                 })
-            
+              
+              pre_removed_list = reactive({ # can potentially be used to re-incorporate sample automatically removed, but not implimented yet
+                # pre_removed_list = c()
+                # if('completeness' %in% input$select_remove){
+                #   pre_removed_list = c(pre_removed_list,excluded_patients_c)
+                #   }
+                # if('duplicates' %in% input$select_remove){
+                #   pre_removed_list = c(pre_removed_list,duplicated_list)
+                # }
+                pre_removed_list = c(excluded_patients_c,duplicated_list)
+                pre_removed_list
+              })
+              
+              pre_dead_patients = reactive({
+                retained_patients =  patient_list[!patient_list %in% pre_removed_list()]
+                death_list = death_list()
+                dead_list = names(death_list[death_list < input$pre_death_cutoff])
+                retained_list = retained_patients[retained_patients %in% dead_list]
+                retained_list
+              })
+              
+              output$pre_remove_ui = renderUI({
+                #if(file.exists('www/pre_exclude_list.rds')){
+                #  print('read pre RDS')
+                #  patient_custom_exclude = readRDS('www/pre_exclude_list.rds')
+                #}
+                
+                patient_list = patient_list[!patient_list %in% pre_removed_list()]
+                
+                selected_list = unique(c(patient_custom_exclude,pre_dead_patients()))
+                selected_list = selected_list[order(selected_list)]
+                #patient_custom_exclude = patient_custom_exclude[!patient_custom_exclude %in% excluded_patients_c]
+                #selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800)
+                selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = selected_list, width = 800)
+               
+               })
+              
               pre_retained_patients = reactive({
-                remove_list = patient_list[patient_list %in% input$remove_list]
-                saveRDS(remove_list,'www/pre_exclude_list.rds')
-                patient_list = patient_list[!(patient_list %in% remove_list)]
+                patient_list = patient_list[!patient_list %in% pre_removed_list()]
+                
+                #if(r_values$init == 0){
+                #  remove_list = patient_custom_exclude
+                #  r_values$init = 1
+                #}else{
+                #  remove_list = patient_list[patient_list %in% remove_list()]
+                #}
+                #print(remove_list)
+                patient_list = patient_list[!(patient_list %in% input$remove_list)]
+                
                 if(input$status_radio == '2'){
                   MRN = na.omit(pFEV_wf$MRN[pFEV_wf$MonthsToDeath < as.numeric(input$post_range[2])])
                   patient_list = patient_list[patient_list %in% MRN]
@@ -185,16 +232,67 @@ shinyServer(function(input, output) {
                 patient_list                
                 })
               
+              remove_list = reactive(input$remove_list)
+              
+              observeEvent(remove_list(), { 
+                
+                remove_list <- remove_list()
+                str(remove_list)
+                
+              })
+              
             output$pre_num_patients = renderText(print(paste('Number of retained patients : ',length(pre_retained_patients()))))
-            output$pre_patients_text = renderText(print(pre_retained_patients()))
+            output$clustered_patients_text = renderText(print(paste(length(pre_retained_patients()), 'patients clustered')))
+            
+            #observeEvent(input$pre_save,{
+            #  remove_list = input$remove_list
+            #  saveRDS(remove_list,'www/pre_exclude_list.rds')
+            #})
+            
+            output$pre_patients_text = renderText({
+              #remove_list = input$remove_list
+              #saveRDS(remove_list,'www/pre_exclude_list.rds')
+              print(pre_retained_patients())
+              })
+            
+
             
             output$post_num_patients = renderText(print(paste('Number of retained patients : ',length(post_retained_patients()))))
-            output$post_patients_text = renderText(print(post_retained_patients()))
+            
+           # observeEvent(input$post_save,{
+          #    remove_list = input$post_cluster_select
+          #    saveRDS(remove_list, 'www/post_exclude_list.rds')
+          #  })
+            
+            output$post_patients_text = renderText({
+              #remove_list = input$post_cluster_select
+              #saveRDS(remove_list, 'www/post_exclude_list.rds')
+              print(post_retained_patients())
+              })
             
             line_size = 2
             point_size = 4
             sm_size = 1
-              
+            
+            output$pre_patients_table = renderDataTable({
+              pFEV_wf[pFEV_wf$MRN %in% excluded_patients_c,pFEV_numeric_colnames_f]
+            })
+            
+            output$post_patients_table = renderDataTable({
+              pFEV_wf[pFEV_wf$MRN %in% input$post_cluster_select,pFEV_numeric_colnames_f]
+            })
+            
+            output$retained_patients_table = renderDataTable({
+              pFEV_wf[pFEV_wf$MRN %in% post_retained_patients(),pFEV_numeric_colnames_f]
+            })
+            
+            output$patients_text = renderText({
+              paste(dim(clustering)[1],'entries, ', length(unique(clustering$MRN_original)), 'individual patients,', length(post_retained_patients()), 'clustered entries')
+            })
+            output$completeness_text = renderText({
+              paste(length(excluded_patients_c), 'patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')
+            })
+            
             ####### __retained ###########
               output$plots <- renderUI({
                 plot_output_list <- lapply(retained_patients(), function(i) {
@@ -537,8 +635,12 @@ shinyServer(function(input, output) {
     
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_2_zero()$per_data, pFEV_sym())
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data, pFEV_sym())
-    
+    #death_list = death_list()
+    #o_data$drop_out = death_list[match(o_data$MNR,names(death_list))]
+    o_data$drop_out = death_list()
     data = o_data[o_data$MRN %in% pre_retained_patients(),]
+    colnames(o_data)
+    #View(o_data[,c("DeathDate","MonthsToDeath","YearsToDeath", "MonthSinceRx" , "AltDxScore","BOS1mnth","BOS2mnth" , "BOS3mnth","BOS 3 free survival", 'drop_out')])
     #data = data[data$Status %in% status_r(),]
     ##View(data)
     data
@@ -587,31 +689,37 @@ shinyServer(function(input, output) {
     
   },height = 200)
   
-  dead_patients = reactive({
+  post_dead_patients = reactive({
     retained_patients = pre_retained_patients()
     death_list = death_list()
-    dead_list = names(death_list[death_list < input$death_cutoff])
+    dead_list = names(death_list[death_list < input$post_death_cutoff])
     retained_list = retained_patients[retained_patients %in% dead_list]
     retained_list
   })
   
   output$post_select_ui = renderUI({
-    selected_list = unique(c(post_exclude_list,dead_patients()))
+    #if(file.exists('www/post_exclude_list.rds')){
+    #  post_exclude_list = readRDS('www/post_exclude_list.rds')
+    #}
+    selected_list = unique(c(post_exclude_list,post_dead_patients()))
     selected_list = selected_list[order(selected_list)]
-    selectInput('post_cluster_select','Select Additional Sample to Exclude',pre_retained_patients(),multiple = T,selected = selected_list)
+    selectInput('post_cluster_select','Select Additional Sample to Exclude or remove those added by the slider',pre_retained_patients(),multiple = T,selected = selected_list)
   })
   
   post_retained_patients = reactive({
     retained_patients = pre_retained_patients()
     remove_list = input$post_cluster_select
-    saveRDS(remove_list, 'www/post_exclude_list.rds')
     retained_patients = retained_patients[! retained_patients %in% remove_list]
     retained_patients
   })
   
   retained_patients = reactive(post_retained_patients())
   
-  output$post_retained_text = renderText(paste(post_retained_patients()))
+  # output$post_retained_text = renderText({
+  #   remove_list = input$post_cluster_select
+  #   saveRDS(remove_list, 'www/post_exclude_list.rds')
+  #   paste(post_retained_patients())
+  #   })
               
   pFEV_wf_r = reactive({
     o_data = pFEV_wf_c()
@@ -619,6 +727,7 @@ shinyServer(function(input, output) {
     m_data$MRN = rownames(m_data)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    #print(dim(data))
     data = change_data_w()
     data
     
@@ -1223,6 +1332,9 @@ shinyServer(function(input, output) {
     #mrn = c('5850700')
     #i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% mrn,]
     #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% mrn,]
+    #data = pFEV_lf[pFEV_lf$MRN %in% input$mrn_select_i,]
+    #View(i_data)
+    #print('test')
     
     i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% input$mrn_select_i,]
     sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN  %in% input$mrn_select_i,]
@@ -1263,6 +1375,32 @@ shinyServer(function(input, output) {
     
     
     
+  })
+  
+  output$individual_patient_table = renderDataTable({
+    data = pFEV_wf[pFEV_wf$MRN %in% input$mrn_select_i,]
+    data
+  })
+  
+  output$individual_patients_dup = renderPlot({
+
+    data = i_pFEV_lf[pFEV_lf$MRN_original %in% input$mrn_select_i_dup,]
+
+      ggplot(NULL) +
+        geom_vline(x_intercept = 0) +
+        geom_line(data = data, aes(x = time, y = value, group = MRN,col = MRN),size = line_size)+
+        geom_point(data = data, aes(x = time, y = data,group = MRN,col = MRN),size = point_size, position = position_jitter(w = 0.5, h = 0)) +
+        theme(axis.text.x = element_text(size=8, angle=90)) +
+        ggtitle('Imputed and Smoothed')
+    
+    
+    
+    
+  })
+  
+  output$individual_patient_table_dup = renderDataTable({
+    data = pFEV_wf[pFEV_wf$MRN_original %in% input$mrn_select_i_dup,]
+    data
   })
   
   output$line_pFEV = renderPlot({
@@ -2700,7 +2838,10 @@ shinyServer(function(input, output) {
                                                 input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                 input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
         #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
+        
+        #r_values$init = 1
         cluster_data_list
+        
       })
   
     

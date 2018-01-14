@@ -64,8 +64,8 @@ if(defaults == "Shaun"){
   
 }
 
-patient_custom_exclude = readRDS('www/pre_exclude_list.rds')
-post_exclude_list = readRDS('www/post_exclude_list.rds')
+#patient_custom_exclude = readRDS('www/pre_exclude_list.rds')
+#post_exclude_list = readRDS('www/post_exclude_list.rds')
 
 si = sessionInfo()
 enableBookmarking(store = "url")
@@ -99,7 +99,8 @@ edit_colname_function = function(col_names){
 }
 
 colnames(clustering)
-
+clustering$MRN_original = clustering$MRN
+MRN_original = clustering$MRN_original
 
 rename_columns = F
 if(rename_columns == T){
@@ -160,15 +161,15 @@ clustering_continuous_columns = c(continuous_columns,continuous_date_columns,pFE
 
 ### ALL COLUMNS #####
 all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
-all_discrete_columns = c('MRN',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
+all_discrete_columns = c('MRN','MRN_original',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
 all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
 #Columns in program not in googlesheets
 missing_columns = all_columns[!all_columns %in% colnames(clustering)]
-
+missing_columns
 #Columns in googlesheets not in program
 
 additional_columns = setdiff(colnames(clustering),all_columns)
-
+additional_columns
 if(length(additional_columns) > 0){
   info_tab = 'Sanity Check'
   default_tab = 'R Info'
@@ -200,13 +201,40 @@ non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols,continuo
 
 
 ### REMOVE DUPLICATE ROWS ####
-dup = duplicated(clustering[,1])
-dups = clustering[duplicated(clustering[,1]),1]
+#dup = duplicated(clustering[,1])
+#dups = clustering[duplicated(clustering[,1]),1]
 #dups
-row_names = clustering[,1]
-row_names[dup] = paste(row_names[dup],'a',sep='_') 
-clustering = clustering[!is.na(row_names),]
-row_names = row_names[!is.na(row_names)]
+#row_names = clustering[,1]
+#row_names[dup] = paste(row_names[dup],'a',sep='_') 
+#dup = duplicated(row_names)
+#dup
+#row_names[dup]
+#clustering = clustering[!is.na(row_names),]
+
+
+
+row_names = clustering$MRN
+#clustering$MRN_original = clustering$MRN
+row_names
+dup = duplicated(row_names)
+dup
+duplicated_patients = unique(row_names[dup])
+duplicated_patients = duplicated_patients[order(duplicated_patients)]
+length(dup[dup])
+if(length(dup[dup]) > 0){
+  row_names[dup] = paste(row_names[dup],'a',sep='_') 
+}
+dup = duplicated(row_names)
+length(dup[dup])
+i = 1
+while(length(dup[dup]) > 0){
+  row_names[dup] = gsub(paste0('_',letters[i]),paste0('_',letters[i+1]),row_names[dup])
+  i = i + 1
+  dup = duplicated(row_names)
+}
+#row_names
+
+#row_names = row_names[!is.na(row_names)]
 rownames(clustering) = row_names
 clustering$MRN = row_names
 
@@ -215,228 +243,250 @@ clustering$MRN = row_names
 
 if(length(missing_columns) == 0){
 
-
-
-
-######################################
-
-#### correct DATE columns ##########
-clust_date = clustering[,date_columns]
-#clust_date
-clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
-#head(clust_date)
-
-
-
-####### PROCESS ###################
-
-
-
-############ FACTOR COLUMNS ###################
-cluster_factor = clustering[,discrete_numeric_columns]
-clust_fac_con = clustering[,discrete_term_columns]
-#View(clust_fac_con)
-convert_factors = T # convert word columns to lowercase
-if(convert_factors==T){
-  cluster_factor_con = apply(clust_fac_con, 2, function(x) tolower(factor(x)))
-}else{
-  cluster_factor_con = clust_fac_con
-}
-
-
-cluster_factor_con = apply(cluster_factor_con, 2, function(x) as.numeric(factor(x)))
-
-
-
-
-full_fac = cbind(cluster_factor,cluster_factor_con)
-full_fac$MRN = clustering$MRN
-
-full_fac = apply(full_fac,2, function(x) factor(x))
-
-
-
-
-#num_fac = apply(full_fac,2, function(x) as.numeric(x))
-
-
-
-########### NUMERIC COLUMN ###############
-
-## numric column ##
-clust_num = clustering[,non_pFEV_continuous_columns]
-clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric(sub('%','',x))))
-#str(clust_num)
-#clust_num
-
-
-
-#as.numeric(clustering$MonthsToDeath)
-####################### pFEV ##################################
-
-########## ADD missing pFEV columns ###################
-pFEV = clustering[,pFEV_cols]
-pFEV = as.data.frame(apply(pFEV,2, function(x) as.numeric(x)))
-rownames(pFEV) = rownames(clustering)
-pFEV_na <- apply(pFEV, 1, function(x) round((1-(sum(is.na(x))/length(x)))*100,1))
-
-
-
-pFEV_w = pFEV
-pFEV_numeric_colnames_n = c(-24,-18,-12,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,12,18,24)
-pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
-colnames(pFEV_w) = pFEV_numeric_colnames_f
-
-
-for(col in seq(-24,24,1)){
-  if(!col %in% pFEV_numeric_colnames_n){
-    pFEV_w[,paste(col)] = NA
-  }
-}
-
-p_cols = colnames(pFEV_w)[order(as.numeric(colnames(pFEV_w)))]
-
-pFEV_w = pFEV_w[,p_cols]
-
-
-################## CONSOLIDATE DATA ##############
-
-#full_num = cbind(full_fac,clust_num,clust_date)
-patient_list = clustering$MRN
-patient_list = patient_list[order(patient_list)]
-
-
-processed_data = cbind(full_fac,clust_num,clust_date)
-
-
-processed_data_pFEV = cbind(full_fac,clust_num,clust_date,pFEV)
-
-
-
-processed_data = as.data.frame(processed_data[,order_columns(colnames(processed_data),colnames(clustering))])
-processed_data$pFEV_na = as.numeric(pFEV_na)
-
-
-
-full_factor_columns = colnames(processed_data)
-processed_data = cbind(processed_data,pFEV_w) #extended withe missing columns
-
-
-
-### order ###
-excluded_patients_c = paste(processed_data$MRN[processed_data$pFEV_na < completeness])
-r_list = patient_list[!patient_list %in% excluded_patients_c]
-
-
-
-processed_data_r = processed_data # allowed for additional processing here
-
-full_fac_0 = processed_data_r[,full_factor_columns]
-pFEV_w = processed_data_r[,p_cols]
-pFEV_wf = processed_data_r
-
-pFEV_lf = melt(processed_data_r, id.vars = full_factor_columns, measure.vars = colnames(pFEV_w))
-pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
-pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
-
-term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
-for(term in discrete_term_columns){
-  reason = data.frame(Name = clustering[,term],Number = as.numeric(processed_data[,term]))
-  #reason
-  reason = reason[order(reason$Number),]
-  reason = reason[!duplicated(reason),]
-  reason$Factor = term
-  reason$Number = factor(reason$Number)
-  reason = reason[,c('Factor','Number','Name')]
-  term_mapping_df = rbind(term_mapping_df,reason)
-}
-
-####################### IMPUTE pFEV ####################### 
   
-pFEV_ts = as.ts(t(pFEV_w))
-#pFEV_ts
-
-i_pFEV_ts = na.interpolation(pFEV_ts)
-
-i_pFEV_ts = as.data.frame(t(i_pFEV_ts))
-colnames(i_pFEV_ts) = seq(-24,24,1)
-#rownames(i_pFEV_ts) = rownames(full_fac_0)
-
-
-i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
-i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
-i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
-
-pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
-
-i_pFEV_lf$i = pFEV_lf$value
-i_pFEV_lf$data = pFEV_lf$value
-i_pFEV_lf$i[is.na(i_pFEV_lf$data)] = '0'
-i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
-
-
-
- ############## differential ###################
-
-
-
-
-time = as.numeric(colnames(i_pFEV_ts))
-#time
-i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
-colnames(i_pFEV_sm) = time
-
-i_pFEV_smf = cbind(full_fac_0[rownames(i_pFEV_sm),],i_pFEV_sm)
-i_pFEV_sm_lf = melt(i_pFEV_smf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
-i_pFEV_sm_lf$time = as.numeric(as.character(i_pFEV_sm_lf$variable))
-
-
-
-############ D1 ###############
-i_pFEV_sm_ts = as.ts(t(i_pFEV_sm))
-
-i_pFEV_sm_ts_d1 = diff(i_pFEV_sm_ts)
-i_pFEV_sm_d1 = as.data.frame(t(i_pFEV_sm_ts_d1))
-
-colnames(i_pFEV_sm_d1) = time[-2]
-
-
-i_pFEV_sm_d1_m = i_pFEV_sm_d1[,pFEV_numeric_colnames_f]
-
-i_pFEV_sm_d1_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
-
-
-
-i_pFEV_sm_d1_f = cbind(full_fac_0[rownames(i_pFEV_sm_d1),],i_pFEV_sm_d1)
-i_pFEV_sm_d1_fl = melt(i_pFEV_sm_d1_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d1))
-i_pFEV_sm_d1_fl$time = as.numeric(as.character(i_pFEV_sm_d1_fl$variable))
-
-
-################## D2 #######################
-i_pFEV_sm_ts_d2 = diff(i_pFEV_sm_ts_d1)
-i_pFEV_sm_d2 = as.data.frame(t(i_pFEV_sm_ts_d2))
-
-
-colnames(i_pFEV_sm_d2) = colnames(i_pFEV_sm_d1)[-2]
-
-rownames(i_pFEV_sm_d2) = rownames(i_pFEV_sm)
-
-i_pFEV_sm_d2_m = i_pFEV_sm_d2[,pFEV_numeric_colnames_f]
-
-i_pFEV_sm_d2_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
-
-
-
-
-i_pFEV_sm_d2_f = cbind(full_fac_0[rownames(i_pFEV_sm_d2),],i_pFEV_sm_d2)
-i_pFEV_sm_d2_fl = melt(i_pFEV_sm_d2_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d2))
-i_pFEV_sm_d2_fl$time = as.numeric(as.character(i_pFEV_sm_d2_fl$variable))
-
-
-before = colnames(pFEV_w)[c(1:25)]
-
-after = colnames(pFEV_w)[c(25:49)]
-
+  
+  
+  ######################################
+  
+  #### correct DATE columns ##########
+  clust_date = clustering[,date_columns]
+  #clust_date
+  clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
+  #head(clust_date)
+  
+  
+  
+  ####### PROCESS ###################
+  
+  
+  
+  ############ FACTOR COLUMNS ###################
+  cluster_factor = clustering[,discrete_numeric_columns]
+  clust_fac_con = clustering[,discrete_term_columns]
+  #View(clust_fac_con)
+  convert_factors = T # convert word columns to lowercase
+  if(convert_factors==T){
+    cluster_factor_con = apply(clust_fac_con, 2, function(x) tolower(factor(x)))
+  }else{
+    cluster_factor_con = clust_fac_con
+  }
+  
+  
+  cluster_factor_con = apply(cluster_factor_con, 2, function(x) as.numeric(factor(x)))
+  
+  
+  
+  
+  full_fac = cbind(cluster_factor,cluster_factor_con)
+  full_fac$MRN = clustering$MRN
+  full_fac$MRN_original = clustering$MRN_original
+  
+  full_fac = apply(full_fac,2, function(x) factor(x))
+  
+  
+  
+  
+  #num_fac = apply(full_fac,2, function(x) as.numeric(x))
+  
+  
+  
+  ########### NUMERIC COLUMN ###############
+  
+  ## numric column ##
+  clust_num = clustering[,non_pFEV_continuous_columns]
+  clust_num = as.data.frame(apply(clust_num, 2, function(x) as.numeric(sub('%','',x))))
+  #str(clust_num)
+  #clust_num
+  
+  
+  
+  #as.numeric(clustering$MonthsToDeath)
+  ####################### pFEV ##################################
+  
+  ########## ADD missing pFEV columns ###################
+  pFEV = clustering[,pFEV_cols]
+  pFEV = as.data.frame(apply(pFEV,2, function(x) as.numeric(x)))
+  rownames(pFEV) = rownames(clustering)
+  pFEV_na <- apply(pFEV, 1, function(x) round((1-(sum(is.na(x))/length(x)))*100,1))
+  
+  
+  
+  pFEV_w = pFEV
+  pFEV_numeric_colnames_n = c(-24,-18,-12,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,12,18,24)
+  pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
+  colnames(pFEV_w) = pFEV_numeric_colnames_f
+  
+  
+  for(col in seq(-24,24,1)){
+    if(!col %in% pFEV_numeric_colnames_n){
+      pFEV_w[,paste(col)] = NA
+    }
+  }
+  
+  p_cols = colnames(pFEV_w)[order(as.numeric(colnames(pFEV_w)))]
+  
+  pFEV_w = pFEV_w[,p_cols]
+  
+  
+  ################## CONSOLIDATE DATA ##############
+  
+  #full_num = cbind(full_fac,clust_num,clust_date)
+  patient_list = clustering$MRN
+  patient_list = patient_list[order(patient_list)]
+  
+  
+  processed_data = cbind(full_fac,clust_num,clust_date)
+  dim(processed_data)
+  
+  processed_data_pFEV = cbind(full_fac,clust_num,clust_date,pFEV)
+  
+  
+  
+  processed_data = as.data.frame(processed_data[,order_columns(colnames(processed_data),colnames(clustering))])
+  processed_data$pFEV_na = as.numeric(pFEV_na)
+  
+  
+  
+  full_factor_columns = colnames(processed_data)
+  full_factor_columns = c('MRN_original',full_factor_columns[full_factor_columns != 'MRN_original'])
+  full_factor_columns
+  processed_data = processed_data[,full_factor_columns]
+  processed_data = cbind(processed_data,pFEV_w) #extended withe missing columns
+  
+  
+  #View(pFEV)
+  pFEV_test = pFEV
+  pFEV_test$MRN_original = clustering$MRN_original[clustering$MRN == rownames(pFEV_test)]
+  colnames(pFEV_test)
+  pFEV_dup = duplicated(pFEV_test)
+  pFEV_dup
+  duplicated_list = rownames(pFEV_test[pFEV_dup,])
+  duplicated_list = duplicated_list[order(duplicated_list)]
+  length(duplicated_list)
+  dup_test = F
+  if(dup_test == T){
+    dup_result = pFEV_test[duplicated_list[1],]
+    dup_result
+    dup_result$MRN_original
+    pFEV_test[pFEV_test$MRN_original == dup_result$MRN_original,]
+  }
+  
+  processed_data_dup = processed_data[!(processed_data$MRN %in% duplicated_list),]
+  dim(processed_data_dup)
+  ### order ###
+  excluded_patients_c = paste(processed_data_dup$MRN[processed_data_dup$pFEV_na < completeness])
+  r_list = patient_list[!patient_list %in% excluded_patients_c]
+  
+  
+  
+  processed_data_r = processed_data # allowed for additional processing here
+  
+  full_fac_0 = processed_data_r[,full_factor_columns]
+  pFEV_w = processed_data_r[,p_cols]
+  pFEV_wf = processed_data_r
+  
+  pFEV_lf = melt(processed_data_r, id.vars = full_factor_columns, measure.vars = colnames(pFEV_w))
+  pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
+  pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
+  
+  term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
+  for(term in discrete_term_columns){
+    reason = data.frame(Name = processed_data_r[,term],Number = as.numeric(processed_data_r[,term]))
+    #reason
+    reason = reason[order(reason$Number),]
+    reason = reason[!duplicated(reason),]
+    reason$Factor = term
+    reason$Number = factor(reason$Number)
+    reason = reason[,c('Factor','Number','Name')]
+    term_mapping_df = rbind(term_mapping_df,reason)
+  }
+  
+  ####################### IMPUTE pFEV ####################### 
+    
+  pFEV_ts = as.ts(t(pFEV_w))
+  #pFEV_ts
+  
+  i_pFEV_ts = na.interpolation(pFEV_ts)
+  
+  i_pFEV_ts = as.data.frame(t(i_pFEV_ts))
+  colnames(i_pFEV_ts) = seq(-24,24,1)
+  #rownames(i_pFEV_ts) = rownames(full_fac_0)
+  
+  
+  i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
+  i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+  i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
+  
+  pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
+  
+  i_pFEV_lf$i = pFEV_lf$value
+  i_pFEV_lf$data = pFEV_lf$value
+  i_pFEV_lf$i[is.na(i_pFEV_lf$data)] = '0'
+  i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
+  
+  
+  
+   ############## differential ###################
+  
+  
+  
+  
+  time = as.numeric(colnames(i_pFEV_ts))
+  #time
+  i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
+  colnames(i_pFEV_sm) = time
+  
+  i_pFEV_smf = cbind(full_fac_0[rownames(i_pFEV_sm),],i_pFEV_sm)
+  i_pFEV_sm_lf = melt(i_pFEV_smf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+  i_pFEV_sm_lf$time = as.numeric(as.character(i_pFEV_sm_lf$variable))
+  
+  
+  
+  ############ D1 ###############
+  i_pFEV_sm_ts = as.ts(t(i_pFEV_sm))
+  
+  i_pFEV_sm_ts_d1 = diff(i_pFEV_sm_ts)
+  i_pFEV_sm_d1 = as.data.frame(t(i_pFEV_sm_ts_d1))
+  
+  colnames(i_pFEV_sm_d1) = time[-2]
+  
+  
+  i_pFEV_sm_d1_m = i_pFEV_sm_d1[,pFEV_numeric_colnames_f]
+  
+  i_pFEV_sm_d1_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
+  
+  
+  
+  i_pFEV_sm_d1_f = cbind(full_fac_0[rownames(i_pFEV_sm_d1),],i_pFEV_sm_d1)
+  i_pFEV_sm_d1_fl = melt(i_pFEV_sm_d1_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d1))
+  i_pFEV_sm_d1_fl$time = as.numeric(as.character(i_pFEV_sm_d1_fl$variable))
+  
+  
+  ################## D2 #######################
+  i_pFEV_sm_ts_d2 = diff(i_pFEV_sm_ts_d1)
+  i_pFEV_sm_d2 = as.data.frame(t(i_pFEV_sm_ts_d2))
+  
+  
+  colnames(i_pFEV_sm_d2) = colnames(i_pFEV_sm_d1)[-2]
+  
+  rownames(i_pFEV_sm_d2) = rownames(i_pFEV_sm)
+  
+  i_pFEV_sm_d2_m = i_pFEV_sm_d2[,pFEV_numeric_colnames_f]
+  
+  i_pFEV_sm_d2_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
+  
+  
+  
+  
+  i_pFEV_sm_d2_f = cbind(full_fac_0[rownames(i_pFEV_sm_d2),],i_pFEV_sm_d2)
+  i_pFEV_sm_d2_fl = melt(i_pFEV_sm_d2_f, id.vars = colnames(full_fac_0), measure.vars = colnames(i_pFEV_sm_d2))
+  i_pFEV_sm_d2_fl$time = as.numeric(as.character(i_pFEV_sm_d2_fl$variable))
+  
+  
+  before = colnames(pFEV_w)[c(1:25)]
+  
+  after = colnames(pFEV_w)[c(25:49)]
+  
 
 }else{
   patient_list = c()
@@ -446,4 +496,5 @@ after = colnames(pFEV_w)[c(25:49)]
   default_tab = 'R Info'
   
 }
+
 

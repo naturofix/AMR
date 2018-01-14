@@ -2,7 +2,7 @@
 completeness = 20 # percentage of datapoints required to automatically include patients
 #patient_custom_exclude = c('4941516', '4964463', '5863880', '5881350', '5884461', '5900493', '5928232', '5931655', '5931655_a', '4854594', '4941516', '5895629', '4905274', '4977337', '5876473', '5916182')
 patient_custom_exclude = c('4941516','5863880','5884461','5900493','5916182','5931655')
-
+post_exclude_list = c()
 
 subset_1 = 'All'
 select_subset_1 = 'All'
@@ -39,7 +39,7 @@ c_weight_2 = 1
 num_clusters = 3
   
 # Tabs : Data Tables, Patient pFEV, Plots, Statistics, Clustering, BOS, R Session Info
-default_tab = 'Clustering'
+default_tab = 'Patient pFEV'
 
 
 ### Columns Extracted from the Google Sheet  ###

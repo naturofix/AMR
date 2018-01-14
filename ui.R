@@ -84,23 +84,29 @@ shinyUI(fluidPage(
     #### PATIENT DATA ####
     
     tabPanel('Patient pFEV',
+        textOutput('patients_text'),
         #tabPanel('Pre Clustering Selection',
              #uiOutput('scale_slide_1'),
              
-             tabsetPanel(
+             tabsetPanel(selected = 'Pre Clustering Selection',
                tabPanel('Missingness Plot',
                         tags$h5('Missing values in the pFEV data'),
                         plotOutput('missmap_plot'),
                         plotOutput('pFEV_na_hist')),
-               tabPanel('Individual Patient Plots',
-                        tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
-                        selectInput('mrn_select_i','MRN',patient_list,multiple = T, selected = patient_list[1], width = 800),
-                        plotOutput('individual_patients')
-               ),
+
                tabPanel('Pre Clustering Selection',
-                  tags$h5(paste('Patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
+                  tags$h4(paste(length(duplicated_list), 'entries for individual patients, had duplicated pFEV values and were automatically removed')),
+                  textOutput('auto_removed_duplicates'),  
+                  HTML("<br>"),
+                  tags$h4(paste(length(excluded_patients_c), 'patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
                   textOutput('auto_removed_patients'),
-                  selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800),
+                  HTML("<br><br>"),
+                  #selectInput('select_remove','remove',list(`< 20% of pFEV values` = 'completeness' ,duplicates = 'duplicates'),multiple = T, selected = c('completeness','duplicates')),
+                  
+                  sliderInput('pre_death_cutoff','Exclude Patients that no longer have pFEV measures after timepoint ',min = -24,max=24,step = 1,value = -24,width = 800),
+                  
+                  uiOutput('pre_remove_ui'),
+                  #actionButton('pre_save','Save List'),
                   
                   plotOutput('pre_hist',height = 200),
                   
@@ -134,9 +140,11 @@ shinyUI(fluidPage(
               ),
               
               tabPanel('Post Clustering Selection',
-                       sliderInput('death_cutoff','Exclude Patients that no longer have pFEV measures at ... ',min = 0,max=24,step = 1,value = 0,width = 800),
+                       sliderInput('post_death_cutoff','Exclude Patients that no longer have pFEV measures at ... ',min = -24,max=24,step = 1,value = -24,width = 800),
                        
                        uiOutput('post_select_ui'),
+                       #actionButton('post_save','Save List'),
+                       
                        
                        plotOutput('post_hist',height = 200),
                        
@@ -177,21 +185,52 @@ shinyUI(fluidPage(
                        #tags$h5('test')
               ),
             
-             tabPanel('Plot all Patients',
-                      HTML(paste('Plots take some time to render, please wait ...')),
-                      tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+             tabPanel('Plots',
+                      tabsetPanel(
+                      tabPanel('Individual',
+                               tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+                               selectInput('mrn_select_i','MRN',patient_list,multiple = T, selected = patient_list[1], width = 800),
+                               plotOutput('individual_patients'),
+                               dataTableOutput('individual_patient_table')
+                      ),
+                      tabPanel('Duplicated',
+                              
+                               selectInput('mrn_select_i_dup','Duplicated MRN',duplicated_patients,multiple = F, selected = duplicated_patients[1], width = 800),
+                               plotOutput('individual_patients_dup'),
+                               dataTableOutput('individual_patient_table_dup')
+                               
+                      ),
                       
-             tabsetPanel(
+                      
+
+                      
+             
                
                
                #   #HTML(paste('Plots take some time to render, please wait ...')),
-               tabPanel('Excluded - pre cluster',column(12,uiOutput('excluded_plots'))),
+               tabPanel('Excluded - pre cluster',
+                        column(12,
+                   HTML(paste('Plots take some time to render, please wait ...')),
+                   tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+                   
+                   
+                   dataTableOutput('pre_patients_table'),
+                   uiOutput('excluded_plots'))),
                #   
-               tabPanel('Excluded - post clustering',column(12,uiOutput('excluded_plots_post'))),
+               tabPanel('Excluded - post clustering',column(12,
+                    HTML(paste('Plots take some time to render, please wait ...')),
+                    tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+                    
+                    
+                    dataTableOutput('post_patients_table'),
+                    uiOutput('excluded_plots_post'))),
                
-               tabPanel('Retained',column(12,uiOutput("plots")))
+               tabPanel('Retained',column(12,
+                                          dataTableOutput('retained_patients_table'),
+                                          uiOutput("plots")))
                #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
-             )))
+             ))
+             )
     
     #tabPanel('Post Clustering Selection')
     ),
@@ -435,7 +474,8 @@ shinyUI(fluidPage(
                     numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
 
                     selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
-                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1)
+                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
+                    textOutput('clustered_patients_text')
                     ),
              column(12,
                     numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),

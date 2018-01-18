@@ -40,7 +40,7 @@ g_sheet = T
 info_tab = 'Session Info'
 
 defaults = 'David'
-#defaults = 'Shaun'
+defaults = 'Shaun'
 
 
 #post_exclude_list
@@ -59,8 +59,8 @@ if(defaults == "Shaun"){
   num_clusters = 4
   g_sheet = F
   
-  #default_tab = 'R Info'
-  #info_tab = 'Testing'
+  default_tab = 'R Info'
+  info_tab = 'Testing'
   
 }
 

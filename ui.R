@@ -615,11 +615,13 @@ shinyUI(fluidPage(
                    tags$h5('Samples with multiple rows in the data were appended with _a'),
                    verbatimTextOutput('duplicated_samples')
                    #verbatimTextOutput("processed_data_str")
-          )
+          ),
           
-          # tabPanel('Testing',
-          #          
-          #          tabsetPanel(selected = 'Plot',
+          tabPanel('Testing',
+            tabsetPanel(
+              tabPanel('Multivariant_Analysis')
+              
+            ))
           #          
           #          
           # 

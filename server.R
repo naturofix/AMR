@@ -3429,7 +3429,36 @@ shinyServer(function(input, output) {
           
           
 
-
+#### MULTIVARIANT ANALYSIS #####
+          # output$test_plot = renderPlot({
+          #   data = i_pFEV_wf 
+          #   data_l = i_pFEV_lf
+          #   colnames(data_l)
+          #   #ggplot(data_l, aes(x = variable, y = log2(value), group = MRN)) + geom_line()
+          #   
+          #   data = data[!is.na(data[,'-24']),]
+          #   print(dim(data))
+          #   colnames(i_pFEV_wf)
+          #   plot_data = data[,pFEV_numeric_colnames_f]
+          #   head(plot_data)
+          #   new_data = cbind(data,pFEV_matrix = I(as.matrix(plot_data)))
+          #   head(new_data)
+          #   str(new_data)
+          #   new_data$NewCTChange
+          #   factor = 'NewCTChange'
+          #   factor2 = 
+          #   factor_list = 
+          #   fit = NULL  
+          #   fit = lm(pFEV_matrix ~ factor, data = test_data)
+          #   summary(fit)
+          #   plot(fit)
+          #   
+          #   plot(pFEV_matrix ~ factor+ SignOfInflammation, data = test_data)
+          #   
+          #   
+          # 
+          #   })
+          # 
           
 
 

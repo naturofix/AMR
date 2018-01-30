@@ -619,7 +619,8 @@ shinyUI(fluidPage(
           
           tabPanel('Testing',
             tabsetPanel(
-              tabPanel('Multivariant_Analysis')
+              tabPanel('Multivariant_Analysis',
+                       plotOutput('normality_plot'))
               
             ))
           #          

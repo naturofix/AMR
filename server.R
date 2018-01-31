@@ -3334,7 +3334,7 @@ shinyServer(function(input, output) {
             }
             ##View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
-            View(m_bos)
+            #View(m_bos)
             m_bos
           })
           
@@ -3355,7 +3355,7 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            head(m_bos)
+            #head(m_bos)
             col_name = 'BOS1_free'
             #m_bos = m_bos[m_bos$Status != 'All',]
             p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
@@ -3389,7 +3389,7 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            head(m_bos)
+            #head(m_bos)
             col_name = 'Survival'
             p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
             print(p)
@@ -3562,7 +3562,7 @@ shinyServer(function(input, output) {
       selected_pre_month = input$summary_slider[1]
       df = bos_factor()
       bos_df = df[df$time == selected_month & df$variable == 'BOS3_free',]
-      m_df = df[df$time == selected_month & df$variable == 'BOS3_surv_free',]
+      m_df = df[df$time == selected_month & df$variable == 'Survival',]
       #table_formatting_function(df)
       #bos_df = bos_factor()
       head(bos_df)

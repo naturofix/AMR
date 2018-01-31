@@ -1429,6 +1429,40 @@ dendrogram_plot_function = function(dendr,x_cluster,cut){
 }
 
 
+
+BOS_calc_function = function(BOS,v,cols){
+  #print(cols)
+  #print(v)
+  vmin = tryCatch(min(which(v < BOS)), error = function(e) Inf)
+  vmax = tryCatch(max(which(v > BOS)), error = function(e) Inf)
+  #print(colnames(v))
+  #print(paste(vmin,vmax))
+  if(is.finite(vmax)){
+    if(is.finite(vmin) ){
+      if(v[vmin + 1] < BOS){
+      #if(vmin > vmax){
+        #return(vmin + 1)
+        return(as.numeric(cols[vmin +1]))
+      }else{
+        new_start = vmax
+        new_start = vmin + 1
+        cols = cols[c(new_start:length(v))]
+        v = v[c(new_start:length(v))]
+        BOS_calc_function(BOS,v,cols)
+      }
+    }else{
+      return(NA)
+    }
+  }else{
+    if(is.finite(vmin)){
+      return(as.numeric(cols[vmin +1]))
+    }else{
+      return(NA)
+    }
+  }
+}
+
+
 BOS_function_pFEV = function(full_data,imputed = F){
   BOS1 = 0.8
   BOS2 = 0.66
@@ -1517,6 +1551,7 @@ BOS_function_pFEV = function(full_data,imputed = F){
 BOS_test_function = function(time,rx_date,bos_date,death_date,status){
   #bos_status = 0
   #print(rx_date)
+  bos_date = as.numeric(bos_date)
   if(time >= bos_date){
     bos_status = 3
   }else{
@@ -1637,6 +1672,83 @@ BOS_patient_function = function(full_data){
   patient_status_df$BOS3[!patient_status_df$BOS3_free == 3] = no_hit
   return(patient_status_df)
 }
+
+
+BOS_patient_function_post_calc = function(full_data){
+  #full_data = pFEV_wf
+  
+  BOS1 = 0.8
+  BOS2 = 0.66
+  BOS3 = 0.5
+  end_time = 50
+  MRN = full_data$MRN
+  #print(str(MRN))
+  d_date = full_data$MonthsToDeath
+  #print(str(d_date))
+  rx = full_data$MonthSinceRx
+  #print(str(rx))
+  status = full_data$Status
+  #print(str(status))
+  BOS1_date = full_data$BOS1
+  BOS2_date = full_data$BOS2
+  BOS3_date = full_data$BOS3
+  BOS3_surv_date = full_data$BOS3
+  
+  BOS1_date[is.na(BOS1_date)] = end_time
+  BOS2_date[is.na(BOS2_date)] = end_time
+  BOS3_date[is.na(BOS3_date)] = end_time
+  BOS3_surv_date[is.na(BOS3_surv_date)] = end_time
+  
+  full_data$BOS1_date = BOS1_date
+  full_data$BOS2_date = BOS2_date
+  full_data$BOS3_date = BOS3_date
+  full_data$BOS3_surv_date = BOS3_surv_date
+  full_data$MonthsToDeath[is.na(full_data$MonthsToDeath)] = end_time
+  full_data$MonthSinceRx[is.na(full_data$MonthSinceRx)] = end_time
+  
+  time = seq(-24,48,1)
+  #str(time)
+  bos_df = data.frame(time = time)
+  rx_i = grep('MonthSinceRx', colnames(full_data))
+  BOS1_date_i = grep('BOS1_date', colnames(full_data))
+  BOS2_date_i = grep('BOS2_date', colnames(full_data))
+  BOS3_date_i = grep('BOS3_date', colnames(full_data))
+  BOS3_surv_date_i = grep('BOS3_surv_date', colnames(full_data))
+  d_date_i = grep('MonthsToDeath', colnames(full_data))
+  status_i = grep('Status', colnames(full_data))
+  patient_status_df = data.frame(time = numeric(0))
+  #print(rx_i)
+  for(t in time){
+    #print(t)
+    #row_data = full_data[1,]
+    #print(row_data)
+    #print(row_data[rx_i]) 
+    status_1 = 0
+    status_2 = 0
+    status_3 = 0
+    status_4 = 0
+    patient_status_df[paste(t,MRN,sep='_'),'time'] = t
+    patient_status_df[paste(t,MRN,sep='_'),'MRN'] = MRN
+    status_1 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS1_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_2 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS2_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_3 = unlist(apply(full_data,1, function(x) BOS_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS3_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    status_4 = unlist(apply(full_data,1, function(x) BOS_surv_test_function(t,as.numeric(x[rx_i]),as.numeric(x[BOS3_date_i]),as.numeric(x[d_date_i]),as.numeric(x[status_i]))))
+    patient_status_df[paste(t,MRN,sep='_'),'BOS1_free'] = status_1
+    patient_status_df[paste(t,MRN,sep='_'),'BOS2_free'] = status_2
+    patient_status_df[paste(t,MRN,sep='_'),'BOS3_free'] = status_3
+    patient_status_df[paste(t,MRN,sep='_'),'BOS3_surv_free'] = status_4
+  }
+  hit = 0
+  no_hit = 1
+  patient_status_df$BOS1[patient_status_df$BOS1_free == 3] = hit
+  patient_status_df$BOS1[!patient_status_df$BOS1_free == 3] = no_hit
+  patient_status_df$BOS2[patient_status_df$BOS2_free == 3] = hit
+  patient_status_df$BOS2[!patient_status_df$BOS2_free == 3] = no_hit
+  patient_status_df$BOS3[patient_status_df$BOS3_free == 3] = hit
+  patient_status_df$BOS3[!patient_status_df$BOS3_free == 3] = no_hit
+  return(patient_status_df)
+}
+
   
   #head(patient_status_df,50)  
     
@@ -1648,6 +1760,133 @@ BOS_patient_function = function(full_data){
   #tail(patient_status_df)
 
 
+BOS_function_post_calc = function(full_data){
+  #full_data = pFEV_wf
+  
+  BOS1 = 0.8
+  BOS2 = 0.66
+  BOS3 = 0.5
+  end_time = 50
+  MRN = full_data$MRN
+  d_date = full_data$MonthsToDeath
+  rx = full_data$MonthSinceRx
+  status = full_data$Status
+  BOS1_date = full_data$BOS1
+  BOS2_date = full_data$BOS2
+  BOS3_date = full_data$BOS3
+  BOS3_surv_date = full_data$MonthsToDeath
+  
+  BOS1_date[is.na(BOS1_date)] = end_time
+  BOS2_date[is.na(BOS2_date)] = end_time
+  BOS3_date[is.na(BOS3_date)] = end_time
+  BOS3_surv_date[is.na(BOS3_surv_date)] = end_time
+  
+  full_data$BOS1_date = BOS1_date
+  full_data$BOS2_date = BOS2_date
+  full_data$BOS3_date = BOS3_date
+  full_data$BOS3_surv_date = BOS3_surv_date
+  
+  
+  time = seq(-24,48,1)
+  bos_df = data.frame(time = time)
+  
+  bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
+  bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
+  bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
+  bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_surv_date[x >= BOS3_surv_date]))))
+  
+  bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS1_date]))))
+  bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS2_date]))))
+  bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_surv_date]))))
+  
+  
+  bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS1_date]))))
+  bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS2_date]))))
+  bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_surv_date]))))
+  
+  
+  bos_df = mutate(bos_df, 
+                  BOS1_num_diff = c(0,diff(BOS1_num)),
+                  BOS2_num_diff = c(0,diff(BOS2_num)),
+                  BOS3_num_diff = c(0,diff(BOS3_num)),
+                  BOS3_surv_num_diff = c(0,diff(BOS3_surv_num))
+  )
+  bos_df = mutate(bos_df, 
+                  BOS1_Dead_diff = c(0,diff(BOS1_Dead)),
+                  BOS2_Dead_diff = c(0,diff(BOS2_Dead)),
+                  BOS3_Dead_diff = c(0,diff(BOS3_Dead)),
+                  BOS3_surv_Dead_diff = c(0,diff(BOS3_surv_Dead))
+  )
+  bos_df = mutate(bos_df, 
+                  BOS1_Censor_diff = c(0,diff(BOS1_Censor)),
+                  BOS2_Censor_diff = c(0,diff(BOS2_Censor)),
+                  BOS3_Censor_diff = c(0,diff(BOS3_Censor)),
+                  BOS3_surv_Censor_diff = c(0,diff(BOS3_surv_Censor))
+  )
+  
+  bos_df = mutate(bos_df, 
+                  BOS1_risk = dim(full_data)[1] - c(0,BOS1_num[-length(BOS1_num)]) - c(0,BOS1_Dead[-length(BOS1_Dead)]) - c(0,BOS1_Censor[-length(BOS1_Censor)]),
+                  BOS2_risk = dim(full_data)[1] - c(0,BOS2_num[-length(BOS2_num)]) - c(0,BOS2_Dead[-length(BOS2_Dead)]) - c(0,BOS2_Censor[-length(BOS2_Censor)]),
+                  BOS3_risk = dim(full_data)[1] - c(0,BOS3_num[-length(BOS3_num)]) - c(0,BOS3_Dead[-length(BOS3_Dead)]) - c(0,BOS3_Censor[-length(BOS3_Censor)]),
+                  BOS3_surv_risk = dim(full_data)[1] - c(0,BOS3_surv_num[-length(BOS3_surv_num)]) - c(0,BOS3_surv_Dead[-length(BOS3_surv_Dead)]) - c(0,BOS3_surv_Censor[-length(BOS3_surv_Censor)])
+                  
+  )
+  
+  bos_df = mutate(bos_df, 
+                  BOS1_prog = c(BOS1_num[1] + BOS1_Dead[1], BOS1_num_diff[-1] + BOS1_Dead_diff[-1]),
+                  BOS2_prog = c(BOS2_num[1] + BOS2_Dead[1], BOS2_num_diff[-1] + BOS2_Dead_diff[-1]),
+                  BOS3_prog = c(BOS3_num[1] + BOS3_Dead[1], BOS3_num_diff[-1] + BOS3_Dead_diff[-1]),
+                  BOS3_surv_prog = c(BOS3_surv_num[1] + BOS3_surv_Dead[1], BOS3_surv_num_diff[-1] + BOS3_surv_Dead_diff[-1])
+  )
+  
+  bos_df = mutate(bos_df, 
+                  BOS1_prog_per = BOS1_prog / BOS1_risk,
+                  BOS2_prog_per = BOS2_prog / BOS2_risk,
+                  BOS3_prog_per = BOS3_prog / BOS3_risk,
+                  BOS3_surv_prog_per = BOS3_surv_prog / BOS3_surv_risk
+  )
+  
+  
+  t = 1 *(1 - bos_df$BOS1_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS1_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS1_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS2_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS2_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS2_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS3_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS3_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS3_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS3_surv_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS3_surv_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS3_surv_free = b*100
+  
+  return(bos_df)
+}
 
 BOS_function = function(full_data){
   #full_data = pFEV_wf

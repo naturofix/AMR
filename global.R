@@ -40,7 +40,7 @@ g_sheet = T
 info_tab = 'Session Info'
 
 defaults = 'David'
-defaults = 'Shaun'
+#defaults = 'Shaun'
 
 
 #post_exclude_list
@@ -59,7 +59,7 @@ if(defaults == "Shaun"){
   num_clusters = 4
   g_sheet = F
   
-  default_tab = 'R Info'
+  default_tab = 'Patient pFEV'
   info_tab = 'Testing'
   
 }
@@ -82,11 +82,11 @@ if(g_sheet == T){
   clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   
   #colnames(clustering)
-  saveRDS(file = 'clustering_7_new.rds',object = clustering)
+  saveRDS(file = 'clustering_8_new.rds',object = clustering)
   #clustering2 = clustering
 }else{
   #clustering = readRDS('clustering4.rds') ## OLD CLUSTERING FILE
-  clustering = readRDS('clustering_7_new.rds')
+  clustering = readRDS('clustering_8_new.rds')
   
 }
 
@@ -404,17 +404,26 @@ if(length(missing_columns) == 0){
   ####################### IMPUTE pFEV ####################### 
     
   pFEV_ts = as.ts(t(pFEV_w))
-  #pFEV_ts
+  head(pFEV_ts)
   
   i_pFEV_ts = na.interpolation(pFEV_ts)
   
   i_pFEV_ts = as.data.frame(t(i_pFEV_ts))
   colnames(i_pFEV_ts) = seq(-24,24,1)
+  head(i_pFEV_ts)
   #rownames(i_pFEV_ts) = rownames(full_fac_0)
   
   
   i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
-  i_pFEV_lf = melt(i_pFEV_wf, id.vars = colnames(full_fac_0), measure.vars = colnames(pFEV_w))
+  head(i_pFEV_wf)
+  i_pFEV_wf$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
+  i_pFEV_wf$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
+  i_pFEV_wf$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
+  
+  i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
+  
+  i_pFEV_lf = melt(i_pFEV_wf, id.vars = c(colnames(full_fac_0),'BOS1','BOS2','BOS3'), measure.vars = colnames(pFEV_w))
+  colnames(i_pFEV_lf)
   i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
   
   pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
@@ -496,5 +505,10 @@ if(length(missing_columns) == 0){
   default_tab = 'R Info'
   
 }
+
+
+
+
+
 
 

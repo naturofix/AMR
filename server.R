@@ -569,11 +569,58 @@ shinyServer(function(input, output) {
                     
                     #i_data = i_pFEV_lf_r()[i_pFEV_lf_r()$MRN %in% input$mrn_select,]
                     #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% input$mrn_select,]
-                    if(dim(sm_data)[1]>0){
-                      ggplot(NULL) +
-                        geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+                    #if(dim(sm_data)[1]>0){
+                    p = ggplot(NULL) +
+                      geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0')))
+                    p = p + geom_hline(yintercept = 0.8,color = 'yellow') +
+                      geom_hline(yintercept = 0.66, color = 'orange') + 
+                      geom_hline(yintercept = 0.5, color = 'red')
+                    if(!is.na(as.numeric(i_data$MonthsToDeath))){
+                       mortality = which(levels(i_data$variable) %in% factor(round(as.numeric(i_data$MonthsToDeath),0))[1])
+                       print(as.numeric(i_data$MonthsToDeath))
+                       print(mortality)
+                       if(length(mortality) > 0){
+                        p = p + geom_segment(data = i_data,aes(x = mortality, xend = mortality,y = 0, yend = 1),col = 'grey',lwd = 5)
+                       }
+                      }
+                    
+                    if(!is.na(i_data$BOS1)){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS1))),col = 'yellow',lwd = 1.5)
+                      BOS1_x = which(levels(i_data$variable) %in% factor(i_data$BOS1))
+                      p = p + geom_segment(data = i_data,aes(x = BOS1_x, xend = BOS1_x,y = 0, yend = 0.8),col = 'yellow',lwd = 3.5)
+                    }
+                    if(!is.na(i_data$BOS2)){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS2))),col = 'orange',lwd = 3)
+                      BOS2_x = which(levels(i_data$variable) %in% factor(i_data$BOS2))
+                      p = p + geom_segment(data = i_data,aes(x = BOS2_x, xend = BOS2_x,y = 0, yend = 0.66),col = 'orange',lwd = 3.5)
+                    }
+                    if(!is.na(i_data$BOS3)){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS3))),col = 'red',lwd = 4.5)
+                      BOS3_x = which(levels(i_data$variable) %in% factor(i_data$BOS3))
+                      p = p + geom_segment(data = i_data,aes(x = BOS3_x, xend = BOS3_x,y = 0, yend = 0.5),col = 'red',lwd = 3.5)
+                      
+                    }
+
+            
+                  
+                    if(!is.na(as.numeric(i_data$BOS1mnth))){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS1mnth))),col = 'blue',lwd = 1)
+                      BOS1_x = which(levels(i_data$variable) %in% factor(i_data$BOS1mnth))
+                      p = p + geom_segment(data = i_data,aes(x = BOS1_x, xend = BOS1_x,y = 0, yend = 0.8),col = 'blue',lwd = 1)
+                      } 
+                    if(!is.na(as.numeric(i_data$BOS2mnth))){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS2mnth))),col = 'blue',lwd = 1)
+                      BOS2_x = which(levels(i_data$variable) %in% factor(i_data$BOS2mnth))
+                      p = p + geom_segment(data = i_data,aes(x = BOS2_x, xend = BOS2_x,y = 0, yend = 0.66),col = 'blue',lwd = 1)
+                      }
+                    if(!is.na(as.numeric(i_data$BOS3mnth))){
+                      #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% factor(i_data$BOS3mnth))),col = 'blue',lwd = 1)
+                      BOS3_x = which(levels(i_data$variable) %in% factor(i_data$BOS3mnth))
+                      p = p + geom_segment(data = i_data,aes(x = BOS3_x, xend = BOS3_x,y = 0, yend = 0.5),col = 'blue',lwd = 1)
+                      }
                         
-                        geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+                      if(dim(sm_data)[1]>0){  
+                        p = p + geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
                         geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
                         
                         scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
@@ -586,10 +633,10 @@ shinyServer(function(input, output) {
                     }else{
                       
                       if(dim(i_data)[1]>0){
-                        ggplot(NULL) +
-                          geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
+                        #p = ggplot(NULL) +
+                        #p = p + geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
                           
-                          geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+                        p = p + geom_line(data = i_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
                           geom_point(data = i_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
                           scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
                           
@@ -600,10 +647,10 @@ shinyServer(function(input, output) {
                           ggtitle(my_i)
                         
                       }else{
-                        ggplot(NULL) +
-                          geom_vline(data = o_data,aes(xintercept = which(levels(o_data$variable) %in% '0'))) +
+                        #p = ggplot(NULL) +
+                        #  geom_vline(data = o_data,aes(xintercept = which(levels(o_data$variable) %in% '0'))) +
                           
-                          geom_line(data = o_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
+                         p = p + geom_line(data = o_data, aes(x = variable, y = value, group = MRN),col='red',size = line_size)+
                           geom_point(data = o_data, aes(x = variable, y = data,group = MRN),col='blue',size = point_size) +
                           #geom_line(data = )
                           #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
@@ -618,7 +665,7 @@ shinyServer(function(input, output) {
                       }
                     }
                     
-                    
+                  print(p) 
                   },width = 600)
                 })
               }
@@ -1329,12 +1376,7 @@ shinyServer(function(input, output) {
   ########### _LINE PLOT ############
   
   output$individual_patients = renderPlot({
-    #mrn = c('5850700')
-    #i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% mrn,]
-    #sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN %in% mrn,]
-    #data = pFEV_lf[pFEV_lf$MRN %in% input$mrn_select_i,]
-    #View(i_data)
-    #print('test')
+ 
     
     i_data = i_pFEV_lf[i_pFEV_lf$MRN %in% input$mrn_select_i,]
     sm_data = i_pFEV_sm_lf[i_pFEV_sm_lf$MRN  %in% input$mrn_select_i,]
@@ -1343,6 +1385,9 @@ shinyServer(function(input, output) {
       ggplot(NULL) +
         #geom_vline(data = i_data,aes(xintercept = which(levels(i_data$variable) %in% '0'))) +
         geom_vline(xintercept = 0) +
+        geom_vline(xintercept = i_data$BOS1, color = 'red',lwd = 3) +
+        geom_vline(xintercept = i_data$BOS2, color = 'green',lwd = 2) +
+        geom_vline(xintercept = i_data$BOS3, color = 'blue',lwd = 1) +
         geom_line(data = i_data, aes(x = time, y = value, group = MRN),col='red',size = line_size)+
         geom_point(data = i_data, aes(x = time, y = data,group = MRN),col='blue',size = point_size) +
         #geom_line(data = )
@@ -1378,7 +1423,7 @@ shinyServer(function(input, output) {
   })
   
   output$individual_patient_table = renderDataTable({
-    data = pFEV_wf[pFEV_wf$MRN %in% input$mrn_select_i,]
+    data = i_pFEV_wf[i_pFEV_wf$MRN %in% input$mrn_select_i,]
     data
   })
   
@@ -3166,8 +3211,8 @@ shinyServer(function(input, output) {
           
           bos_df = reactive({
             full_data = pFEV_wf
-            full_data = pFEV_wf_r()
-            bos_data = BOS_function(full_data)
+            full_data = i_pFEV_wf_r()
+            bos_data = BOS_function_post_calc(full_data)
             #return(list(bos_df = bos_df,patient_status_df = patient_status_df))
             bos_data
           })
@@ -3216,7 +3261,7 @@ shinyServer(function(input, output) {
             
           })
           
-          bos_factor = reactive({
+          bos_factor_original = reactive({
             full_data = pFEV_wf_r()
             global_factor = 'Status'
             global_factor = input$global_factor
@@ -3246,6 +3291,43 @@ shinyServer(function(input, output) {
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
             m_bos
           })
+          
+          bos_factor = reactive({
+            full_data = i_pFEV_wf_r()
+            global_factor = 'Status'
+            global_factor = input$global_factor
+            factor_entry = unique(na.omit(full_data[,global_factor]))
+            entry = factor_entry[1]
+            #factor_entry
+            df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1_free = numeric(0),BOS2_free = numeric(0),BOS3_free = numeric())
+            patient_df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),BOS1 = numeric(0),BOS2 = numeric(0),BOS3 = numeric())
+            df = BOS_function_post_calc(full_data)
+            df$Factor = global_factor
+            df$Status = 'All'
+            df =  df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")]
+
+            for(entry in factor_entry){
+              function_data = full_data[full_data[,global_factor] == entry,]
+              bos_df = BOS_function_post_calc(function_data)
+              #patient_status = BOS_patient_function_post_calc(function_data)
+              #str(patient_status)
+              #head(patient_status)
+              bos_df$Factor = global_factor
+              bos_df$Status = entry
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
+              
+              
+              #patient_status$Factor = global_factor
+              #patient_status$Status = entry
+              #head(patient_df)
+              #head(patient_status)
+              #patient_df = rbind(patient_df,patient_status[,c("Factor",'Status','time','BOS1','BOS2','BOS3')])
+            }
+            ##View(df)
+            m_bos = melt(df,id.vars= c('Factor','Status','time'))
+            m_bos
+          })
+          
           
           output$boss_factor_table = renderDataTable(bos_factor())
           
@@ -3460,7 +3542,36 @@ shinyServer(function(input, output) {
           #   })
           # 
           
-
+    output$summary_table = renderDataTable({
+      selected_month = input$summary_slider[2]
+      selected_pre_month = input$summary_slider[1]
+      df = bos_factor()
+      bos_df = df[df$time == selected_month & df$variable == 'BOS3_free',]
+      m_df = df[df$time == selected_month & df$variable == 'BOS3_surv_free',]
+      #table_formatting_function(df)
+      #bos_df = bos_factor()
+      head(bos_df)
+      #df = data.frame(`BOS3 @ 6 months` = numeric(0), `Mortality @ 6 months` = numeric(0), `pFEV -6 months` = numeric(0), `pFEV 6 month relative` = numeric(0))
+      #df
+      df = bos_df[,c('Status','value')]
+      colnames(df) = c('Cluster','BOS3')
+      df[,paste('BOS3 at',selected_month,'months post treatment')] = paste(signif(df$BOS3,3),'%')
+      df[,paste('Survival at',selected_month,'months post treatment')] = paste(signif(m_df$value,3),'%')
+      mean_df = mean_df()
+      #View(mean_df)
+      mean_pre_6_months = as.numeric(mean_df[mean_df$pFEV == -(selected_month),c(2:6)])
+      mean_pre_6_months
+      mean_post_6_months = as.numeric(mean_df[mean_df$pFEV == selected_month,c(2:6)])
+      mean_post_6_months
+      
+      per_change = (mean_post_6_months-mean_pre_6_months)/mean_pre_6_months*100
+      df[,paste('pFEV',selected_month,'months pre-treatment')] = signif(mean_pre_6_months,3)
+      df[,paste('pFEV percentage change',selected_pre_month,'months pre and',selected_month,' post treatment')] = paste(signif(per_change,3),'%')
+      rownames(df) = df$Cluster
+      df = df[,c(-1,-2)]
+      t_df = as.data.frame(t(df))
+      table_formatting_function(t_df)
+    })
 
 })
 

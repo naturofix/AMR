@@ -76,7 +76,10 @@ shinyUI(fluidPage(
           tabPanel('log 2 ratio vs zero',
                    dataTableOutput("pFEV_ratio2zero")),
           tabPanel('precentage change vs zero',
-                   dataTableOutput("pFEV_per2zero"))
+                   dataTableOutput("pFEV_per2zero")),
+          tabPanel('Summary Table',
+                   sliderInput('summary_slider','Select Month',min = -24,max=24,step = 1,value = c(-6,6), width = 800),
+                   dataTableOutput('summary_table'))
         )
       
     ),
@@ -598,7 +601,7 @@ shinyUI(fluidPage(
              )
              ), # BOSS
 
-
+          
 
     ######### R SESSION INFO #########
           tabPanel('R Info',

@@ -2299,7 +2299,7 @@ shinyServer(function(input, output) {
         
         #data = full_data[,pFEV_numeric_colnames_f]
         factor_list = unique(full_data[,global_factor])
-        #print(factor_list)
+        print(factor_list)
         data = full_data[,clustering_continuous_columns]
         mean_df = data.frame('pFEV' = clustering_continuous_columns)
         mean_list = as.data.frame(apply(data,2,function(x) mean(x,na.rm=T)))
@@ -2312,6 +2312,12 @@ shinyServer(function(input, output) {
           #print(sub_mean_list)
           mean_df = cbind(mean_df,sub_mean_list)
         }
+        numbers = as.data.frame(t(c('Number_of_Patients',dim(full_data)[1],as.numeric(table(full_data$cluster)))))
+        #numbers
+        colnames(numbers) = colnames(mean_df)
+        rownames(numbers) = 'Number_of_Patients'
+        mean_df = rbind(mean_df,numbers)
+        #mean_df['Number_of_Patients',] = numbers
         mean_df
         
         #(mean_df['0',2] - mean_df[,2])/ mean_df['0',2]* 100
@@ -3235,14 +3241,16 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             #bos_df_data = bos_df$bos_df
             bos_df_data = bos_df()
-            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'BOS3_surv_free')]
+            bos_data = bos_df_data[,c('time',"BOS1_free","BOS2_free","BOS3_free",'Survival')]
             bos_data
             m_bos = melt(bos_data,id.var = 'time')
             ggplot(m_bos,aes(x = time,y=value,col=variable)) + 
-              geom_line() +
+              geom_line(lwd = 2) +
               geom_vline(xintercept = 0) +
               geom_hline(yintercept = 0)+
-              xlim(x1,x2)
+              xlim(x1,x2) + 
+              ggtitle('BOS plot for All patients')
+              
             
           })
           
@@ -3304,17 +3312,18 @@ shinyServer(function(input, output) {
             df = BOS_function_post_calc(full_data)
             df$Factor = global_factor
             df$Status = 'All'
-            df =  df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")]
+            df =  df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"Survival")]
 
             for(entry in factor_entry){
               function_data = full_data[full_data[,global_factor] == entry,]
               bos_df = BOS_function_post_calc(function_data)
+              head(bos_df)
               #patient_status = BOS_patient_function_post_calc(function_data)
               #str(patient_status)
               #head(patient_status)
               bos_df$Factor = global_factor
               bos_df$Status = entry
-              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"BOS3_surv_free")])
+              df = rbind(df,bos_df[,c("Factor",'Status','time','BOS1_free','BOS2_free','BOS3_free',"Survival")])
               
               
               #patient_status$Factor = global_factor
@@ -3325,6 +3334,7 @@ shinyServer(function(input, output) {
             }
             ##View(df)
             m_bos = melt(df,id.vars= c('Factor','Status','time'))
+            View(m_bos)
             m_bos
           })
           
@@ -3345,7 +3355,9 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
+            head(m_bos)
             col_name = 'BOS1_free'
+            #m_bos = m_bos[m_bos$Status != 'All',]
             p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
             print(p)
             #p
@@ -3377,7 +3389,8 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
-            col_name = 'BOS3_surv_free'
+            head(m_bos)
+            col_name = 'Survival'
             p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
             print(p)
             
@@ -3410,6 +3423,8 @@ shinyServer(function(input, output) {
             x2 = as.numeric(input$bos_range[2])
             global_factor = input$global_factor
             m_bos = bos_factor()
+            #m_bos = m_bos[m_bos$Status != 'All',]
+            
             col_name = 'BOS1_free'
             p = BOS_factor_plot_smooth(m_bos,col_name,global_factor,x1,x2)
             print(p)
@@ -3555,18 +3570,20 @@ shinyServer(function(input, output) {
       #df
       df = bos_df[,c('Status','value')]
       colnames(df) = c('Cluster','BOS3')
-      df[,paste('BOS3 at',selected_month,'months post treatment')] = paste(signif(df$BOS3,3),'%')
-      df[,paste('Survival at',selected_month,'months post treatment')] = paste(signif(m_df$value,3),'%')
       mean_df = mean_df()
+      
+      df[,'Number of Patients'] = as.numeric(mean_df[mean_df$pFEV == 'Number_of_Patients',c(2:length(mean_df))])
+      df[,paste('BOS3 at',selected_month,'months post treatment')] = paste(signif((100-df$BOS3),3),'%')
+      df[,paste('Survival at',selected_month,'months post treatment')] = paste(signif(m_df$value,3),'%')
       #View(mean_df)
-      mean_pre_6_months = as.numeric(mean_df[mean_df$pFEV == -(selected_month),c(2:6)])
+      mean_pre_6_months = as.numeric(mean_df[mean_df$pFEV == selected_pre_month,c(2:length(mean_df))])
       mean_pre_6_months
-      mean_post_6_months = as.numeric(mean_df[mean_df$pFEV == selected_month,c(2:6)])
+      mean_post_6_months = as.numeric(mean_df[mean_df$pFEV == selected_month,c(2:length(mean_df))])
       mean_post_6_months
       
       per_change = (mean_post_6_months-mean_pre_6_months)/mean_pre_6_months*100
-      df[,paste('pFEV',selected_month,'months pre-treatment')] = signif(mean_pre_6_months,3)
-      df[,paste('pFEV percentage change',selected_pre_month,'months pre and',selected_month,' post treatment')] = paste(signif(per_change,3),'%')
+      df[,paste('pFEV1',selected_month,'months pre-treatment')] = signif(mean_pre_6_months,3)
+      df[,paste('pFEV1 percentage change',selected_pre_month,'months pre and',selected_month,' post treatment')] = paste(signif(per_change,3),'%')
       rownames(df) = df$Cluster
       df = df[,c(-1,-2)]
       t_df = as.data.frame(t(df))

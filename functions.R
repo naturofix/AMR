@@ -1774,17 +1774,17 @@ BOS_function_post_calc = function(full_data){
   BOS1_date = full_data$BOS1
   BOS2_date = full_data$BOS2
   BOS3_date = full_data$BOS3
-  BOS3_surv_date = full_data$MonthsToDeath
+  Survival = full_data$MonthsToDeath
   
   BOS1_date[is.na(BOS1_date)] = end_time
   BOS2_date[is.na(BOS2_date)] = end_time
   BOS3_date[is.na(BOS3_date)] = end_time
-  BOS3_surv_date[is.na(BOS3_surv_date)] = end_time
+  Survival[is.na(Survival)] = end_time
   
   full_data$BOS1_date = BOS1_date
   full_data$BOS2_date = BOS2_date
   full_data$BOS3_date = BOS3_date
-  full_data$BOS3_surv_date = BOS3_surv_date
+  full_data$Survival = Survival
   
   
   time = seq(-24,48,1)
@@ -1793,18 +1793,18 @@ BOS_function_post_calc = function(full_data){
   bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
   bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
   bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
-  bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_surv_date[x >= BOS3_surv_date]))))
+  bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(Survival[x >= Survival]))))
   
   bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS1_date]))))
   bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS2_date]))))
   bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_date]))))
-  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_surv_date]))))
+  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < Survival]))))
   
   
   bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS1_date]))))
   bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS2_date]))))
   bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_date]))))
-  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_surv_date]))))
+  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < Survival]))))
   
   
   bos_df = mutate(bos_df, 
@@ -1883,7 +1883,7 @@ BOS_function_post_calc = function(full_data){
     #print(t)
     b = c(b,t)
   }
-  bos_df$BOS3_surv_free = b*100
+  bos_df$Survival = b*100
   
   return(bos_df)
 }
@@ -2062,14 +2062,20 @@ BOSS_plot_smooth_per = function(bos_df){
 
 BOS_factor_plot = function(m_bos,col_name,global_factor,x1,x2){
   m_bos3 = m_bos[m_bos$variable == col_name,]
-  p = ggplot(m_bos3, aes(x = time, y = value,col=Status)) +
+  plot_data = m_bos3[m_bos3$Status != 'All',]
+  all_data = m_bos3[m_bos3$Status == 'All',]
+  p = ggplot(plot_data, aes(x = time, y = value,col=Status)) +
     guides(col=guide_legend(title=global_factor)) +
     geom_vline(xintercept = 0) +
     geom_hline(yintercept = 0) +
-    geom_line() +
+    geom_line(lwd = 2) +
     ggtitle(paste(col_name,'by', global_factor)) +
 
     xlim(x1,x2)
+  if(dim(all_data)[1] > 0){
+    p = p + geom_line(data = all_data, aes(x = time, y = value), col = 'black',linetype="dotted")
+  }
+  
   return(p)
 }
 

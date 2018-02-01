@@ -1436,29 +1436,36 @@ BOS_calc_function = function(BOS,v,cols){
   vmin = tryCatch(min(which(v < BOS)), error = function(e) Inf)
   vmax = tryCatch(max(which(v > BOS)), error = function(e) Inf)
   #print(colnames(v))
-  #print(paste(vmin,vmax))
-  if(is.finite(vmax)){
-    if(is.finite(vmin) ){
-      if(v[vmin + 1] < BOS){
-      #if(vmin > vmax){
-        #return(vmin + 1)
-        return(as.numeric(cols[vmin +1]))
+  print(paste(vmin,vmax))
+  print(length(v))
+  if(vmin != length(v)){
+    if(is.finite(vmax)){
+      if(is.finite(vmin) ){
+       
+          if(v[vmin + 1] < BOS){
+          #if(vmin > vmax){
+            #return(vmin + 1)
+            return(as.numeric(cols[vmin +1]))
+          }else{
+            new_start = vmax
+            new_start = vmin + 1
+            cols = cols[c(new_start:length(v))]
+            v = v[c(new_start:length(v))]
+            BOS_calc_function(BOS,v,cols)
+          }
+        
       }else{
-        new_start = vmax
-        new_start = vmin + 1
-        cols = cols[c(new_start:length(v))]
-        v = v[c(new_start:length(v))]
-        BOS_calc_function(BOS,v,cols)
+        return(NA)
       }
     }else{
-      return(NA)
+      if(is.finite(vmin)){
+        return(as.numeric(cols[vmin +1]))
+      }else{
+        return(NA)
+      }
     }
   }else{
-    if(is.finite(vmin)){
-      return(as.numeric(cols[vmin +1]))
-    }else{
-      return(NA)
-    }
+    return(NA)
   }
 }
 

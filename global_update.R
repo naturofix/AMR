@@ -107,37 +107,38 @@ colnames(clustering) = clustering[1,]
 variable_type = clustering[2,]
 variable_type
 unique(unlist(variable_type))
-continuous_columns = names(variable_type[,variable_type == 'Continuous' | variable_type == 'pFVC' | variable_type == 'pRatio' ])
-continuous_columns
-discrete_term_columns = names(variable_type[,variable_type == 'Discrete'])
-
-discrete_term_columns = discrete_term_columns[discrete_term_columns != "Name and notes"]
-discrete_term_columns
-continuous_date_columns = names(variable_type[,variable_type == 'Date'])
-continuous_date_columns                               
-                              
-discrete_numeric_columns = names(variable_type[,variable_type == 'DiscreteNumeric'])
-discrete_numeric_columns
-
+Continuous_column_names = names(variable_type[,variable_type == 'Continuous'])
+Continuous_column_names
+Discrete_column_names = names(variable_type[,variable_type == 'Discrete'])
+Discrete_column_names
+DiscreteNumeric_column_names = names(variable_type[,variable_type == 'DiscreteNumeric'])
+DiscreteNumeric_column_names
 pFEV1_column_names = names(variable_type[,variable_type == 'pFEV1'])
-
+pFEV_matrix = as.matrix(clustering[,pFEV1_column_names])
+pFEV_matrix = apply(pFEV_matrix,2, function(x) as.numeric(x))
+numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
+colnames(pFEV_matrix) = numeric_colnames_f
+clustering$pFEV_matrix = pFEV_matrix
 
 pFVC_column_names = names(variable_type[,variable_type == 'pFVC'])
-
+pFVC_column_names
+pFVC_matrix = as.matrix(clustering[,pFVC_column_names])
+colnames(pFVC_matrix) = numeric_colnames_f
+clustering$pFVC_marix = pFVC_matrix
 
 pRatio_column_names = names(variable_type[,variable_type == 'pRatio'])
-
+pRatio_column_names
+pRatio_matrix = as.matrix(clustering[,pRatio_column_names])
+colnames(pRatio_matrix) = numeric_colnames_f
+clustering
 
 clustering
 
 clustering = clustering[c(-1,-2),-1]
-clustering = clustering[!is.na(clustering$MRN),]
-clustering$MRN
 #View(clustering)
 clustering$MRN_original = clustering$MRN
-
 MRN_original = clustering$MRN_original
-MRN_original
+
 
 
 ####not being used anymore #######
@@ -165,7 +166,7 @@ if(rename_columns == T){
 
 
 #factor_list = c(discrete_numeric_columns,discrete_term_columns,'cluster') 
-factor_list = c(discrete_numeric_columns,discrete_term_columns,'cluster') 
+factor_list = c(DiscreteNumeric,Discrete,'cluster') 
 factor_list
 
 pFEV_numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
@@ -201,7 +202,7 @@ clustering_continuous_columns = c(continuous_columns,continuous_date_columns,pFE
 
 
 ### ALL COLUMNS #####
-all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols)
+all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols,bos_cols,change_cols)
 all_discrete_columns = c('MRN','MRN_original',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
 all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
 #Columns in program not in googlesheets
@@ -225,7 +226,7 @@ change_cols = order_columns(change_cols,colnames(clustering))
 
 discrete_numeric_columns = order_columns(discrete_numeric_columns,colnames(clustering))
 discrete_term_columns = order_columns(discrete_term_columns,colnames(clustering))
-discrete_term_columns = discrete_term_columns[discrete_term_columns != "Name and notes"]
+
 all_continuous_columns = order_columns(all_continuous_columns,colnames(clustering))
 all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering)) 
 
@@ -236,7 +237,7 @@ all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering))
 discrete_columns_4_comparison = c(discrete_numeric_columns,discrete_term_columns) #factor_colums_4_comparisons
 discrete_columns_4_comparison = order_columns(discrete_columns_4_comparison,colnames(clustering))
 
-non_pFEV_continuous_columns = c(continuous_columns,continuous_date_columns)
+non_pFEV_continuous_columns = c(continuous_columns,bos_cols,change_cols,continuous_date_columns)
 #discrete_columns_4_comparison
 
 
@@ -281,25 +282,6 @@ clustering$MRN = row_names
 
 
 
-###### CREATE DATA MATRIXES ######
-pFEV_matrix = as.matrix(clustering[,pFEV1_column_names])
-pFEV_matrix = apply(pFEV_matrix,2, function(x) as.numeric(x))
-numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
-colnames(pFEV_matrix) = numeric_colnames_f
-clustering$pFEV_matrix = pFEV_matrix
-
-
-pFVC_column_names
-pFVC_matrix = as.matrix(clustering[,pFVC_column_names])
-colnames(pFVC_matrix) = numeric_colnames_f
-clustering$pFVC_marix = pFVC_matrix
-
-
-pRatio_column_names
-pRatio_matrix = as.matrix(clustering[,pRatio_column_names])
-colnames(pRatio_matrix) = numeric_colnames_f
-clustering
-
 
 if(length(missing_columns) == 0){
 
@@ -310,7 +292,7 @@ if(length(missing_columns) == 0){
   
   #### correct DATE columns ##########
   clust_date = clustering[,date_columns]
-  clust_date
+  #clust_date
   clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
   #head(clust_date)
   
@@ -480,7 +462,7 @@ if(length(missing_columns) == 0){
   i_pFEV_wf$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
   i_pFEV_wf$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
   
-  #i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
+  i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
   
   i_pFEV_lf = melt(i_pFEV_wf, id.vars = c(colnames(full_fac_0),'BOS1','BOS2','BOS3'), measure.vars = colnames(pFEV_w))
   colnames(i_pFEV_lf)

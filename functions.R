@@ -1470,6 +1470,49 @@ BOS_calc_function = function(BOS,v,cols){
 }
 
 
+BOS_calc_matrix_function = function(BOS,v){
+  #print(v)
+  cols = colnames(v)
+  #print(cols)
+  #print(v)
+  vmin = tryCatch(min(which(v < BOS)), error = function(e) Inf)
+  vmax = tryCatch(max(which(v > BOS)), error = function(e) Inf)
+  #print(colnames(v))
+  #print(paste(vmin,vmax))
+  #print(length(v))
+  if(vmin != length(v)){
+    if(is.finite(vmax)){
+      if(is.finite(vmin) ){
+        
+        if(v[vmin + 1] < BOS){
+          #if(vmin > vmax){
+          #return(vmin + 1)
+          return(as.numeric(cols[vmin +1]))
+        }else{
+          new_start = vmax
+          new_start = vmin + 1
+          cols = cols[c(new_start:length(v))]
+          v = v[c(new_start:length(v))]
+          a = BOS_calc_matrix_function(BOS,v)
+          return(a)
+        }
+        
+      }else{
+        return(NA)
+      }
+    }else{
+      if(is.finite(vmin)){
+        return(as.numeric(cols[vmin +1]))
+      }else{
+        return(NA)
+      }
+    }
+  }else{
+    return(NA)
+  }
+}
+
+
 BOS_function_pFEV = function(full_data,imputed = F){
   BOS1 = 0.8
   BOS2 = 0.66

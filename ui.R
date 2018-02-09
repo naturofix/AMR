@@ -119,13 +119,13 @@ shinyUI(fluidPage(
                                         ),inline = T,selected = '0')),
                   tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
                   
-                  column(6,selectInput('subset_1','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
+                  column(6,selectInput('subset_1','Subset by 1',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
                   column(6,uiOutput('out_select_factor_1')),
                   column(12),
-                  column(6,selectInput('subset_2','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
+                  column(6,selectInput('subset_2','Subset by 2',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
                   column(6,uiOutput('out_select_factor_2')),
                   column(12),
-                  column(6,selectInput('subset_3','Subset by',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
+                  column(6,selectInput('subset_3','Subset by 3',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
                   column(6,uiOutput('out_select_factor_3')),
                   
                   
@@ -473,12 +473,18 @@ shinyUI(fluidPage(
                     numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1)
                     ),
               column(6,
-                    selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
+                    #selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
+                    uiOutput('ccc_1'),
+                    
                     numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
 
-                    selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+                    #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+                    uiOutput('ccc_2'),
                     numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
-                    textOutput('clustered_patients_text')
+                    selectInput('data_set','Datasets used for clustering',grep('matrix',colnames(processed_data),value = T),clustering_data_sets,multiple = T),
+                    
+                    textOutput('clustered_patients_text'),
+                    radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
                     ),
              column(12,
                     numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),

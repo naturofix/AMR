@@ -81,7 +81,7 @@ if(g_sheet == T){
   #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
   #clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
   clustering = as.data.frame(gs_read(ss=gs, ws= "Full cohort"))
-  
+  default_gs = as.data.frame(gs_read(ss=gs, ws= "App Defaults"))
   #colnames(clustering)
   #saveRDS(file = 'clustering_8_new.rds',object = clustering)
   saveRDS(file = 'full_cohort.rds',object = clustering)
@@ -93,6 +93,19 @@ if(g_sheet == T){
   clustering = readRDS('full_cohort.rds')
   
   
+}
+
+#### process defaults #####
+default_df = default_gs[!is.na(default_gs$value),]
+#View(default_df)
+use_gs_defaults = T
+for(variable in default_df$variable){
+  #print(variable)
+  cmd = paste(variable,'=',default_df$value[default_df$variable == variable])
+  print(cmd)
+  if(use_gs_defaults == T){
+    eval(parse(text = cmd))
+  }
 }
 
 edit_colname_function = function(col_names){
@@ -108,6 +121,8 @@ variable_type = clustering[2,]
 variable_type
 unique(unlist(variable_type))
 continuous_columns = names(variable_type[,variable_type == 'Continuous' | variable_type == 'pFVC' | variable_type == 'pRatio' ])
+continuous_columns = names(variable_type[,variable_type == 'Continuous'])# | variable_type == 'pFVC' | variable_type == 'pRatio' ])
+
 continuous_columns
 discrete_term_columns = names(variable_type[,variable_type == 'Discrete'])
 
@@ -148,13 +163,13 @@ if(rename_columns == T){
   custom_colnames_list = c("date_columns","continuous_date_columns","pFEV_cols","bos_cols","change_cols","continuous_columns","discrete_numeric_columns","discrete_term_columns")
   for(col_name in custom_colnames_list){
     cmd = paste('col_names = ',col_name)
-    print(cmd)
+    #print(cmd)
     eval(parse(text=cmd))
-    print(col_names)
+    #print(col_names)
     col_names = edit_colname_function(col_names)
-    print(col_names)
+    #print(col_names)
     cmd = paste(col_name, ' = col_names')
-    print(cmd)
+    #print(cmd)
     eval(parse(text=cmd))
   }
 }
@@ -213,7 +228,7 @@ additional_columns = setdiff(colnames(clustering),all_columns)
 additional_columns
 if(length(additional_columns) > 0){
   info_tab = 'Sanity Check'
-  default_tab = 'R Info'
+  #default_tab = 'R Info'
 }
 
 #### ORGANISING COLUMNS ############
@@ -283,23 +298,28 @@ clustering$MRN = row_names
 
 ###### CREATE DATA MATRIXES ######
 pFEV_matrix = as.matrix(clustering[,pFEV1_column_names])
+pFEV_matrix[1,]
 pFEV_matrix = apply(pFEV_matrix,2, function(x) as.numeric(x))
 numeric_colnames_f = c('-24','-18','-12','-6','-5','-4','-3','-2','-1','0','1','2','3','4','5','6','12','18','24')
 colnames(pFEV_matrix) = numeric_colnames_f
-clustering$pFEV_matrix = pFEV_matrix
-
+clustering$pFEV1_matrix = pFEV_matrix
+rownames(clustering$pFEV1_matrix) = rownames(clustering)
+clustering$pFEV1_matrix
+clustering$pFEV1_matrix[1,]
 
 pFVC_column_names
 pFVC_matrix = as.matrix(clustering[,pFVC_column_names])
 colnames(pFVC_matrix) = numeric_colnames_f
-clustering$pFVC_marix = pFVC_matrix
+clustering$pFVC_matrix = pFVC_matrix
+rownames(clustering$pFVC_matrix) = rownames(clustering)
 
 
 pRatio_column_names
 pRatio_matrix = as.matrix(clustering[,pRatio_column_names])
 colnames(pRatio_matrix) = numeric_colnames_f
 clustering
-
+clustering$pRatio_matrix = pRatio_matrix
+rownames(clustering$pRatio_matrix) = rownames(clustering)
 
 if(length(missing_columns) == 0){
 
@@ -364,6 +384,65 @@ if(length(missing_columns) == 0){
   ####################### pFEV ##################################
   
   ########## ADD missing pFEV columns ###################
+  
+  make_numeric = function(m){
+    n = apply(m,2,function(x) as.numeric(x))
+    rownames(n) = rownames(m)
+    return(n)
+  }
+  
+  clustering$pFEV1_matrix = make_numeric(clustering$pFEV1_matrix)
+  clustering$pFEV1_matrix[1,]
+  clustering$pFVC_matrix = make_numeric(clustering$pFVC_matrix)
+  clustering$pRatio_matrix = make_numeric(clustering$pRatio_matrix)
+  
+  count_na = function(m){
+    n = apply(m, 1, function(x) round((1-(sum(is.na(x))/length(x)))*100,1))
+    #rownames(n) = rownames(m)
+    return(n)
+  }
+  clustering$pFEV1_na = count_na(clustering$pFEV1_matrix)
+  clustering$pFEV1_na
+  clustering$pFVC_na = count_na(clustering$pFVC_matrix)
+  clustering$pRatio_na = count_na(clustering$pRatio_matrix)
+  
+  add_missing_columns = function(m,first_col = 0, last_col = 0){
+    cols = colnames(m)
+    numeric_cols = as.numeric(cols)
+    #numeric_cols
+    if(first_col == 0){
+      first_col = numeric_cols[1]
+    }
+    if(last_col == 0){
+      last_col = numeric_cols[length(numeric_cols)]
+    }
+    #last_col
+    df = as.data.frame(m)
+    for(col in seq(first_col,last_col,1)){
+      #print(col)
+      if(!col %in% numeric_cols){
+        #print('hit')
+        df[,paste(col)] = NA
+      }
+    }
+    df = df[,(order(as.numeric(colnames(df))))]
+    #colnames(df)
+    n = as.matrix(df)
+    rownames(n) = rownames(m)
+    return(n)
+  }
+  
+
+  numeric_cols = as.numeric(colnames(clustering$pFEV1_matrix))
+  pFEV1_first_col = numeric_cols[1]
+  pFEV1_last_col = numeric_cols[length(numeric_cols)]
+  clustering$pFEV1_matrix = add_missing_columns(clustering$pFEV1_matrix,pFEV1_first_col,pFEV1_last_col)
+  clustering$pFEV1_matrix[1,]
+  clustering$pFVC_matrix = add_missing_columns(clustering$pFVC_matrix,pFEV1_first_col,pFEV1_last_col)
+  clustering$pRatio_matrix = add_missing_columns(clustering$pRatio_matrix,pFEV1_first_col,pFEV1_last_col)
+  
+  matrix_columns = clustering[,c('pFEV1_matrix','pFVC_matrix','pRatio_matrix','pFEV1_na','pFVC_na','pRatio_matrix')]
+  
   pFEV = clustering[,pFEV_cols]
   pFEV = as.data.frame(apply(pFEV,2, function(x) as.numeric(x)))
   rownames(pFEV) = rownames(clustering)
@@ -411,8 +490,9 @@ if(length(missing_columns) == 0){
   full_factor_columns = c('MRN_original',full_factor_columns[full_factor_columns != 'MRN_original'])
   full_factor_columns
   processed_data = processed_data[,full_factor_columns]
-  processed_data = cbind(processed_data,pFEV_w) #extended withe missing columns
-  
+  processed_data = cbind(processed_data,pFEV_w) #extended with missing columns
+  processed_data = cbind(processed_data,pFEV_w,matrix_columns) #extended with missing columns
+  colnames(processed_data)
   
   #View(pFEV)
   pFEV_test = pFEV
@@ -445,6 +525,29 @@ if(length(missing_columns) == 0){
   pFEV_w = processed_data_r[,p_cols]
   pFEV_wf = processed_data_r
   
+  melt_processed_data = function(processed_data,matrix_column){
+    #test = melt(processed_data, ,id.vars = full_factor_columns,measure_vars = processed_data$pFEV1_matrix)
+    #processed_data = cbind(processed_data,processed_data$pFEV1_matrix)
+    full_factor_columns
+    #p_cols
+    colnames(processed_data)
+    wide_df = processed_data[,c(full_factor_columns)]
+    wide_df = cbind(wide_df,processed_data[,matrix_column])
+    #head(wide_df)
+    long_df = melt(wide_df,id.vars = full_factor_columns,measure_vars = p_cols)
+    #head(long_df)
+    long_df$time = as.numeric(as.character(long_df$variable))
+    long_df[,all_discrete_columns] = apply(long_df[,all_discrete_columns],2,function(x) factor(x))
+    data_list = list(wide_df = wide_df,long_df = long_df)
+    return(data_list)
+  }
+
+  pFEV1_data_list = melt_processed_data(processed_data,'pFEV1_matrix')
+  #str(pFEV1_data_list)
+  pFVC_data_list = melt_processed_data(processed_data,'pFVC_matrix')
+  pRatio_data_list = melt_processed_data(processed_data,'pRatio_matrix')
+  
+  
   pFEV_lf = melt(processed_data_r, id.vars = full_factor_columns, measure.vars = colnames(pFEV_w))
   pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
   pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
@@ -462,7 +565,24 @@ if(length(missing_columns) == 0){
   }
   
   ####################### IMPUTE pFEV ####################### 
-    
+  
+  impute_data = function(m){
+  
+    m_ts = as.ts(t(m))
+
+    i_m_ts = t(na.interpolation(m_ts))
+  
+    colnames(i_m_ts) = colnames(m)
+
+    return(i_m_ts)
+  }
+  m = processed_data$pFEV1_matrix
+  processed_data$i_pFEV1_matrix = impute_data(processed_data$pFEV1_matrix)
+  #processed_data$i_pFEV1_matrix
+  processed_data$i_pFVC_matrix = impute_data(processed_data$pFVC_matrix)
+  processed_data$i_pRatio_matrix = impute_data(processed_data$pRatio_matrix)
+  #View(processed_data)
+   
   pFEV_ts = as.ts(t(pFEV_w))
   head(pFEV_ts)
   
@@ -475,10 +595,31 @@ if(length(missing_columns) == 0){
   
   
   i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
-  head(i_pFEV_wf)
+  view = F
+  if(view == T){
+    View(i_pFEV_wf)
+    
+    View(processed_data$i_pFEV1_matrix)
+    
+    a_i = i_pFEV_wf[1,colnames(i_pFEV_ts)]
+    a_i
+    b_i = processed_data$i_pFEV1_matrix[1,]
+    b_i
+    }
+  
   i_pFEV_wf$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
   i_pFEV_wf$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
   i_pFEV_wf$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
+  
+  #BOS = 0.8
+  #v = processed_data$pFEV1_matrix[1,]
+  #BOS_calc_matrix_function(0.8,v)
+  ##### NOT WORKING NEEDS AN UPGRADE ######
+  processed_data$BOS1 = apply(as.data.frame(processed_data$i_pFEV1_matrix),1,function(x) BOS_calc_matrix_function(0.8,x))
+  processed_data$BOS1
+  processed_data$BOS2 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.66,x))
+  processed_data$BOS3 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.5,x))
+
   
   #i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
   
@@ -493,16 +634,47 @@ if(length(missing_columns) == 0){
   i_pFEV_lf$i[is.na(i_pFEV_lf$data)] = '0'
   i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
   
+
+  
+  ############## differential ###################
+  ###### ___SMOOTHING###########
+  smoothing_function = function(m,m_na){
+    time = as.numeric(colnames(m))
+    m_sm = m
+    x = m_sm
+    m_sm[m_na >= completeness,] = t(apply(m[m_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth))
+    m_sm[m_na < completeness,] = NA
+    if(view == T){
+      View(m_sm)
+    }
+    return(m_sm)
+  }
   
   
-   ############## differential ###################
+  m = processed_data$i_pFEV1_matrix
+  m_na = processed_data$pFEV1_na
   
+  processed_data$sm_i_pFEV1_matrix = smoothing_function(processed_data$i_pFEV1_matrix,processed_data$pFEV1_na)
+  processed_data$sm_i_pFVC_matrix = smoothing_function(processed_data$i_pFVC_matrix,processed_data$pFVC_na)
+  processed_data$sm_i_pRatio_matrix = smoothing_function(processed_data$i_pRatio_matrix,processed_data$pRatio_na)
   
   
   
   time = as.numeric(colnames(i_pFEV_ts))
   #time
+  #x = i_pFEV_sm
   i_pFEV_sm = as.data.frame(t(apply(i_pFEV_ts[full_fac_0$pFEV_na >= completeness,],1, function(x) predict(sm.spline(time, as.numeric(x)))$ysmth)))
+  if(view == T){
+    ### slight differences here ####
+    View(i_pFEV_sm)
+    View(processed_data$sm_i_pFEV1_matrix)
+    
+    a = i_pFEV_sm[1,]
+    a_sm
+    b = processed_data$sm_i_pFEV1_matrix[1,] 
+    b_sm
+  }
+  
   colnames(i_pFEV_sm) = time
   
   i_pFEV_smf = cbind(full_fac_0[rownames(i_pFEV_sm),],i_pFEV_sm)
@@ -511,17 +683,48 @@ if(length(missing_columns) == 0){
   
   
   
-  ############ D1 ###############
-  i_pFEV_sm_ts = as.ts(t(i_pFEV_sm))
+  ############ ___D1 ###############
   
-  i_pFEV_sm_ts_d1 = diff(i_pFEV_sm_ts)
+  differential_function = function(m,m_na){
+    m_ts = as.ts(t(m))
+    m_ts_d1 = m_ts[-1,]
+    m_ts_d1[,m_na >= completeness] = (apply(m_ts[,m_na >= completeness],2, function(x) diff(x)))
+    m_ts_d1[,m_na < completeness] = NA
+    if(view == T){
+      View(m_ts)
+      View(m_ts_d1)
+    }
+    d1 = t(m_ts_d1)
+    colnames(d1) = colnames(m)[-2]
+    d1
+  }
+  m = processed_data$sm_i_pFEV1_matrix
+  m_na = processed_data$pFEV1_na
+  
+  processed_data$d1_pFEV1_matrix = differential_function(processed_data$sm_i_pFEV1_matrix,processed_data$pFEV_na)
+  processed_data$d1_pFVC_matrix = differential_function(processed_data$sm_i_pFVC_matrix,processed_data$pFVC_na)
+  processed_data$d1_pRatio_matrix = differential_function(processed_data$sm_i_pRatio_matrix,processed_data$pRatio_na)
+  processed_data$d2_pFEV1_matrix = differential_function(processed_data$d1_pFEV1_matrix,processed_data$pFEV_na)
+  processed_data$d2_pFVC_matrix = differential_function(processed_data$d1_pFVC_matrix,processed_data$pFVC_na)
+  processed_data$d2_pRatio_matrix = differential_function(processed_data$d1_pRatio_matrix,processed_data$pRatio_na)
+  
+  i_pFEV_sm_ts = as.ts(t(i_pFEV_sm))
+  #i_pFEV_sm_ts[,1]
+  #diff(i_pFEV_sm_ts[,1])
+  i_pFEV_sm_ts_d1 = diff((i_pFEV_sm_ts))
+  
   i_pFEV_sm_d1 = as.data.frame(t(i_pFEV_sm_ts_d1))
   
   colnames(i_pFEV_sm_d1) = time[-2]
   
   
   i_pFEV_sm_d1_m = i_pFEV_sm_d1[,pFEV_numeric_colnames_f]
-  
+  if(view == T){
+    View(i_pFEV_sm_ts)
+    View(i_pFEV_sm_ts_d1)
+    View(i_pFEV_sm_d1)
+    View(processed_data$d1_pFEV1_matrix)
+  }
   i_pFEV_sm_d1_mf = cbind(full_fac_0[rownames(i_pFEV_sm_d1_m),],i_pFEV_sm_d1_m)
   
   

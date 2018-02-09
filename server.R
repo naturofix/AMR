@@ -117,7 +117,7 @@ shinyServer(function(input, output) {
                   }else{
                     selected_factor_selected = select_factor_list
                   }
-                  selectInput('select_subset_1','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_1','Subset Selection 1',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })
     
@@ -131,7 +131,7 @@ shinyServer(function(input, output) {
                     selected_factor_selected = select_factor_list
                   }
                   
-                  selectInput('select_subset_2','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_2','Subset Selection 2',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })
               
@@ -144,7 +144,7 @@ shinyServer(function(input, output) {
                   }else{
                     selected_factor_selected = select_factor_list
                   }
-                  selectInput('select_subset_3','Select',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_3','Subset Select 1',choices = select_factor_list,multiple=T,selected = select_factor_list)
                 }
               })
               output$auto_removed_duplicates = renderText(paste(duplicated_list,collapse = ', '))
@@ -1060,14 +1060,49 @@ shinyServer(function(input, output) {
     select_cols
     
   })
-  change_data = reactive({
+  #data_list = c('i_pFVC','i_pRatio','d1_sm_i_pFEV1','d1_sm_i_pRatio')
+  
+  #change_data
+  change_data_list = reactive({
     d1_data = i_pFEV_sm_d1_f_c()
     d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
     colnames(d1_data) = paste0('D1_',colnames(d1_data))
+  
+    
     data = cbind(comp_data(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
     data
-    
+    ccc = clustering_continuous_columns
+    data_list = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
+    data_list = input$data_set
+    for(data_entry in data_list){
+      cmd = paste0("o_data = processed_data$",data_entry,"_matrix")
+      eval(parse(text = cmd))
+      head(o_data)
+      o_data = as.data.frame(o_data)
+      o_data
+      colnames(o_data) = gsub('-','neg',paste(data_entry,colnames(o_data)))
+      ccc = c(ccc,colnames(o_data))
+      #print(head(o_data))
+      #print(rownames(o_data))
+      o_data$MRN = rownames(o_data)
+      new_data = o_data[o_data$MRN %in% pre_retained_patients(),]
+      dim(new_data)
+      data = cbind(data,new_data)
+    }
+    data
+    list(data = data, ccc = ccc)
   })
+  
+  change_data = reactive(change_data_list()$data)
+  
+  output$ccc_1 = renderUI({
+    selectInput('mix_clust_col_num','Continuous Variable List 1',change_data_list()$ccc,multiple = T,selected = continuous_list_1,width = 600)
+  })
+  
+  output$ccc_2 = renderUI({
+    selectInput('mix_clust_col_num_2','Continuous Variable List 2', change_data_list()$ccc, multiple = T,selected = continuous_list_2,width = 600)
+  })
+  
   change_data_w = reactive({
     o_data = change_data()
     c_o_data = o_data
@@ -2885,13 +2920,15 @@ shinyServer(function(input, output) {
       discrete_cluster_D = reactive({
         full_data = change_data()
         #print(colnames(full_data))
-        cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
-                                                input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
-                                                input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
-        #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
-        
-        #r_values$init = 1
-        cluster_data_list
+        if(input$run_clustering == T){
+          cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
+                                                  input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
+                                                  input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+          #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
+          
+          #r_values$init = 1
+          cluster_data_list
+        }
         
       })
   

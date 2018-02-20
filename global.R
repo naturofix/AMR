@@ -1,27 +1,35 @@
 
+## CRAN packages : install.packages('package_name')
+install_packages = F
+if(install_packages == T){
+  source("https://bioconductor.org/biocLite.R")
+    biocLite("marray") # required for CluMix
+
+  install.packages(c("shiny","shinythemes", "googlesheets","gplots", "ggplot2","CluMix",
+    "Amelia","reshape","imputeTS","pspline","DT","dendextend","plyr","dplyr","survival",
+    "ggfortify","survminer","ggdendro","zoo","broom","ggsignif",'devtools'))
+}
+
 library(shiny)
-library(shinythemes)
-#library(shinydashboard)
+library(shinythemes) #
 library(googlesheets)
-library(gplots)
+library(gplots) #
 library(ggplot2)
 library(CluMix)
-library(Amelia)
+library(Amelia)#
 library(reshape)
-library(imputeTS)
-library(pspline)
+
+
+library(imputeTS)#
+library(pspline)#
 library(DT)
-#library(CluMix)
 library(dendextend)
-#library(ggdendro)
 library(plyr)
 library(dplyr)
 library(survival)
 library(ggfortify)
 library(survminer)
-#library(ggplot2)
 library(ggdendro)
-#library(plyr)
 library(zoo)
 library(broom)
 library(ggsignif)
@@ -95,6 +103,7 @@ if(g_sheet == T){
   
 }
 
+colnames(clustering)
 #### process defaults #####
 default_df = default_gs[!is.na(default_gs$value),]
 #View(default_df)
@@ -155,26 +164,6 @@ MRN_original = clustering$MRN_original
 MRN_original
 
 
-####not being used anymore #######
-rename_columns = F
-if(rename_columns == T){
-  colnames(clustering) =  edit_colname_function(colnames(clustering))
-  
-  custom_colnames_list = c("date_columns","continuous_date_columns","pFEV_cols","bos_cols","change_cols","continuous_columns","discrete_numeric_columns","discrete_term_columns")
-  for(col_name in custom_colnames_list){
-    cmd = paste('col_names = ',col_name)
-    #print(cmd)
-    eval(parse(text=cmd))
-    #print(col_names)
-    col_names = edit_colname_function(col_names)
-    #print(col_names)
-    cmd = paste(col_name, ' = col_names')
-    #print(cmd)
-    eval(parse(text=cmd))
-  }
-}
-##################################
-
 
 
 
@@ -218,7 +207,7 @@ clustering_continuous_columns = c(continuous_columns,continuous_date_columns,pFE
 ### ALL COLUMNS #####
 all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols)
 all_discrete_columns = c('MRN','MRN_original',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
-all_columns = c(all_discrete_columns,all_continuous_columns,date_columns)
+all_columns = c(all_discrete_columns,all_continuous_columns,continuous_date_columns,pFVC_column_names,pRatio_column_names)
 #Columns in program not in googlesheets
 missing_columns = all_columns[!all_columns %in% colnames(clustering)]
 missing_columns
@@ -228,7 +217,7 @@ additional_columns = setdiff(colnames(clustering),all_columns)
 additional_columns
 if(length(additional_columns) > 0){
   info_tab = 'Sanity Check'
-  #default_tab = 'R Info'
+  default_tab = 'R Info'
 }
 
 #### ORGANISING COLUMNS ############
@@ -276,6 +265,7 @@ dup = duplicated(row_names)
 dup
 duplicated_patients = unique(row_names[dup])
 duplicated_patients = duplicated_patients[order(duplicated_patients)]
+duplicated_patients
 length(dup[dup])
 if(length(dup[dup]) > 0){
   row_names[dup] = paste(row_names[dup],'a',sep='_') 
@@ -329,7 +319,7 @@ if(length(missing_columns) == 0){
   ######################################
   
   #### correct DATE columns ##########
-  clust_date = clustering[,date_columns]
+  clust_date = clustering[,continuous_date_columns]
   clust_date
   clust_date = apply(clust_date,2, function(x) as.character((as.Date(x, '%d-%b-%Y'))))
   #head(clust_date)

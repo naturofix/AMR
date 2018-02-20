@@ -27,6 +27,7 @@ shinyUI(fluidPage(
           tabPanel('Original',
                    tags$h5('Original Data downloaded from googlesheet'),
                    dataTableOutput('clustering')),
+          tabPanel('Defaults',dataTableOutput('gs_defaults')),
           tabPanel('Processed',
                    tags$h5('Data after processing into R data types'),
                    dataTableOutput('full_num')),
@@ -481,7 +482,7 @@ shinyUI(fluidPage(
                     #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
                     uiOutput('ccc_2'),
                     numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
-                    selectInput('data_set','Datasets used for clustering',grep('matrix',colnames(processed_data),value = T),clustering_data_sets,multiple = T),
+                    selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
                     
                     textOutput('clustered_patients_text'),
                     radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)

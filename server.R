@@ -68,6 +68,7 @@ shinyServer(function(input, output) {
   ########## DATA TABLES #####################
   
     output$clustering = renderDataTable(clustering)
+    output$gs_defaults = renderDataTable(default_df)
     #output$clustering = renderDataTable(clustering)
     output$full_num = renderDataTable(processed_data)
     output$term_mapping = renderTable(term_mapping_df)
@@ -117,7 +118,7 @@ shinyServer(function(input, output) {
                   }else{
                     selected_factor_selected = select_factor_list
                   }
-                  selectInput('select_subset_1','Subset Selection 1',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_1','Subset Selection 1',choices = select_factor_list,multiple=T,selected = selected_factor_selected)
                 }
               })
     
@@ -131,7 +132,7 @@ shinyServer(function(input, output) {
                     selected_factor_selected = select_factor_list
                   }
                   
-                  selectInput('select_subset_2','Subset Selection 2',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_2','Subset Selection 2',choices = select_factor_list,multiple=T,selected = selected_factor_selected)
                 }
               })
               
@@ -144,7 +145,7 @@ shinyServer(function(input, output) {
                   }else{
                     selected_factor_selected = select_factor_list
                   }
-                  selectInput('select_subset_3','Subset Select 1',choices = select_factor_list,multiple=T,selected = select_factor_list)
+                  selectInput('select_subset_3','Subset Select 1',choices = select_factor_list,multiple=T,selected = selected_factor_selected)
                 }
               })
               output$auto_removed_duplicates = renderText(paste(duplicated_list,collapse = ', '))
@@ -1074,13 +1075,14 @@ shinyServer(function(input, output) {
     ccc = clustering_continuous_columns
     data_list = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
     data_list = input$data_set
+    print(data_list)
     for(data_entry in data_list){
       cmd = paste0("o_data = processed_data$",data_entry,"_matrix")
       eval(parse(text = cmd))
       head(o_data)
       o_data = as.data.frame(o_data)
       o_data
-      colnames(o_data) = gsub('-','neg',paste(data_entry,colnames(o_data)))
+      colnames(o_data) = gsub('-','neg_',paste(data_entry,colnames(o_data),sep='_'))
       ccc = c(ccc,colnames(o_data))
       #print(head(o_data))
       #print(rownames(o_data))

@@ -40,7 +40,7 @@ num_clusters = 3
 clustering_data_sets = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
 run_clustering = T
 # Tabs : Data Tables, Patient pFEV, Plots, Statistics, Clustering, BOS, R Session Info
-default_tab = 'Patient pFEV'
+default_tab = 'Patients'
 
 
 ### Columns Extracted from the Google Sheet  ###

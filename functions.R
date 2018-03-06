@@ -1,4 +1,51 @@
 
+
+#### save variable functions ####
+save_variable_function = function(variable_list){
+  cmd_list = c()
+  for(entry in variable_list){
+    cmd = paste0("saveRDS(",entry,",'temp/",entry,".rds')")
+    print(cmd)
+    cmd_list = c(cmd_list,cmd)
+    #eval(parse(text = cmd))
+  }
+  ### TO GET DATA BACK OUT ###
+  #cmd_list = save_variable_function(variable_list)
+  #lapply(cmd_list, function(cmd) eval(parse(text = cmd)))
+  #save_input_function(input)
+  return(cmd_list)
+}
+
+save_input_function = function(input){
+  save_input = list()
+  input_list = names(reactiveValuesToList(input))
+  
+  for(entry in input_list){
+    cmd = paste0("save_input[['",entry,"']] = input$",entry)
+    print(cmd)
+    
+    eval(parse(text = cmd))
+  }
+  #input = readRDS('temp/save_input.rds')
+  saveRDS(save_input,'temp/save_input.rds')
+}
+
+read_variable_function = function(variable_list){
+  cmd_list = c()
+  for(entry in variable_list){
+    cmd = paste0(entry, " = readRDS('temp/",entry,".rds')")
+    print(cmd)
+    cmd_list = c(cmd_list,cmd)
+    #eval(parse(text = cmd))
+  }
+  #cmd_list = read_variable_function(variable_list)
+  #for(cmd in cmd_list){
+  #  eval(parse(text = cmd))
+  #}
+  return(cmd_list)
+}
+
+
 source_https_2 <- function(url, ...) {
   # load package
   require(RCurl)
@@ -68,10 +115,182 @@ order_columns = function(column_list,ordering_list){
 }
 
 
+##### PROCESSING DATA ####
+
+melt_processed_data = function(processed_data,factor_columns,matrix_column){
+  #test = melt(processed_data, ,id.vars = full_factor_columns,measure_vars = processed_data$pFEV1_matrix)
+  #processed_data = cbind(processed_data,processed_data$pFEV1_matrix)
+  #full_factor_columns
+  #p_cols
+  colnames(processed_data)
+  wide_df = processed_data[,c(factor_columns)]
+  wide_df = cbind(wide_df,processed_data[,matrix_column])
+  #head(wide_df)
+  long_df = melt(wide_df,id.vars = factor_columns,measure_vars = p_cols)
+  #head(long_df)
+  long_df$time = as.numeric(as.character(long_df$variable))
+  long_df[,all_discrete_columns] = apply(long_df[,all_discrete_columns],2,function(x) factor(x))
+  data_list = list(wide_df = wide_df,long_df = long_df)
+  return(data_list)
+}
+
 
 
 
 ########### PLOTS############
+
+makePlotContainers <- function(plot_name_list, prefix="individual") {
+  print('makePlotContainers')
+  lst <- lapply(plot_name_list, function(plot_name) {
+    output_name = paste(plot_name,prefix,sep = '_')
+    print(output_name)
+    plotOutput(paste(plot_name,prefix,sep = '_'),height = 500)
+  })
+  
+  do.call(tagList, lst)
+}
+
+
+renderPlots = function(full_data, patient_list, input, output, prefix = 'individual'){
+  save_test = F
+  if(save_test == T){
+    variable_list = c('full_data','patient_list','prefix')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(cmd) eval(parse(text = cmd)))
+    save_input_function(input)
+  }
+  read_test = F
+  if(read_test == T){
+    #variable_list = c('m','data_df','sample_list','gene_list','sample_path_line','prefix')
+    
+    cmd_list = read_variable_function(variable_list)
+    
+    for(cmd in cmd_list){
+      eval(parse(text = cmd))
+    }
+    #sapply(cmd_list, function(cmd) eval(parse(text = cmd)))
+    
+    input = readRDS('temp/save_input.rds')
+  }
+  
+  #boxplot_path = sample_path_line
+  
+  
+  #print('gene_list')
+  #print(gene_list)
+  patient = patient_list[1]
+  
+  line_size = 2
+  point_size = 3
+  sm_size = 1
+  
+  for(patient in patient_list){
+    local({
+      
+      
+      #print('gene')
+      #print(gene)
+      
+      output_name = paste(patient,prefix,sep = '_')
+      name = paste(patient)
+      #plot_path = paste0(sample_path_line,'/',gene,'.png')
+      #print(plot_path)
+      #print(file.exists(plot_path))
+      
+      print('running ')
+      print(output_name)
+      
+      
+      #full_data = processed_long
+      
+      data = full_data[full_data$MRN %in% patient,]
+      #print(dim(data))
+
+      cols = data$time
+      scale_cols = pFEV_numeric_colnames_n[pFEV_numeric_colnames_n %in% cols]
+      scale_cols
+      
+      p = ggplot(data)
+      
+
+      p = p + 
+        geom_vline(xintercept = 0)
+      if(input$retained_radiobutton == 'bos'){
+        if(length(data$RAS[!is.na(data$RAS)]) != 0){
+          p = p + geom_vline(xintercept = data$RAS, color = 'blue',lwd = 1, linetype = 'solid')
+        }
+        p = p + geom_vline(xintercept = input$bos_range[1]) + 
+          geom_vline(xintercept = input$bos_range[2]) +
+          
+          
+          geom_vline(xintercept = data$BOS3_RAS, color = 'red4',lwd = 4, linetype = 'dotdash') +
+          geom_vline(xintercept = data$BOS2_RAS, color = 'red',lwd = 3, linetype = 'dashed') +
+          geom_vline(xintercept = data$BOS1_RAS, color = 'orange',lwd = 2, linetype = 'dotted') +
+          
+          
+          geom_hline(yintercept = c(0.8), color = 'orange',linetype = 'dotted') + 
+          geom_hline(yintercept = c(0.66), color = 'red',linetype = 'dashed') + 
+          geom_hline(yintercept = c(0.5), color = 'red4',linetype = 'dotdash') + 
+          
+          geom_hline(yintercept = 0.7, color = 'blue')
+      }
+      
+      p = p + geom_line(aes(x = time, y = i_pFEV1, group = MRN),col='red',size = line_size)
+      p = p + geom_point(aes(x = time, y = pFEV1,group = MRN),col='yellow',size = point_size)
+      p = p + geom_line(aes(x = time, y = sm_i_pFEV1,group = MRN),col='black',size = sm_size)
+      
+      p = p + geom_line(aes(x = time, y = i_pFVC, group = MRN),col='green',size = line_size)
+      p = p + geom_point(aes(x = time, y = pFVC,group = MRN),col='yellow',size = point_size)
+      p = p + geom_line(aes(x = time, y = sm_i_pFVC,group = MRN),col='black',size = sm_size)
+      
+      p = p + geom_line(aes(x = time, y = i_pRatio, group = MRN),col='blue',size = line_size)
+      p = p + geom_point(aes(x = time, y = pRatio,group = MRN),col='yellow',size = point_size)
+      p = p + geom_line(aes(x = time, y = sm_i_pRatio,group = MRN),col='black',size = sm_size)
+      
+      #p = p +  scale_fill_identity(name = 'the fill', guide = 'legend',labels = c('m1')) +
+      #          scale_colour_manual(name = 'the colour', 
+      #                      values =c('black'='black','red'='red'), labels = c('c2','c1'))
+      p = p + theme(axis.text.x = element_text(size=8, angle=90)) +
+        #ylim(0,1) + 
+        scale_x_continuous(breaks = scale_cols) +
+        
+        #theme(legend.position="top", show.legend = T) + 
+        ggtitle(patient)
+      
+      #p = p + scale_colour_manual(values = c('red','green','blue'), labels = c('1','2','3'))
+  
+      
+      
+      
+      #print(p)
+ 
+        
+        
+        
+        output[[output_name]] = renderPlot({
+         print(p)
+        })
+      
+    })
+  }
+}
+
+renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
+  x1 = as.numeric(input$bos_range[1])
+  x2 = as.numeric(input$bos_range[2])
+  global_factor = input$global_factor
+  
+  for(plot_name in BOS_columns){
+    local({
+      output_name = paste(plot_name,prefix,sep = '_')
+      
+      p = BOS_factor_plot(m_bos,plot_name,global_factor,x1,x2)
+      output[[output_name]] = renderPlot({
+        print(p)
+      })
+    })
+  }
+}
 
 line_plot_function = function(plot_data,title,input){
   ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
@@ -1469,6 +1688,102 @@ BOS_calc_function = function(BOS,v,cols){
   }
 }
 
+BOS_RAS_matrix_calc_function = function(BOS, v, y){
+  RAS = 0.7
+  row = rownames(v)
+  row
+
+  cols = colnames(v)
+  cols
+
+  vmin = tryCatch(min(which(v < BOS & y < RAS)), error = function(e) Inf)
+  vmin
+  vmax = tryCatch(max(which(v > BOS & y < RAS)), error = function(e) Inf)
+  vmax
+
+  if(vmin != length(v)){
+    if(is.finite(vmax)){
+      if(is.finite(vmin) ){
+        
+        if(v[vmin + 1] < BOS & y[vmin + 1] < RAS){
+          #if(vmin > vmax){
+          #return(vmin + 1)
+          return(as.numeric(cols[vmin +1]))
+        }else{
+          new_start = vmax
+          new_start = vmin + 1
+          cols = cols[c(new_start:length(v))]
+          cols
+          v = v[c(new_start:length(v))]
+          v
+          y = y[c(new_start:length(y))]
+          a = BOS_RAS_matrix_calc_function(BOS,v,y)
+          return(a)
+        }
+        
+      }else{
+        return(NA)
+      }
+    }else{
+      if(is.finite(vmin)){
+        return(as.numeric(cols[vmin +1]))
+      }else{
+        return(NA)
+      }
+    }
+  }else{
+    return(NA)
+  }
+}
+
+RAS_matrix_calc_function = function(BOS, v, y){
+  RAS = 0.7
+  row = rownames(v)
+  row
+  
+  cols = colnames(v)
+  cols
+  
+  vmin = tryCatch(min(which(y > RAS & v < 0.8)), error = function(e) Inf)
+  vmin
+  vmax = tryCatch(max(which(y > RAS & v < 0.8)), error = function(e) Inf)
+  vmax
+  
+  if(vmin != length(y)){
+    if(is.finite(vmax)){
+      if(is.finite(vmin)){
+        
+        if(y[vmin + 1] > RAS & v[vmin + 1] < 0.8){
+          #if(vmin > vmax){
+          #return(vmin + 1)
+          return(as.numeric(cols[vmin + 1]))
+        }else{
+          new_start = vmax
+          new_start = vmin + 1
+          cols = cols[c(new_start:length(y))]
+          cols
+          v = v[c(new_start:length(y))]
+          v
+          y = y[c(new_start:length(y))]
+          a = RAS_matrix_calc_function(BOS,v,y)
+          return(a)
+        }
+        
+      Ths }else{
+        return(NA)
+      }
+    }else{
+      if(is.finite(vmin)){
+        return(as.numeric(cols[vmin]))
+      }else{
+        return(NA)
+      }
+    }
+  }else{
+    return(NA)
+  }
+}
+
 
 BOS_calc_matrix_function = function(BOS,v){
   #print(v)
@@ -1938,6 +2253,331 @@ BOS_function_post_calc = function(full_data){
   return(bos_df)
 }
 
+
+
+bos_df_function = function(full_data){
+  df = data.frame(Factor = numeric(),Status = numeric(),time = numeric(),RAS = numeric(0),BOS1 = numeric(0),BOS2 = numeric(0),BOS3 = numeric())
+  data_name_list = list(RAS = 'RAS', RAS_recovery = 'RAS_recovery',BOS1_RAS = 'BOS1',BOS2_RAS = 'BOS2',BOS3_RAS = 'BOS3',MonthsToDeath = 'Survival')
+  for(data_name in names(data_name_list)){
+    print(data_name)
+    print(paste(data_name_list[data_name]))
+    
+    df_n = BOS_function_single(full_data,data_name,data_name_list[data_name])
+    if(dim(df)[1] == 0){
+      df = df_n
+    }else{
+      df = cbind(df,df_n[-1])
+    }
+  }
+  return(df)
+}
+
+BOS_function_single = function(full_data,data_name, replacement_name,start_time = -24, end_time = 48, end_study = 50){
+
+  test = F
+  if(test == T){
+    full_data = readRDS('temp/full_data.rds')
+    start_time = -24
+    end_time = 48
+    end_study = 50
+    data_name = 'RAS'
+  }
+  #end_time = 50
+  MRN = full_data$MRN
+  d_date = full_data$MonthsToDeath
+  rx = full_data$MonthSinceRx
+  status = full_data$Status
+  
+  data = full_data[,data_name]
+  #RAS_date = full_data$RAS
+  #BOS1_date = full_data$BOS1_RAS
+  #BOS2_date = full_data$BOS2_RAS
+  #BOS3_date = full_data$BOS3_RAS
+  #Survival = full_data$MonthsToDeath
+  
+  
+  data[is.na(data)] = end_time
+  #BOS1_date[is.na(BOS1_date)] = end_time
+  #BOS2_date[is.na(BOS2_date)] = end_time
+  #BOS3_date[is.na(BOS3_date)] = end_time
+  #Survival[is.na(Survival)] = end_time
+  
+  #full_data$RAS_date = RAS_date
+  #full_data$BOS1_date = BOS1_date
+  #full_data$BOS2_date = BOS2_date
+  #full_data$BOS3_date = BOS3_date
+  #full_data$Survival = Survival
+  
+  
+  time = seq(start_time,end_time,1)
+  bos_df = data.frame(time = time)
+  
+  bos_df$data_num = unlist(lapply(bos_df$time, function(x) length(na.omit(data[x >= data]))))
+  #bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
+  #bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
+  #bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
+  #os_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(Survival[x >= Survival]))))
+  
+  bos_df$data_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < data]))))
+  #bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS1_date]))))
+  #bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS2_date]))))
+  #bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_date]))))
+  #bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < Survival]))))
+  
+  bos_df$data_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < data]))))
+  #bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS1_date]))))
+  #bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS2_date]))))
+  #bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_date]))))
+  #bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < Survival]))))
+  
+  
+  bos_df = mutate(bos_df,
+                  data_num_diff = c(0,diff(data_num))
+                  #BOS1_num_diff = c(0,diff(BOS1_num)),
+                  #BOS2_num_diff = c(0,diff(BOS2_num)),
+                  #BOS3_num_diff = c(0,diff(BOS3_num)),
+                  #BOS3_surv_num_diff = c(0,diff(BOS3_surv_num))
+  )
+  bos_df = mutate(bos_df, 
+                  data_Dead_diff = c(0,diff(data_Dead))
+                  #BOS1_Dead_diff = c(0,diff(BOS1_Dead)),
+                  #BOS2_Dead_diff = c(0,diff(BOS2_Dead)),
+                  #BOS3_Dead_diff = c(0,diff(BOS3_Dead)),
+                  #BOS3_surv_Dead_diff = c(0,diff(BOS3_surv_Dead))
+  )
+  bos_df = mutate(bos_df, 
+                  data_Censor_diff = c(0,diff(data_Censor))
+                  #BOS1_Censor_diff = c(0,diff(BOS1_Censor)),
+                  #BOS2_Censor_diff = c(0,diff(BOS2_Censor)),
+                  #BOS3_Censor_diff = c(0,diff(BOS3_Censor)),
+                  #BOS3_surv_Censor_diff = c(0,diff(BOS3_surv_Censor))
+  )
+  
+  bos_df = mutate(bos_df, 
+                  data_risk = dim(full_data)[1] - c(0,data_num[-length(data_num)]) - c(0,data_Dead[-length(data_Dead)]) - c(0,data_Censor[-length(data_Censor)])
+                  #BOS1_risk = dim(full_data)[1] - c(0,BOS1_num[-length(BOS1_num)]) - c(0,BOS1_Dead[-length(BOS1_Dead)]) - c(0,BOS1_Censor[-length(BOS1_Censor)]),
+                  #BOS2_risk = dim(full_data)[1] - c(0,BOS2_num[-length(BOS2_num)]) - c(0,BOS2_Dead[-length(BOS2_Dead)]) - c(0,BOS2_Censor[-length(BOS2_Censor)]),
+                  #BOS3_risk = dim(full_data)[1] - c(0,BOS3_num[-length(BOS3_num)]) - c(0,BOS3_Dead[-length(BOS3_Dead)]) - c(0,BOS3_Censor[-length(BOS3_Censor)]),
+                  #BOS3_surv_risk = dim(full_data)[1] - c(0,BOS3_surv_num[-length(BOS3_surv_num)]) - c(0,BOS3_surv_Dead[-length(BOS3_surv_Dead)]) - c(0,BOS3_surv_Censor[-length(BOS3_surv_Censor)])
+                  
+  )
+  
+  bos_df = mutate(bos_df, 
+                  data_prog = c(data_num[1] + data_Dead[1], data_num_diff[-1] + data_Dead_diff[-1])
+                  #BOS1_prog = c(BOS1_num[1] + BOS1_Dead[1], BOS1_num_diff[-1] + BOS1_Dead_diff[-1]),
+                  #BOS2_prog = c(BOS2_num[1] + BOS2_Dead[1], BOS2_num_diff[-1] + BOS2_Dead_diff[-1]),
+                  #BOS3_prog = c(BOS3_num[1] + BOS3_Dead[1], BOS3_num_diff[-1] + BOS3_Dead_diff[-1]),
+                  #BOS3_surv_prog = c(BOS3_surv_num[1] + BOS3_surv_Dead[1], BOS3_surv_num_diff[-1] + BOS3_surv_Dead_diff[-1])
+  )
+  
+  bos_df = mutate(bos_df, 
+                  data_prog_per = data_prog / data_risk
+                  #BOS1_prog_per = BOS1_prog / BOS1_risk,
+                  #BOS2_prog_per = BOS2_prog / BOS2_risk,
+                  #BOS3_prog_per = BOS3_prog / BOS3_risk,
+                  #BOS3_surv_prog_per = BOS3_surv_prog / BOS3_surv_risk
+  )
+  
+  
+  t = 1 *(1 - bos_df$data_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$data_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$data = b*100
+  
+  # t = 1 *(1 - bos_df$BOS1_prog_per[1])
+  # b = c(t)
+  # for(entry in bos_df$BOS1_prog_per[-1]){
+  #   t = t*(1-entry)
+  #   #print(t)
+  #   b = c(b,t)
+  # }
+  # bos_df$BOS1_free = b*100
+  # 
+  # t = 1 *(1 - bos_df$BOS2_prog_per[1])
+  # b = c(t)
+  # for(entry in bos_df$BOS2_prog_per[-1]){
+  #   t = t*(1-entry)
+  #   #print(t)
+  #   b = c(b,t)
+  # }
+  # bos_df$BOS2_free = b*100
+  # 
+  # t = 1 *(1 - bos_df$BOS3_prog_per[1])
+  # b = c(t)
+  # for(entry in bos_df$BOS3_prog_per[-1]){
+  #   t = t*(1-entry)
+  #   #print(t)
+  #   b = c(b,t)
+  # }
+  # bos_df$BOS3_free = b*100
+  # 
+  # t = 1 *(1 - bos_df$BOS3_surv_prog_per[1])
+  # b = c(t)
+  # for(entry in bos_df$BOS3_surv_prog_per[-1]){
+  #   t = t*(1-entry)
+  #   #print(t)
+  #   b = c(b,t)
+  # }
+  # bos_df$Survival = b*100
+  colnames(bos_df) = gsub('data',replacement_name,colnames(bos_df))
+  return(bos_df)
+}
+
+
+
+BOS_RAS_function = function(full_data){
+  #full_data = pFEV_wf
+  
+  #BOS1 = 0.8
+  #BOS2 = 0.66
+  #BOS3 = 0.5
+  end_time = 50
+  MRN = full_data$MRN
+  d_date = full_data$MonthsToDeath
+  rx = full_data$MonthSinceRx
+  status = full_data$Status
+  RAS_date = full_data$RAS
+  BOS1_date = full_data$BOS1_RAS
+  BOS2_date = full_data$BOS2_RAS
+  BOS3_date = full_data$BOS3_RAS
+  Survival = full_data$MonthsToDeath
+  
+  RAS_date[is.na(RAS_date)] = end_time
+  BOS1_date[is.na(BOS1_date)] = end_time
+  BOS2_date[is.na(BOS2_date)] = end_time
+  BOS3_date[is.na(BOS3_date)] = end_time
+  Survival[is.na(Survival)] = end_time
+  
+  full_data$RAS_date = RAS_date
+  full_data$BOS1_date = BOS1_date
+  full_data$BOS2_date = BOS2_date
+  full_data$BOS3_date = BOS3_date
+  full_data$Survival = Survival
+  
+  
+  time = seq(-24,48,1)
+  bos_df = data.frame(time = time)
+  
+  bos_df$RAS_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= RAS_date]))))
+  bos_df$BOS1_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS1_date[x >= BOS1_date]))))
+  bos_df$BOS2_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS2_date[x >= BOS2_date]))))
+  bos_df$BOS3_num = unlist(lapply(bos_df$time, function(x) length(na.omit(BOS3_date[x >= BOS3_date]))))
+  bos_df$BOS3_surv_num = unlist(lapply(bos_df$time, function(x) length(na.omit(Survival[x >= Survival]))))
+  
+  bos_df$RAS_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < RAS_date]))))
+  bos_df$BOS1_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS1_date]))))
+  bos_df$BOS2_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS2_date]))))
+  bos_df$BOS3_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Dead = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '2' & d_date <= x & !is.na(d_date) & x < Survival]))))
+  
+  bos_df$RAS_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < RAS_date]))))
+  bos_df$BOS1_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS1_date]))))
+  bos_df$BOS2_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS2_date]))))
+  bos_df$BOS3_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < BOS3_date]))))
+  bos_df$BOS3_surv_Censor = unlist(lapply(bos_df$time, function(x) length(na.omit(MRN[status == '1' & rx <= x & !is.na(rx) & x < Survival]))))
+  
+  
+  bos_df = mutate(bos_df,
+                  RAS_num_diff = c(0,diff(RAS_num)),
+                  BOS1_num_diff = c(0,diff(BOS1_num)),
+                  BOS2_num_diff = c(0,diff(BOS2_num)),
+                  BOS3_num_diff = c(0,diff(BOS3_num)),
+                  BOS3_surv_num_diff = c(0,diff(BOS3_surv_num))
+  )
+  bos_df = mutate(bos_df, 
+                  RAS_Dead_diff = c(0,diff(RAS_Dead)),
+                  BOS1_Dead_diff = c(0,diff(BOS1_Dead)),
+                  BOS2_Dead_diff = c(0,diff(BOS2_Dead)),
+                  BOS3_Dead_diff = c(0,diff(BOS3_Dead)),
+                  BOS3_surv_Dead_diff = c(0,diff(BOS3_surv_Dead))
+  )
+  bos_df = mutate(bos_df, 
+                  RAS_Censor_diff = c(0,diff(RAS_Censor)),
+                  BOS1_Censor_diff = c(0,diff(BOS1_Censor)),
+                  BOS2_Censor_diff = c(0,diff(BOS2_Censor)),
+                  BOS3_Censor_diff = c(0,diff(BOS3_Censor)),
+                  BOS3_surv_Censor_diff = c(0,diff(BOS3_surv_Censor))
+  )
+  
+  bos_df = mutate(bos_df, 
+                  RAS_risk = dim(full_data)[1] - c(0,RAS_num[-length(BOS1_num)]) - c(0,RAS_Dead[-length(RAS_Dead)]) - c(0,RAS_Censor[-length(RAS_Censor)]),
+                  BOS1_risk = dim(full_data)[1] - c(0,BOS1_num[-length(BOS1_num)]) - c(0,BOS1_Dead[-length(BOS1_Dead)]) - c(0,BOS1_Censor[-length(BOS1_Censor)]),
+                  BOS2_risk = dim(full_data)[1] - c(0,BOS2_num[-length(BOS2_num)]) - c(0,BOS2_Dead[-length(BOS2_Dead)]) - c(0,BOS2_Censor[-length(BOS2_Censor)]),
+                  BOS3_risk = dim(full_data)[1] - c(0,BOS3_num[-length(BOS3_num)]) - c(0,BOS3_Dead[-length(BOS3_Dead)]) - c(0,BOS3_Censor[-length(BOS3_Censor)]),
+                  BOS3_surv_risk = dim(full_data)[1] - c(0,BOS3_surv_num[-length(BOS3_surv_num)]) - c(0,BOS3_surv_Dead[-length(BOS3_surv_Dead)]) - c(0,BOS3_surv_Censor[-length(BOS3_surv_Censor)])
+                  
+  )
+  
+  bos_df = mutate(bos_df, 
+                  RAS_prog = c(RAS_num[1] + RAS_Dead[1], RAS_num_diff[-1] + RAS_Dead_diff[-1]),
+                  BOS1_prog = c(BOS1_num[1] + BOS1_Dead[1], BOS1_num_diff[-1] + BOS1_Dead_diff[-1]),
+                  BOS2_prog = c(BOS2_num[1] + BOS2_Dead[1], BOS2_num_diff[-1] + BOS2_Dead_diff[-1]),
+                  BOS3_prog = c(BOS3_num[1] + BOS3_Dead[1], BOS3_num_diff[-1] + BOS3_Dead_diff[-1]),
+                  BOS3_surv_prog = c(BOS3_surv_num[1] + BOS3_surv_Dead[1], BOS3_surv_num_diff[-1] + BOS3_surv_Dead_diff[-1])
+  )
+  
+  bos_df = mutate(bos_df, 
+                  RAS_prog_per = RAS_prog / RAS_risk,
+                  BOS1_prog_per = BOS1_prog / BOS1_risk,
+                  BOS2_prog_per = BOS2_prog / BOS2_risk,
+                  BOS3_prog_per = BOS3_prog / BOS3_risk,
+                  BOS3_surv_prog_per = BOS3_surv_prog / BOS3_surv_risk
+  )
+  
+  
+  t = 1 *(1 - bos_df$RAS_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$RAS_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$RAS_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS1_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS1_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS1_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS2_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS2_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS2_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS3_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS3_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$BOS3_free = b*100
+  
+  t = 1 *(1 - bos_df$BOS3_surv_prog_per[1])
+  b = c(t)
+  for(entry in bos_df$BOS3_surv_prog_per[-1]){
+    t = t*(1-entry)
+    #print(t)
+    b = c(b,t)
+  }
+  bos_df$Survival = b*100
+  
+  return(bos_df)
+}
+
+
 BOS_function = function(full_data){
   #full_data = pFEV_wf
   
@@ -2065,6 +2705,7 @@ BOS_function = function(full_data){
   
   return(bos_df)
 }
+
 
 
 BOSS_plot = function(bos_df){
@@ -2375,6 +3016,7 @@ significance_table_formatting_function = function(df,mtc = 'none',sort = T){
   
   df$mtc_significant = ifelse(df[,mtc] < 0.05,1,0)
   df = col_rearrange_function(df,2)
+  #df = apply(df, 2, function(x) ifelse(is.numeric(x), signif(x,3), x))
   datatable(df, options = list(pageLength = 500,
                                columnDefs = list(list(targets = c(grep('significant',colnames(df),grep('significant',colnames(df)))),
                                                       visible = FALSE)))) %>% 
@@ -2424,4 +3066,39 @@ col_rearrange_function = function(df,col_num){
   l = length(colnames(df))
   df = df[,c((l-col_num+1):l,1:(l-col_num))]
   return(df)
+}
+
+processed_data_long_function = function(processed_data){
+  matrix_column_list = c("i_pFEV1_matrix","pFEV1_matrix","pFVC_matrix","pRatio_matrix","i_pFEV1_matrix","i_pFVC_matrix","i_pRatio_matrix","sm_i_pFEV1_matrix","sm_i_pFVC_matrix","sm_i_pRatio_matrix","d1_pFEV1_matrix","d1_pFVC_matrix","d1_pRatio_matrix","d2_pFEV1_matrix","d2_pFVC_matrix","d2_pRatio_matrix")
+  processed_long = data.frame(empty = character(0))
+  dim(processed_long)
+  colnames(processed_data)[!colnames(processed_data) %in% full_factor_columns]
+  factor_columns = full_factor_columns[full_factor_columns %in% colnames(processed_data)]
+  factor_columns
+  #factor_columns = colnames(processed_data)[!colnames(processed_data) %in% matrix_column_list]
+  #factor_columns
+  for(entry in matrix_column_list){
+      print(entry)
+      matrix_column = entry
+      
+      temp = melt_processed_data(processed_data,factor_columns,entry)$long_df
+      col_names = colnames(temp)
+      entry_name = gsub('_matrix','',entry)
+      entry_name
+      #col_names = gsub('value',entry_name,col_names)
+      #col_names
+      #colnames(temp) = col_names
+      
+      if(dim(processed_long)[1] == 0){
+        processed_long = temp[,!names(temp) == 'value']
+      }
+      #cmd = paste0('processed_long$',entry_name,' = temp$value')
+      
+      cmd = paste0('processed_long$',entry_name,' = temp$value[match(processed_long$time, temp$time) & match(processed_long$MRN, temp$MRN)]')
+      
+      print(cmd)
+      eval(parse(text = cmd))
+      
+    }
+  return(processed_long)
 }

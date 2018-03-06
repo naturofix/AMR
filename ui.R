@@ -3,11 +3,13 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
- 
+    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster'),
+    uiOutput("cluster_select_clusters")),
+    
     
 
-    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
+    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800),
+           radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
            radioButtons("data_select", 'Select Data',
@@ -21,83 +23,84 @@ shinyUI(fluidPage(
     tabsetPanel(selected = default_tab,
  
     #### DATA TABLES ####
+      #uiOutput('data_table_ui'),
       tabPanel("Data Tables",
-               
-        tabsetPanel(
-          tabPanel('Original',
-                   tags$h5('Original Data downloaded from googlesheet'),
-                   dataTableOutput('clustering')),
-          tabPanel('Defaults',dataTableOutput('gs_defaults')),
-          tabPanel('Processed',
-                   tags$h5('Data after processing into R data types'),
-                   dataTableOutput('full_num')),
-          tabPanel('Term Mapping',
-                   tags$h5('Mapping of discrete character factors to discrete numeric factors'),
-                   tableOutput('term_mapping')),
-          
-          
-          # tabPanel('pFEV',dataTableOutput('pFEV_wf')),
-          # tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf')),
-          # tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf')),
-          # #i_pFEV_sm_lf_r
-          # #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
-          # tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f")),
-          # tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f")),
-          
-          tabPanel('Selected Data',
-                   tags$h5('Data after generation ratio and percentage calculations as well as clustering'),
-                   tags$h6('D1 : first differential of imputed smoothed data'),
-                  tags$h6('log2zero: log2(treatment/-x) or log2(x/treatment)'), 
-                  tags$h6('per2zero : percentage change to or from treatment'), 
-                  tags$h6('log2 : log(x/-x)'),
-                  tags$h6('per : precentage change from -x to x'),
-                  tags$h6('per_rel : change between percentage change before treamtment and percentage change after treatment'),
-                   dataTableOutput('pFEV_wf_r')),
-          #tabPanel('pFEV_l',dataTableOutput('pFEV_lf_r')),
-          
-          #tabPanel('Change Data', dataTableOutput('change_data')),
-          #tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf_r')),
-          #tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf_r')),
-          #i_pFEV_sm_lf_r
-          #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
-          #tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f_r")),
-          #tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f_r")),
-          tabPanel('cluster',
-                   tags$h5('Data used the generate the clusters'),
-                   dataTableOutput("cluster_data")),
-          #tabPanel('cluster_d1',dataTableOutput("cluster_data_d1"))
-          
-          #tabPanel('lm',dataTableOutput("df_lm_table")),
-          #tabPanel('lm imputed',dataTableOutput("df_lm_table_i"))
-          #tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f_r"))
-          #i_pFEV_sm_d1_f
-          tabPanel('Mean Table',
-                   tableOutput('pFEV_mean_table')
-          ),
-          tabPanel('log 2 ratio vs zero',
-                   dataTableOutput("pFEV_ratio2zero")),
-          tabPanel('precentage change vs zero',
-                   dataTableOutput("pFEV_per2zero")),
-          tabPanel('Summary Table',
-                   sliderInput('summary_slider','Select Month',min = -24,max=24,step = 1,value = c(-6,6), width = 800),
-                   dataTableOutput('summary_table'))
-        )
+        uiOutput('data_table_ui')     
+        # tabsetPanel(
+        #   tabPanel('Original',
+        #            tags$h5('Original Data downloaded from googlesheet'),
+        #            dataTableOutput('clustering')),
+        #   tabPanel('Defaults',dataTableOutput('gs_defaults')),
+        #   tabPanel('Processed',
+        #            tags$h5('Data after processing into R data types'),
+        #            dataTableOutput('full_num')),
+        #   tabPanel('Term Mapping',
+        #            tags$h5('Mapping of discrete character factors to discrete numeric factors'),
+        #            tableOutput('term_mapping')),
+        #   
+        #   
+        #   # tabPanel('pFEV',dataTableOutput('pFEV_wf')),
+        #   # tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf')),
+        #   # tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf')),
+        #   # #i_pFEV_sm_lf_r
+        #   # #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
+        #   # tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f")),
+        #   # tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f")),
+        #   
+        #   tabPanel('Selected Data',
+        #            tags$h5('Data after generation ratio and percentage calculations as well as clustering'),
+        #            tags$h6('D1 : first differential of imputed smoothed data'),
+        #           tags$h6('log2zero: log2(treatment/-x) or log2(x/treatment)'), 
+        #           tags$h6('per2zero : percentage change to or from treatment'), 
+        #           tags$h6('log2 : log(x/-x)'),
+        #           tags$h6('per : precentage change from -x to x'),
+        #           tags$h6('per_rel : change between percentage change before treamtment and percentage change after treatment'),
+        #            dataTableOutput('pFEV_wf_r')),
+        #   #tabPanel('pFEV_l',dataTableOutput('pFEV_lf_r')),
+        #   
+        #   #tabPanel('Change Data', dataTableOutput('change_data')),
+        #   #tabPanel('Imputed pFEV',dataTableOutput('i_pFEV_wf_r')),
+        #   #tabPanel('Smoothed',dataTableOutput('i_pFEV_sm_lf_r')),
+        #   #i_pFEV_sm_lf_r
+        #   #tabPanel('Imputed pFEV clustering',dataTableOutput('i_pFEV_wf_r_c')),
+        #   #tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f_r")),
+        #   #tabPanel('D2',dataTableOutput("i_pFEV_sm_d2_f_r")),
+        #   tabPanel('cluster',
+        #            tags$h5('Data used the generate the clusters'),
+        #            dataTableOutput("cluster_data")),
+        #   #tabPanel('cluster_d1',dataTableOutput("cluster_data_d1"))
+        #   
+        #   #tabPanel('lm',dataTableOutput("df_lm_table")),
+        #   #tabPanel('lm imputed',dataTableOutput("df_lm_table_i"))
+        #   #tabPanel('D1',dataTableOutput("i_pFEV_sm_d1_f_r"))
+        #   #i_pFEV_sm_d1_f
+        # 
+        #   tabPanel('log 2 ratio vs zero',
+        #            dataTableOutput("pFEV_ratio2zero")),
+        #   tabPanel('precentage change vs zero',
+        #            dataTableOutput("pFEV_per2zero")),
+        #   tabPanel('Summary Table',
+        #            sliderInput('summary_slider','Select Month',min = -24,max=24,step = 1,value = c(-6,6), width = 800),
+        #            dataTableOutput('summary_table'))
+        # )
       
     ),
 
     #### PATIENT DATA ####
     
-    tabPanel('Patient pFEV',
+    tabPanel('Patients',
         textOutput('patients_text'),
         #tabPanel('Pre Clustering Selection',
              #uiOutput('scale_slide_1'),
              
              tabsetPanel(selected = 'Pre Clustering Selection',
+                ####_missingness####
                tabPanel('Missingness Plot',
                         tags$h5('Missing values in the pFEV data'),
                         plotOutput('missmap_plot'),
                         plotOutput('pFEV_na_hist')),
-
+               
+                ####_selection####
                tabPanel('Pre Clustering Selection',
                   tags$h4(paste(length(duplicated_list), 'entries for individual patients, had duplicated pFEV values and were automatically removed')),
                   textOutput('auto_removed_duplicates'),  
@@ -188,52 +191,80 @@ shinyUI(fluidPage(
                        #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
                        #tags$h5('test')
               ),
-            
-             tabPanel('Plots',
-                      tabsetPanel(
-                      tabPanel('Individual',
-                               tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
-                               selectInput('mrn_select_i','MRN',patient_list,multiple = T, selected = patient_list[1], width = 800),
-                               plotOutput('individual_patients'),
-                               dataTableOutput('individual_patient_table')
-                      ),
-                      tabPanel('Duplicated',
-                              
-                               selectInput('mrn_select_i_dup','Duplicated MRN',duplicated_patients,multiple = F, selected = duplicated_patients[1], width = 800),
-                               plotOutput('individual_patients_dup'),
-                               dataTableOutput('individual_patient_table_dup')
-                               
-                      ),
-                      
-                      
-
-                      
-             
-               
-               
-               #   #HTML(paste('Plots take some time to render, please wait ...')),
-               tabPanel('Excluded - pre cluster',
-                        column(12,
-                   HTML(paste('Plots take some time to render, please wait ...')),
-                   tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
-                   
-                   
-                   dataTableOutput('pre_patients_table'),
-                   uiOutput('excluded_plots'))),
-               #   
-               tabPanel('Excluded - post clustering',column(12,
-                    HTML(paste('Plots take some time to render, please wait ...')),
-                    tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
-                    
-                    
-                    dataTableOutput('post_patients_table'),
-                    uiOutput('excluded_plots_post'))),
-               
-               tabPanel('Retained',column(12,
-                                          dataTableOutput('retained_patients_table'),
-                                          uiOutput("plots")))
-               #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
-             ))
+              ####_plot####
+              
+              tabPanel('View Selected Patients',
+                       radioButtons('retained_radiobutton','Select Patient Lists', list(All = 'all',`Excluded Pre-clustering` = 'pre',`Excluded Post-clustering` = 'post',`Retained Patients` = 'retained', `BOS data` = 'bos'),selected = 'bos',inline = T),
+                       uiOutput('multi_plot_column_select_ui'),
+                       textOutput('multi_patient_number'),
+                       column(9,uiOutput('multi_plot_select_patient_ui')),
+                       column(3,radioButtons('multi_subset','',c('subset','all'))),
+                       tabsetPanel(
+                         
+                         tabPanel('Plots',
+                                  tags$h5('Red : pFEV1, Green : pFVC, Blue : pRatio, Yellow : original data points, Black : Smoothed Data'),
+                                  tags$h5('solid : RAS, dotted : BOS1, dashed : BOS2, dotted-dashed : BOS3'),
+                                  
+                                  
+                                  column(12,uiOutput('individual_patients_ui'))),
+                         tabPanel('Table', tabsetPanel(
+                           tabPanel('Wide', dataTableOutput('multi_patient_table_wide')),
+                           tabPanel('Long', dataTableOutput('multi_patient_table_long'))
+                         ))
+                       )
+                       
+                       
+              )
+              
+             # tabPanel('Plots',
+             #          tabsetPanel(
+             #          tabPanel('Individual',
+             #                   tags$h5('Red : pFEV1, Green : pFVC, Blue : pRatio, Grey : original data points, Black : Smoothed Data'),
+             #                   uiOutput('plot_mrn_select'),
+             #                   
+             #                   plotOutput('individual_patients'),
+             #                   dataTableOutput('individual_patient_table'),
+             #                   
+             #                   plotOutput('individual_patients_pd'),
+             #                   dataTableOutput('individual_patient_table_pd')),
+             # 
+             #          tabPanel('Duplicated',
+             #                  
+             #                   selectInput('mrn_select_i_dup','Duplicated MRN',duplicated_patients,multiple = F, selected = duplicated_patients[1], width = 800),
+             #                   plotOutput('individual_patients_dup'),
+             #                   dataTableOutput('individual_patient_table_dup')
+             #                   
+             #          ),
+             #          
+             #          
+             # 
+             #          
+             # 
+             #   
+             #   
+             #   #   #HTML(paste('Plots take some time to render, please wait ...')),
+             #   tabPanel('Excluded - pre cluster',
+             #            column(12,
+             #       HTML(paste('Plots take some time to render, please wait ...')),
+             #       tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+             #       
+             #       
+             #       dataTableOutput('pre_patients_table'),
+             #       uiOutput('excluded_plots'))),
+             #   #   
+             #   tabPanel('Excluded - post clustering',column(12,
+             #        HTML(paste('Plots take some time to render, please wait ...')),
+             #        tags$h5('Blue : original data points, Red : Imputed Data, Green : Smoothed Data'),
+             #        
+             #        
+             #        dataTableOutput('post_patients_table'),
+             #        uiOutput('excluded_plots_post'))),
+             #   
+             #   tabPanel('Retained',column(12,
+             #                              dataTableOutput('retained_patients_table'),
+             #                              uiOutput("plots")))
+             #   #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
+             # ))
              )
     
     #tabPanel('Post Clustering Selection')
@@ -271,7 +302,8 @@ shinyUI(fluidPage(
                     
 
       ############## STAT ################
-                    tabPanel('Statistics',
+                    tabPanel('Statistics',tabsetPanel(
+                             tabPanel('Lung Measurements',
                              column(12,
 
                                   radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'BH', inline = T),
@@ -457,6 +489,14 @@ shinyUI(fluidPage(
                                                               )
                                                  ))
                                       ))
+                             ),
+                             tabPanel('Continuous Variables', tabsetPanel(
+                               tabPanel('Mean Table',
+                                        
+                                        dataTableOutput('pFEV_mean_table')
+                               )  
+                             ))
+                             )
                              
                     ),#Stats
                     
@@ -484,8 +524,9 @@ shinyUI(fluidPage(
                     numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
                     selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
                     
-                    textOutput('clustered_patients_text'),
-                    radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
+                    textOutput('clustered_patients_text')
+                    
+                   
                     ),
              column(12,
                     numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
@@ -537,7 +578,6 @@ shinyUI(fluidPage(
                                     tabPanel('Cluster',
                                              tags$h5('Factor proportions within clusters'),
                                              
-                                             uiOutput("cluster_select_clusters"),
                                              tabsetPanel(
                                                tabPanel('Proportions',
                                                   tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
@@ -573,20 +613,31 @@ shinyUI(fluidPage(
 
     ####### BOSS #######
     tabPanel('BOS',
+             radioButtons('bos_data_select','Select pFEV Data to use for BOS calculation, pRatio uses imputed',list(original = '', imputed = 'i'),selected = 'i',inline = T),
+             radioButtons('sequence_correction','Correct BOS assignments so they are always in sequence',c(T,F),selected = F,inline = T),
+             radioButtons('first_and_last','Only do BOS calculation between first and last pFEV1 measurements',c(T,F),selected = T,inline = T),
+             radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = T,inline = T),
              
-             column(12,sliderInput('bos_range','Timecourse Range',min = -24,max=48,step = 1,value = c(-24,24),width = 800)),
+             column(12,sliderInput('bos_range','Timecourse Range',min = -48,max=48,step = 1,value = c(-24,24),width = 800)),
              
              tabsetPanel(
                
                tabPanel('Line Plots',
                         plotOutput('bos_plots'),
-                        plotOutput('bos1_factor_plot'),
-                        plotOutput('bos2_factor_plot'),
-                        plotOutput('bos3_factor_plot'),
-                        plotOutput('bos3_surv_factor_plot')
+                        uiOutput('BOS_plot_ui')
+                        #plotOutput('RAS_factor_plot'),
+                        #plotOutput('bos1_factor_plot'),
+                        #plotOutput('bos2_factor_plot'),
+                        #plotOutput('bos3_factor_plot'),
+                        #plotOutput('bos3_surv_factor_plot')
                         #plotOutput('boss_3_factor_l')
                ),
+               #tabPanel('Patient Plots'),
                tabPanel('Tables', tabsetPanel(
+                    tabPanel('Original',
+                             
+                             dataTableOutput("BOS_data_recalc_table")
+                      ),
                     tabPanel('Selected',
                              column(6,selectInput('boss_select','Select',c('BOS1_free','BOS2_free','BOS3_free','BOS3_surv_free'),selected = 'BOS3_surv_free')),
                              column(6,sliderInput('bos_time_select','Time',min = -24,max=48,step = 1,value = 6,width = 800)),

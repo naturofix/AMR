@@ -130,7 +130,7 @@ shinyServer(function(input, output) {
                           dataTableOutput('summary_table'))
                )
             }else{
-              tags$h3('Data Tables have been removed to protect the privacy of the data')
+              tags$h3('Data Tables have been hidden to protect the privacy of the data')
             }
       #)
     })

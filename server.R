@@ -851,23 +851,23 @@ shinyServer(function(input, output) {
   }) 
   
   pFEV_wf_r = reactive({
-    o_data = pFEV_wf_c()
-    m_data = discrete_cluster_D()$data
-    m_data$MRN = rownames(m_data)
-    data = o_data[o_data$MRN %in% retained_patients(),]
-    data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    #o_data = pFEV_wf_c()
+    #m_data = discrete_cluster_D()$data
+    #m_data$MRN = rownames(m_data)
+    #data = o_data[o_data$MRN %in% retained_patients(),]
+    #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
 
     data = change_data_w()
     data
     
-    })
+    }) #### USED THROUGHT APP, actually change_data_w()
 
   
-  pFEV_lf_r = reactive({
+  pFEV_lf_r = reactive({ 
 
     data = change_data_l()
     data
-  })
+  }) #### USED THROUGHT APP, actually change_data_l()
   
 
   
@@ -1161,7 +1161,7 @@ shinyServer(function(input, output) {
     list(data = data, ccc = ccc)
   })
   
-  change_data = reactive(change_data_list()$data)
+  change_data = reactive(change_data_list()$data) # used for clustering
   
   output$ccc_1 = renderUI({
     selectInput('mix_clust_col_num','Continuous Variable List 1',change_data_list()$ccc,multiple = T,selected = continuous_list_1,width = 600)

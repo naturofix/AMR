@@ -12,6 +12,7 @@ shinyUI(fluidPage(
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
            uiOutput("cluster_select_clusters"),
+           radioButtons('data_source','Select Data Type',c('pFEV1','pFVC','pRatio'),inline = T),
            radioButtons("data_select", 'Select Data',
                         choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
                         choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select),

@@ -70,7 +70,7 @@ shinyServer(function(input, output) {
     output$data_table_ui = renderUI({
      
       #tabPanel("Data Tables",
-            display_data_tables = F
+            display_data_tables = T
             if(display_data_tables == T){ 
                tabsetPanel(
                  tabPanel('Original',

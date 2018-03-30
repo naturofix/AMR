@@ -3,22 +3,18 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster'),
-    uiOutput("cluster_select_clusters")),
+    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
+    
     
     
 
-    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800),
-           radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)),
+    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
+           uiOutput("cluster_select_clusters"),
            radioButtons("data_select", 'Select Data',
                         choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
-                        choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select)
-           
-    ),
-    
-    column(12,
+                        choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select),
     
     tabsetPanel(selected = default_tab,
  
@@ -270,6 +266,109 @@ shinyUI(fluidPage(
     #tabPanel('Post Clustering Selection')
     ),
     
+    #### CLUSTERING #####         
+    tabPanel('Clustering',
+             tabsetPanel(
+               tabPanel('Dendograms',
+                        
+                        column(6,
+                               selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = discrete_list_1,width = 600),
+                               numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 100, step = 1),
+                               selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
+                               numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1),
+                               numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
+                               radioButtons('rename_clusters','Rename Clusters',c(T,F),inline = TRUE),
+                               radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
+                        
+                               
+                        ),
+                        column(6,
+                               #selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
+                               uiOutput('ccc_1'),
+                               
+                               numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
+                               
+                               #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+                               uiOutput('ccc_2'),
+                               numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
+                               selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
+                               
+                               textOutput('clustered_patients_text')
+                               
+                               
+                        ),
+                        column(12,
+                               
+                               
+                               column(12,uiOutput('name_clusters_ui')),
+                               column(12,
+                                      plotOutput('discrete_cluster_plot'),  
+                                      plotOutput('mix_clu'),
+                                      
+                                      
+                                      plotOutput('distance_density'),
+                                      
+                                      radioButtons("data_select_clust", 'Select Data applied to plots below',
+                                                   choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
+                                                   choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
+                                      
+                                      tags$h5('log2 ratio t test'),
+                                      plotOutput('boxplot_pp_ratio_cluster'),
+                                      
+                                      tags$h5('Full Range'),
+                                      plotOutput('boxplot_pFEV_cluster_full'),
+                                      tags$h5(textOutput('manova_clustering_text')),
+                                      dataTableOutput('selected_manova_table_cluster'),
+                                      
+                                      tags$h5('ANOVA of continuous variables across clusters'),
+                                      dataTableOutput('continuous_manova_cluster')
+                               ))# column(12)
+                               
+                        ), # Dendogram
+               #### _chi-squared ####
+               tabPanel('Chi-squared',
+                        tabsetPanel(
+                          tabPanel('Factor',
+                                   tags$h5('Factor proportions across clusters by factor'),
+                                   
+                                   tabsetPanel(
+                                     tabPanel('Proportions',
+                                              
+                                              tags$h6('Chi-squared used to determines if the proportions of a specific factor criteria is randomly distributed between clusters. Proportions of each row sums to 100. Random would equate to equal propotions across clusters. Chi-squared tests if the deviation from random is significant.'),
+                                              tabsetPanel(
+                                                tabPanel('Selected',dataTableOutput('cluster_analyis_selected_table')),
+                                                tabPanel('Full',dataTableOutput('cluster_analysis')))),
+                                     tabPanel('Stat',
+                                              tags$h6('Chi-squared used to determines if the proportions between factor criteria are significantly different from each other.'),
+                                              
+                                              tabsetPanel(
+                                                tabPanel('Selected',dataTableOutput('chisq_cluster')),
+                                                tabPanel('Full',dataTableOutput('chisq_cluster_full')     
+                                                )))
+                                   )),
+                          tabPanel('Cluster',
+                                   tags$h5('Factor proportions within clusters'),
+                                   
+                                   tabsetPanel(
+                                     tabPanel('Proportions',
+                                              tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
+                                              tabsetPanel(
+                                                tabPanel('Selected',dataTableOutput('cluster_analysis_within_table_selected_table')),
+                                                tabPanel('Full',dataTableOutput('cluster_analysis_within_table'))
+                                              )),
+                                     tabPanel("Stat",
+                                              tags$h6('Chi-squared used to determines if the factor criteria proportions between clusters are signficantly different from each factor. The clusters can be selected to determine if there are specific differences between clusters.'),
+                                              
+                                              tabsetPanel(
+                                                tabPanel('Selected',dataTableOutput('chisq_cluster_within')),
+                                                tabPanel('Full',dataTableOutput('chisq_cluster_within_full'))
+                                              ))
+                                   ))
+                        ))# chi-squared
+
+             ) 
+    ), #Clustering
+    
   ##### PLOTS ######
     tabPanel('Plots',
 
@@ -490,11 +589,28 @@ shinyUI(fluidPage(
                                                  ))
                                       ))
                              ),
+                             # Continuous Variable #####
                              tabPanel('Continuous Variables', tabsetPanel(
+                               # _Mean Table ##############
                                tabPanel('Mean Table',
                                         
                                         dataTableOutput('pFEV_mean_table')
-                               )  
+                               ),
+                               # _ANOVA ###################
+                               tabPanel('ANOVA',
+                                        #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
+                                        
+                                        #column(12,uiOutput("cluster_select_clusters_anova")),
+                                        tabsetPanel(
+                                          tabPanel('Individual',
+                                                   selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
+                                                   
+                                                   plotOutput('anova_cluster_plot'),
+                                                   dataTableOutput('continuous_manova_single')
+                                          ),
+                                          tabPanel('Full',dataTableOutput('continuous_manova_full'))
+                                        )
+                               )
                              ))
                              )
                              
@@ -502,114 +618,7 @@ shinyUI(fluidPage(
                     
                     
 
-    #### CLUSTERING #####         
-    tabPanel('Clustering',
-             tabsetPanel(
-               tabPanel('Dendograms',
-             
-             column(6,
-                    selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = discrete_list_1,width = 600),
-                    numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 100, step = 1),
-                    selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
-                    numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1)
-                    ),
-              column(6,
-                    #selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
-                    uiOutput('ccc_1'),
-                    
-                    numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
 
-                    #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
-                    uiOutput('ccc_2'),
-                    numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
-                    selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
-                    
-                    textOutput('clustered_patients_text')
-                    
-                   
-                    ),
-             column(12,
-                    numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
-                
-
-                                plotOutput('discrete_cluster_plot'),  
-                                plotOutput('mix_clu'),
-                                
-
-                                plotOutput('distance_density'),
-                    
-                    radioButtons("data_select_clust", 'Select Data applied to plots below',
-                                 choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
-                                 choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
-                    
-                                tags$h5('log2 ratio t test'),
-                                plotOutput('boxplot_pp_ratio_cluster'),
-                                
-                                tags$h5('Full Range'),
-                                plotOutput('boxplot_pFEV_cluster_full'),
-                                tags$h5(textOutput('manova_clustering_text')),
-                                dataTableOutput('selected_manova_table_cluster'),
-                                
-                                tags$h5('ANOVA of continuous variables across clusters'),
-                                dataTableOutput('continuous_manova_cluster')
-                    
-                         )), # Dendogram
-                    #### _chi-squared ####
-                     tabPanel('Chi-squared',
-                              tabsetPanel(
-                                   tabPanel('Factor',
-                                            tags$h5('Factor proportions across clusters by factor'),
-                                            
-                                            tabsetPanel(
-                                              tabPanel('Proportions',
-                                                       
-                                                  tags$h6('Chi-squared used to determines if the proportions of a specific factor criteria is randomly distributed between clusters. Proportions of each row sums to 100. Random would equate to equal propotions across clusters. Chi-squared tests if the deviation from random is significant.'),
-                                                  tabsetPanel(
-                                                    tabPanel('Selected',dataTableOutput('cluster_analyis_selected_table')),
-                                                    tabPanel('Full',dataTableOutput('cluster_analysis')))),
-                                              tabPanel('Stat',
-                                                       tags$h6('Chi-squared used to determines if the proportions between factor criteria are significantly different from each other.'),
-                                                       
-                                                       tabsetPanel(
-                                                         tabPanel('Selected',dataTableOutput('chisq_cluster')),
-                                                          tabPanel('Full',dataTableOutput('chisq_cluster_full')     
-                                                       )))
-                                            )),
-                                    tabPanel('Cluster',
-                                             tags$h5('Factor proportions within clusters'),
-                                             
-                                             tabsetPanel(
-                                               tabPanel('Proportions',
-                                                  tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
-                                                  tabsetPanel(
-                                                    tabPanel('Selected',dataTableOutput('cluster_analysis_within_table_selected_table')),
-                                                    tabPanel('Full',dataTableOutput('cluster_analysis_within_table'))
-                                               )),
-                                               tabPanel("Stat",
-                                                        tags$h6('Chi-squared used to determines if the factor criteria proportions between clusters are signficantly different from each factor. The clusters can be selected to determine if there are specific differences between clusters.'),
-                                                        
-                                                        tabsetPanel(
-                                                          tabPanel('Selected',dataTableOutput('chisq_cluster_within')),
-                                                          tabPanel('Full',dataTableOutput('chisq_cluster_within_full'))
-                                                        ))
-                                               ))
-                                 )),# chi-squared
-             tabPanel('ANOVA',
-                      #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
-                      
-                      column(12,uiOutput("cluster_select_clusters_anova")),
-                      tabsetPanel(
-                        tabPanel('Individual',
-                                 selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
-                                 
-                                 plotOutput('anova_cluster_plot'),
-                                 dataTableOutput('continuous_manova_single')
-                                ),
-                        tabPanel('Full',dataTableOutput('continuous_manova_full'))
-                      )
-                      )
-                    ) 
-                  ), #Clustering
 
     ####### BOSS #######
     tabPanel('BOS',

@@ -3,7 +3,7 @@
 install_packages = F
 if(install_packages == T){
   source("https://bioconductor.org/biocLite.R")
-    biocLite("marray") # required for CluMix
+    biocLite(c("marray",'Biobase')) # required for CluMix
 
   install.packages(c("shiny","shinythemes", "googlesheets","gplots", "ggplot2","CluMix",
     "Amelia","reshape","imputeTS","pspline","DT","dendextend","plyr","dplyr","survival",
@@ -131,6 +131,8 @@ if(read_workspace == T){
       eval(parse(text = cmd))
     }
   }
+  
+  #display_data_tables = T
   
   edit_colname_function = function(col_names){
     edit_list = c(' ','%')

@@ -1,19 +1,51 @@
 
 
 #### save variable functions ####
+save_varaible_code = function(){
+  #### COPY AND PAST THIS TO SAVE VARIABLE
+  variable_list = c('cluster_data','clustering_continuous_columns')
+  save_test = T
+  if(save_test == T){
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    save_input_function(input)
+  }
+  read_test = F
+  if(read_test == T){
+    variable_list = c(variable_list,'input')
+    cmd_list = read_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+    #input = readRDS('temp/save_input.rds')
+  }
+  
+  
+  
+}
+
 save_variable_function = function(variable_list){
   cmd_list = c()
+  
   for(entry in variable_list){
-    cmd = paste0("saveRDS(",entry,",'temp/",entry,".rds')")
-    print(cmd)
-    cmd_list = c(cmd_list,cmd)
-    #eval(parse(text = cmd))
+      cmd = paste0("saveRDS(",entry,",'temp/",entry,".rds')")
+      print(cmd)
+      cmd_list = c(cmd_list,cmd)
+      #eval(parse(text = cmd))
   }
+
+  return(cmd_list)
+  
+  ### Need to run outside of function
+  for(cmd in cmd_list){
+    eval(parse(text = cmd))
+  }
+  
   ### TO GET DATA BACK OUT ###
   #cmd_list = save_variable_function(variable_list)
   #lapply(cmd_list, function(cmd) eval(parse(text = cmd)))
   #save_input_function(input)
-  return(cmd_list)
 }
 
 save_input_function = function(input){
@@ -27,7 +59,7 @@ save_input_function = function(input){
     eval(parse(text = cmd))
   }
   #input = readRDS('temp/save_input.rds')
-  saveRDS(save_input,'temp/save_input.rds')
+  saveRDS(save_input,'temp/input.rds')
 }
 
 read_variable_function = function(variable_list){
@@ -293,6 +325,8 @@ renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
 }
 
 line_plot_function = function(plot_data,title,input){
+  
+  
   ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
     geom_vline(xintercept = 0) +
     geom_line(aes_string(col = input$global_factor)) +
@@ -1266,9 +1300,28 @@ boxplot_pp_ratio_function = function(full_data,factor,t1,t2,df_s){
 
 
 boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
+  test_function = F
+  if(test_function == T){
+    variable_list = c('full_data','global_factor','t1','t2','df_s')
+    cmd_list =save_variable_function(variable_list)
+    for(cmd in cmd_list){
+      eval(parse(text = cmd))
+    }
+  }
+  read_function = F
+  if(read_function == T){
+    cmd_list = read_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+  }
+  
+  
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
   factor_levels = unique(full_data[,global_factor])
+  factor_levels
   df = data.frame(Factor = numeric(0), Status = numeric(0),pre = numeric(0),post = numeric(0))
   for(entry in factor_levels){
     pre_data = full_data$value[full_data[,global_factor] == entry & full_data$variable == t1]
@@ -1286,7 +1339,26 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   df_m
 }
   #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
-boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of log2(ratio)'){ 
+boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of log2(ratio)',input){ 
+  
+  test_function = F
+  if(test_function == T){
+    variable_list = c("df_m","global_factor","title")
+    cmd_list =save_variable_function(variable_list)
+    for(cmd in cmd_list){
+      eval(parse(text = cmd))
+    }
+  }
+  read_function = F
+  if(read_function == T){
+    cmd_list = read_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+  }
+  
+  
   u = as.numeric(as.character(unique(df_m$Status)))
   u = factor(u[(order(u))])
   #sig_col = c("white", "blanchedalmond")
@@ -1299,7 +1371,9 @@ boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of 
   if(!(0 %in% df_m$significant)){
     sig_col = c("blanchedalmond")
   }
-  df_m$Status = factor(df_m$Status, levels = u)
+  if(input$rename_clusters == F){
+    df_m$Status = factor(df_m$Status, levels = u)
+  }
   #View(df_m)
   p = ggplot(df_m, aes(x = Status,y=value,col=variable, fill = significant)) +
     geom_hline(yintercept=0)+
@@ -1452,6 +1526,24 @@ clustering_function = function(full_data,r_list,d_num,
 }
 
 clust_comparison_total = function(df,clust_col){
+  variable_list = c('df','clust_col')
+  save_variable_function
+  save_test = F
+  if(save_test == T){
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+  }
+  read_test = F
+  if(read_test == T){
+    cmd_list = read_variable_function(variable_list)
+    lapply(cmd_list,function(x) eval(parse(text = x)))
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+  }
+  
+  
   num_clusters = unique(df[,clust_col])
   num_clusters = num_clusters[order(num_clusters)]
   df_c = data.frame(cluster = num_clusters)
@@ -1479,12 +1571,34 @@ clust_comparison_total = function(df,clust_col){
   col_range = c(3:dim(data)[2])
   data[,col_range] = apply(data[,col_range], 2, function (x) as.numeric(as.character(x)))
   data$sum = apply(data[,col_range], 1, function(x) round(sum(x),0)) 
+  
+  data$sum_of_squares = apply(data[,col_range],1,function(x) round(sqrt(sum(x^2)),1))
   data$p.value = apply(data[,col_range], 1, function(x) signif(chisq.test(x)$p.value,3)) 
   data = data[order(data$Factor,data$Status),]
   return(data)
 }
 
 clust_comparison_within = function(df,clust_col,input){
+  
+  print('clust_comparison_within')
+  variable_list = c('df','clust_col')
+  save_test = F
+  if(save_test == T){
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    save_input_function(input)
+  }
+  read_test = F
+  if(read_test == T){
+    variable_list = c(variable_list,'input')
+    cmd_list = read_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+    #input = readRDS('temp/save_input.rds')
+  }
+  
   num_clusters = unique(df[,clust_col])
   num_clusters = num_clusters[(order(num_clusters))]
   print(num_clusters)
@@ -1536,13 +1650,13 @@ clust_comparison_within = function(df,clust_col,input){
   data = data[c(2:dim(data)[1]),]
   data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
   data = data[order(data$Factor,data$Status),]
-  
+  data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
   return(data)
 }
 
 
 chisq_total = function(full_data,input){
-    cluster_list = c(3:(2+input$clutree_num)) #set by the table in 
+    cluster_list = c(3:(2+length(input$cluster_select_clusters))) #set by the table in 
     full_test_data = full_data[,cluster_list]
     full_test_data[is.na(full_test_data)] = 0
     chisq_result = chisq.test(full_test_data)
@@ -1571,9 +1685,33 @@ chisq_total = function(full_data,input){
 
 
 chisq_within = function(data,input){
+  print('chisq_within')
+  variable_list = c('data')
+  save_test = F
+  if(save_test == T){
+    cmd_list = save_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+    save_input_function(input)
+  }
+  read_test = F
+  if(read_test == T){
+    variable_list = c(variable_list)
+    cmd_list = read_variable_function(variable_list)
+    for(cmd in cmd_list){
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+    input = readRDS('temp/save_input.rds')
+    
+    
+  }
   cluster_list = input$cluster_select_clusters
+  cluster_list
   factor_list = unique(data$Factor)
-
+  factor_list
   
   full_test_data = data[,cluster_list]
   full_test_data[is.na(full_test_data)] = 0
@@ -1606,7 +1744,7 @@ chisq_within = function(data,input){
 
 
 
-dendrogram_plot_function = function(dendr,x_cluster,cut){
+dendrogram_plot_function = function(dendr,x_cluster,cut,input){
   dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
   
   ## identify all the line above cluster to remove the colours
@@ -1628,13 +1766,36 @@ dendrogram_plot_function = function(dendr,x_cluster,cut){
   dc$cluster[dc$line == 1] = NA
   clusters = factor(unique(na.omit(dc$cluster)))
   clusters = clusters[order(clusters)]
-  
+
+  data = dc
+
+
+  if(input$rename_clusters == T){
+    data$cluster = as.character(data$cluster)
+    dendr$label$cluster = as.character(dendr$label$cluster)
+    i = 4
+    clutree_num = 4
+    clutree_num = input$clutree_num
+    for(i in c(1:clutree_num)){
+      #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
+      
+      cmd = paste0("data$cluster[data$cluster == '",i,"'] = input$cluster_", i)
+      print(cmd)
+      eval(parse(text = cmd))
+      #cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = 'cluster_", i,"'")
+      
+      cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = input$cluster_", i)
+      print(cmd)
+      eval(parse(text = cmd))
+    }
+  }
+
   p = ggplot() +
-    geom_segment(data = dc, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) +
+    geom_segment(data = data, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) +
     geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
               hjust = 1,angle = 90, size = 5, show.legend = F) +
     scale_y_continuous(expand = c(.2, 0))+
-    scale_color_discrete(breaks = clusters) +
+    #scale_color_discrete(breaks = data$cluster) +
     theme(axis.line.y = element_blank(),
           axis.title.y = element_blank(),
           axis.ticks.x = element_blank(),
@@ -1644,6 +1805,7 @@ dendrogram_plot_function = function(dendr,x_cluster,cut){
           panel.grid = element_blank()
           
     )
+  print(p)
   return(p)
 }
 

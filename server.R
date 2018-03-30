@@ -770,19 +770,14 @@ shinyServer(function(input, output) {
   })  
               
   pFEV_wf_r_post_clustering = reactive({
-    #print(retained_patients())
+
     o_data = pFEV_wf_c()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
-    #data$m_data_d1 = discrete_cluster_D_d1()$data
-    #data$m_data_d1$MRN = rownames(m_data_d1)
+
     data = o_data[o_data$MRN %in% pre_retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
-    
-    #data$cluster = discrete_cluster_D()$data$cluster
-    #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
-    #data = data[data$Status %in% status_r(),]
+
     data = change_data_w()
     
     data
@@ -821,9 +816,7 @@ shinyServer(function(input, output) {
   })
   
   output$post_select_ui = renderUI({
-    #if(file.exists('www/post_exclude_list.rds')){
-    #  post_exclude_list = readRDS('www/post_exclude_list.rds')
-    #}
+
     selected_list = unique(c(post_exclude_list,post_dead_patients()))
     selected_list = selected_list[order(selected_list)]
     selectInput('post_cluster_select','Select Additional Sample to Exclude or remove those added by the slider',pre_retained_patients(),multiple = T,selected = selected_list)
@@ -838,21 +831,13 @@ shinyServer(function(input, output) {
   
   retained_patients = reactive(post_retained_patients())
   
-  # output$post_retained_text = renderText({
-  #   remove_list = input$post_cluster_select
-  #   saveRDS(remove_list, 'www/post_exclude_list.rds')
-  #   paste(post_retained_patients())
-  #   })
-  
-  
   processed_data_w_r = reactive({
     o_data = processed_data
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #print(dim(data))
-    #data = change_data_w()
+    
     data
   })
   
@@ -862,8 +847,6 @@ shinyServer(function(input, output) {
     m_data$MRN = rownames(m_data)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #print(dim(data))
-    #data = change_data_w()
     data
   }) 
   
@@ -873,7 +856,7 @@ shinyServer(function(input, output) {
     m_data$MRN = rownames(m_data)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #print(dim(data))
+
     data = change_data_w()
     data
     
@@ -881,9 +864,7 @@ shinyServer(function(input, output) {
 
   
   pFEV_lf_r = reactive({
-    #w_data = pFEV_wf_r()
-    #data = melt(w_data, measure.vars = colnames(pFEV_w))
-    #data$time = as.numeric(as.character(data$variable))
+
     data = change_data_l()
     data
   })
@@ -897,8 +878,7 @@ shinyServer(function(input, output) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
-    #data = data[data$Status %in% status_r(),]
+
     data
   })
   
@@ -1032,24 +1012,16 @@ shinyServer(function(input, output) {
       o_data[which(is.na(m_data[,col_name])),col_name] = NA
     }
     data = o_data
-    #data = data[data$Status %in% status_r(),]
-    #data
-    ##View(data)
+
     data
   })
   i_pFEV_sm_d1_f_c_ir_r = reactive({
     o_data = i_pFEV_sm_d1_f_c_ir()
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
-    #data$m_data_d1 = discrete_cluster_D_d1()$data
-    #data$m_data_d1$MRN = rownames(m_data_d1)
+
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster_d1 = m_data_d1$cluster[match(data$MRN,m_data_d1$MRN)]
-    
-    #data$cluster = discrete_cluster_D()$data$cluster
-    #data$cluster_d1 = discrete_cluster_D_d1()$data$cluster
-    #data = data[data$Status %in% status_r(),]
     
     data
     
@@ -1087,7 +1059,6 @@ shinyServer(function(input, output) {
   })
   
   comp_data = reactive({
-    #print(input$data_select)
     data = pFEV_wf_c()
     
     if(input$data_select == 'pFEV'){
@@ -1117,10 +1088,9 @@ shinyServer(function(input, output) {
     
     if(input$data_select == 'd2'){
       o_data = i_pFEV_sm_d2_f
-      #m_data = pFEV_wf_r()
       data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
-    ##View(data)
+
     
     data
     
@@ -1159,9 +1129,7 @@ shinyServer(function(input, output) {
     select_cols
     
   })
-  #data_list = c('i_pFVC','i_pRatio','d1_sm_i_pFEV1','d1_sm_i_pRatio')
-  
-  #change_data
+
   change_data_list = reactive({
     d1_data = i_pFEV_sm_d1_f_c()
     d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
@@ -1211,6 +1179,8 @@ shinyServer(function(input, output) {
     c_m_data = m_data
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    data = data[data$cluster %in% input$cluster_select_clusters,]
+    dim(data)
     data_l = data
     data
     
@@ -1225,7 +1195,6 @@ shinyServer(function(input, output) {
   })
   
   comp_data_clust = reactive({
-    #print(input$data_select)
     data = pFEV_wf_c()
     
     if(input$data_select_clust == 'pFEV'){
@@ -1242,7 +1211,6 @@ shinyServer(function(input, output) {
     
     if(input$data_select_clust == 'smoothed'){
       o_data = i_pFEV_smf
-      #m_data = pFEV_wf_r()
       data = o_data[o_data$MRN %in% pre_retained_patients(),]
     }
     
@@ -1264,11 +1232,10 @@ shinyServer(function(input, output) {
     
   })
   select_cols_clust = reactive({
-    #print(input$data_select)
-    #data = pFEV_wf_c()
+
     select_cols = colnames(pFEV_w)
     if(input$data_select_clust == 'pFEV'){
-      #data = pFEV_wf_c()
+
       select_cols = colnames(pFEV_w)
       
       
@@ -2316,7 +2283,7 @@ shinyServer(function(input, output) {
         output$boxplot_pp_ratio = renderPlot({
           title = paste0('T test of log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
           
-          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data(),input$global_factor,title)
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data(),input$global_factor,title,input)
         })
             ### ___for clustering ####
         pp_t_test_ratio_cluster = reactive({
@@ -2336,10 +2303,13 @@ shinyServer(function(input, output) {
         boxplot_pp_ratio_data_cluster = reactive({
           #full_data = pFEV_lf_r()
           full_data = change_data_l_clust()
+          
           df_s = pp_t_test_ratio_cluster()
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
+          print(dim(df_s))
           global_factor = 'cluster'
+          
           df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
           ##View(df)
           df
@@ -2348,7 +2318,7 @@ shinyServer(function(input, output) {
         output$boxplot_pp_ratio_cluster = renderPlot({
           title = paste0('T test of ',input$data_select_clust,' log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
           
-          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title)
+          boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title,input)
         })
         
         boxplot_pp_ratio_data = reactive({
@@ -2588,28 +2558,56 @@ shinyServer(function(input, output) {
         significance_table_formatting_function(df,input$mtc)
       })
       
+      
+      
       ###### _RATIOS AND PERCENTAGES #######
+      # mean_df ----------------------------
       mean_df = reactive({
         full_data = pFEV_wf
         full_data = pFEV_wf_r()
         full_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
-        dim(full_data)
+        #print(dim(full_data))
+        #long_data = pFEV_lf_r()
+        #long_data = change_data_l()
+        #cluster_data = change_data_w()[change_data_w()$cluster %in% input$cluster_select_clusters,]
+        
+        
+        
+        save_test = F
+        if(save_test == T){
+          variable_list = c('full_data')
+          cmd_list = save_variable_function(variable_list)
+          lapply(cmd_list, function(x) eval(parse(text = x)))
+          save_input_function(input)
+          read_test = F
+          if(read_test == T){
+            variable_list = c(variable_list,'input')
+            cmd_list = read_variable_function(variable_list)
+            for(cmd in cmd_list){
+              print(cmd)
+              eval(parse(text = cmd))
+            }
+          }
+        }
+
+        
         global_factor = 'Status'
         global_factor = input$global_factor
-        
-        #data = full_data[,pFEV_numeric_colnames_f]
+ 
         factor_list = unique(full_data[,global_factor])
+        factor_list
         #print(factor_list)
-        data = full_data[,clustering_continuous_columns]
-        mean_df = data.frame('pFEV' = clustering_continuous_columns)
+        data = full_data[,continuous_columns]
+        mean_df = data.frame('pFEV' = continuous_columns)
         mean_list = as.data.frame(apply(data,2,function(x) mean(x,na.rm=T)))
         colnames(mean_list) = 'Mean for all'
         mean_df = cbind(mean_df,mean_list)
+        mean_df
         entry = factor_list[1]
         entry
         
         for(entry in factor_list){
-          sub_data = full_data[full_data[,global_factor] == entry,clustering_continuous_columns]
+          sub_data = full_data[full_data[,global_factor] == entry,continuous_columns]
           sub_mean_list = data.frame(apply(sub_data,2,function(x) as.numeric(mean(x,na.rm=T))))
           colnames(sub_mean_list) = paste(global_factor, entry, 'avg')
           #print(sub_mean_list)
@@ -2619,29 +2617,54 @@ shinyServer(function(input, output) {
   
         numbers = as.data.frame(t(c('Number_of_Patients',dim(full_data)[1],as.numeric(table(full_data$cluster)))))
         numbers = numbers[,c(1:dim(mean_df)[2])]
-        #numbers = numbers[numbers[,c(1:dim(mean_df)[2]])] > 0,]
         numbers
         colnames(numbers) = colnames(mean_df)
         rownames(numbers) = 'Number_of_Patients'
         mean_df = rbind(mean_df,numbers)
-        #mean_df['Number_of_Patients',] = numbers
+    
         mean_df
         
-        long_data = pFEV_lf_r()
-        long_data = long_data[long_data$cluster %in% input$cluster_select_clusters,]
-        
+ 
         test_list = rownames(mean_df)
-        test_entry = test_list[1]
+        test_list
+        test_entry = test_list[18]
         test_entry
+        #long_data[,test_entry]
         p_value_list = c()
+        p_value = NA
+        print(p_value)
+        #long_data = full_data
         for(test_entry in test_list){
-          #p_value = NA
-          p_value = try(anova(lm(long_data[,test_entry] ~ long_data[,'time'] + long_data[,'cluster']))$"Pr(>F)"[2])
-          #p_value
-          #p_value = fit$"Pr(>F)"[2]
+          p_value = NA
+          if(test_entry %in% colnames(full_data)){
+            #x = cluster_data[,test_entry]
+            #x
+            x = full_data[,test_entry]
+            x
+            if(length(x[!is.na(x)]) > 0){
+              y = full_data[,'cluster']
+              #p_value = try(anova(lm(long_data[,test_entry] ~ long_data[,'time'] + long_data[,'cluster']))$"Pr(>F)"[2])
+              #p_value = try(anova(lm(long_data[,test_entry] ~ long_data[,'cluster']))$"Pr(>F)")
+              #p_value
+              #anova(x ~ y)
+              #fit = aov(x ~ y)
+              #fit
+              #summary(fit)
+              #unlist(summary(fit))
+              #p_value = unlist(summary(fit))["Pr(>F)1"]
+              #p_value
+              #p_value = fit$"Pr(>F)"[2]
+              df_n = tidy(aov(x ~ y))
+              p_value = df_n$p.value[1]
+              p_value
+              
+              }
+          }
           p_value_list = c(p_value_list,p_value)
         }
+        
         mean_df$p.value = signif(as.numeric(p_value_list),3)
+        mean_df
         #mean_df = mean_df[-1]
         mean_df[,c(2:dim(mean_df)[2])] = apply(mean_df[,c(2:dim(mean_df)[2])], 2, function(x) signif(as.numeric(x),3))
         mean_df = mean_df[-1]
@@ -2649,6 +2672,19 @@ shinyServer(function(input, output) {
         str(mean_df)
         dim(mean_df)
         mean_df
+        
+        # for(global_factor in clustering_continuous_columns[c(2:length(clustering_continuous_columns))]){
+        #   print(global_factor)
+        #   x = cluster_data[,global_factor]
+        #   if(length(x[!is.na(x)]) > 0){
+        #     y = cluster_data[,'cluster']
+        #     y
+        #     df_n = tidy(aov(x ~ y))
+        #     df_n$term[1] = global_factor
+        #     df = rbind(df,df_n[1,])
+        #   }
+        #   
+        # }
 
       })
       
@@ -3218,9 +3254,9 @@ shinyServer(function(input, output) {
       })
       
   
-  ##### CLUSTERING ###############
+  # CLUSTERING ---------------------------------
   
-      discrete_cluster_D = reactive({
+      discrete_cluster = reactive({
         full_data = change_data()
         #print(colnames(full_data))
         if(input$run_clustering == T){
@@ -3228,12 +3264,10 @@ shinyServer(function(input, output) {
                                                   input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                   input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
           #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
-          
-          #r_values$init = 1
-          if(save_data == T){
-            saveRDS(cluster_data_list,'www/cluster_data_list.rds')
-          }
-          cluster_data_list
+          #save_cluster_data = save_data
+          #save_cluster_data = T
+ 
+          #cluster_data_list
         }else{
           cluster_data_list = readRDS('www/cluster_data_list.rds')
         }
@@ -3242,20 +3276,47 @@ shinyServer(function(input, output) {
       })
   
     
-
+      discrete_cluster_D = reactive({
+        cluster_data_list = discrete_cluster()
+        data = cluster_data_list$data
+        #rename_clusters = F
+        if(input$rename_clusters == T){
+          #print(dim(cluster_data_list))
+          #dim(cluster_data_list)
+          
+          data$cluster = as.character(data$cluster)
+          i = 4
+          for(i in c(1:input$clutree_num)){
+            cmd = paste0("data$cluster[data$cluster == '",i,"'] = input$cluster_", i)
+            print(cmd)
+            eval(parse(text = cmd))
+            cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_", i)
+            print(cmd)
+          }
+          data$cluster
+          cluster_data_list$data = data
+        }
+        if(save_data == T){
+          saveRDS(cluster_data_list,'www/cluster_data_list.rds')
+        }
+        cluster_data_list
+        
+        
+      })
   
   
-        ### _plot clusters ####
+        # plot clusters ==================================================
             output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
 
             
           output$discrete_cluster_plot = renderPlot({
-              
+              print('discrete_cluster_plot')
               D = discrete_cluster_D()$D
               dendr <- dendro_data(D, type = "rectangle") 
               x_cluster = discrete_cluster_D()$x_cluster
               cut = input$clutree_num
-              p = dendrogram_plot_function(dendr,x_cluster,cut)
+              cut
+              p = dendrogram_plot_function(dendr,x_cluster,cut,input)
               print(p)
               
 
@@ -3344,7 +3405,25 @@ shinyServer(function(input, output) {
             })
             output$distance_density = renderPlot({
               xy = distance_model()
-              ggplot(xy, aes(x, y, colour=cluster)) + 
+              #saveRDS(xy, 'temp/xy.rds')
+              #xy = readRDS('temp/xy.rds')
+              data = xy
+              
+              if(input$rename_clusters == T){
+                data$cluster = as.character(data$cluster)
+                i = 4
+                clutree_num = 4
+                clutree_num = input$clutree_num
+                for(i in c(1:clutree_num)){
+                  #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
+                  cmd = paste0("data$cluster[data$cluster == '",i,"'] = input$cluster_", i)
+                  print(cmd)
+                  eval(parse(text = cmd))
+     
+                }
+              }
+              
+              ggplot(data, aes(x, y, colour=cluster)) + 
                 geom_point( size=3) +
                 geom_density2d(alpha=0.5)
             })
@@ -3449,11 +3528,14 @@ shinyServer(function(input, output) {
           ### __CHISQ ####
           
           
-          output$cluster_select_clusters <- renderUI({
-            #data = cluster_analysis_within_table_selected_df()
-            #test_data = data[,c(3:dim(data)[2])]
-            clusters <- seq(1,input$clutree_num,1)
-            selectInput("cluster_select_clusters", "Choose Clusters to Test using ChiSQ", choices = clusters, selected = clusters,multiple = T)
+          output$cluster_select_clusters = renderUI({
+            if(input$run_clustering == T){
+              clusters <- unique(discrete_cluster_D()$data$cluster)
+            }else{
+              cluster_data_list = readRDS('www/cluster_data_list.rds')
+              clusters = unique(cluster_data_list$data$cluster)
+            }
+            selectInput("cluster_select_clusters", "Choose Clusters to Use in Analysis", choices = clusters, selected = clusters,multiple = T,width = 1500)
           })
           
           output$cluster_select_clusters_anova <- renderUI({
@@ -3475,6 +3557,7 @@ shinyServer(function(input, output) {
             significance_table_formatting_function(chi_df,input$mtc)
           })
           output$chisq_cluster_within = renderDataTable({
+            print('chisq_cluster_within')
             data = cluster_analysis_within_table_selected_df()
             chi_df = chisq_within(data,input)
             chi_df
@@ -3492,7 +3575,7 @@ shinyServer(function(input, output) {
           output$anova_cluster_plot = renderPlot({
             global_factor = input$continuous_variable
             full_data = change_data_w()
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
             plot_data = melt(cluster_data,measure.vars = global_factor)
             ggplot(plot_data, aes(x = cluster,y = value,col=cluster)) +
               geom_boxplot()
@@ -3500,7 +3583,7 @@ shinyServer(function(input, output) {
           
           output$continuous_manova_single = renderDataTable({
             full_data = change_data_w()
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
             global_factor = input$continuous_variable
             x = cluster_data[,input$continuous_variable]
             y = cluster_data[,'cluster']
@@ -3510,21 +3593,43 @@ shinyServer(function(input, output) {
           })
           
           output$continuous_manova_full = renderDataTable({
+
             full_data = change_data_w()
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters_anova,]
+            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+            print(dim(cluster_data))
             
-            x = cluster_data[,clustering_continuous_columns[1]]
+            variable_list = c('cluster_data','clustering_continuous_columns')
+            save_test = F
+            if(save_test == T){
+              cmd_list = save_variable_function(variable_list)
+              lapply(cmd_list, function(x) eval(parse(text = x)))
+              save_input_function(input)
+            }
+            read_test = F
+            if(read_test == T){
+              variable_list = c(variable_list,'save_input')
+              cmd_list = read_variable_function(variable_list)
+              for(cmd in cmd_list){
+                print(cmd)
+                eval(parse(text = cmd))
+              }
+            }
+            x = cluster_data[,continuous_columns[1]]
             y = cluster_data[,'cluster']
             df = tidy(aov(x ~ y))
             df$term[1] = clustering_continuous_columns[1]
             df = df[1,]
             
-            for(global_factor in clustering_continuous_columns[c(2:length(clustering_continuous_columns))]){
+            for(global_factor in clustering_continuous_columns[c(2:length(continuous_columns))]){
+              print(global_factor)
               x = cluster_data[,global_factor]
-              y = cluster_data[,'cluster']
-              df_n = tidy(aov(x ~ y))
-              df_n$term[1] = global_factor
-              df = rbind(df,df_n[1,])
+              if(length(x[!is.na(x)]) > 0){
+                y = cluster_data[,'cluster']
+                y
+                df_n = tidy(aov(x ~ y))
+                df_n$term[1] = global_factor
+                df = rbind(df,df_n[1,])
+              }
               
             }
             significance_table_formatting_function(df,input$mtc,F)
@@ -4130,7 +4235,19 @@ shinyServer(function(input, output) {
       BOS_processed_data_w_r()[,BOS_columns]
       })
     
+  output$name_clusters_ui = renderUI({
+    if(input$rename_clusters == T){
+      cluster_name_list_full = c(cluster_name_list, sapply(length(cluster_name_list):input$clutree_num, function(i) paste('Cluster', i)))
+      lapply(1:input$clutree_num, function(i) { 
+        column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
+                    choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
+      })
+    }
 
+  })
+  
+
+  #})
 })
 
 

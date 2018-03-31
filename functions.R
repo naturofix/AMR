@@ -2,24 +2,29 @@
 
 #### save variable functions ####
 save_varaible_code = function(){
+  
+  
+  
   #### COPY AND PAST THIS TO SAVE VARIABLE
-  variable_list = c('cluster_data','clustering_continuous_columns')
-  save_test = T
+  
+  
+  save_test = F
   if(save_test == T){
+    variable_list = c('full_data')
     cmd_list = save_variable_function(variable_list)
     lapply(cmd_list, function(x) eval(parse(text = x)))
-    save_input_function(input)
-  }
-  read_test = F
-  if(read_test == T){
-    variable_list = c(variable_list,'input')
-    cmd_list = read_variable_function(variable_list)
-    for(cmd in cmd_list){
-      print(cmd)
-      eval(parse(text = cmd))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list,'input')
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
     }
-    #input = readRDS('temp/save_input.rds')
   }
+  
   
   
   
@@ -64,6 +69,7 @@ save_input_function = function(input){
 
 read_variable_function = function(variable_list){
   cmd_list = c()
+  variable_list = c(variable_list,'input')
   for(entry in variable_list){
     cmd = paste0(entry, " = readRDS('temp/",entry,".rds')")
     print(cmd)
@@ -325,6 +331,23 @@ renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
 }
 
 line_plot_function = function(plot_data,title,input){
+  save_test = T
+  if(save_test == T){
+    variable_list = c('plot_data','title')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list)
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
+    }
+  }
+  
   
   
   ggplot(plot_data, aes(x = time, y = value,group = MRN)) + 
@@ -1453,7 +1476,25 @@ clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
                               num_w_1,num_col_list_1,num_w_2,num_col_list_2){
   #View(full_data)
-  
+  print('clustering_function')
+  save_test = F
+  if(save_test == T){
+    variable_list = c('full_data','r_list','d_num',
+                      'fac_w_1','fac_col_list_1','fac_w_2','fac_col_list_2',
+                      'num_w_1','num_col_list_1','num_w_2','num_col_list_2')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list)
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
+    }
+  }
   testing = 'F'
   if(testing == T){
     colnames(full_data)

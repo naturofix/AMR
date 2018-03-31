@@ -884,6 +884,7 @@ shinyServer(function(input, output) {
   
   i_pFEV_wf_c = reactive({
     o_data = i_pFEV_wf
+    o_data = processed_data
     data = o_data[o_data$MRN %in% pre_retained_patients(),]
     #data = data[data$Status %in% status_r(),]
     data
@@ -1063,7 +1064,6 @@ shinyServer(function(input, output) {
     
     if(input$data_select == 'pFEV'){
       data = pFEV_wf_c()
-      
     }
     if(input$data_select == 'imputed'){
       data = i_pFEV_wf_c()
@@ -1131,14 +1131,17 @@ shinyServer(function(input, output) {
   })
 
   change_data_list = reactive({
-    d1_data = i_pFEV_sm_d1_f_c()
-    d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
-    colnames(d1_data) = paste0('D1_',colnames(d1_data))
+    #d1_data = i_pFEV_sm_d1_f_c()
+    #print()
+    #print(dim(d1_data))
+    #d1_data = d1_data[,colnames(d1_data) %in% pFEV_numeric_colnames_f]
+    #colnames(d1_data) = paste0('D1_',colnames(d1_data))
   
     
-    data = cbind(comp_data(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
-    data
-    ccc = clustering_continuous_columns
+    #data = cbind(comp_data(),d1_data,pFEV_2_zero()$ratio_data,pFEV_2_zero()$per_data, sym_data(),per_sym_data())
+    #data = comp_data()
+    data = pFEV_wf_c()
+    ccc = colnames(data)[colnames(data) %in% continuous_columns]
     data_list = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
     data_list = input$data_set
     print(data_list)
@@ -1154,8 +1157,27 @@ shinyServer(function(input, output) {
       #print(rownames(o_data))
       o_data$MRN = rownames(o_data)
       new_data = o_data[o_data$MRN %in% pre_retained_patients(),]
-      dim(new_data)
+      #print()
+      #dim(new_data)
+      new_data = within(new_data, rm(MRN))
       data = cbind(data,new_data)
+    }
+    
+    save_test = F
+    if(save_test == T){
+      variable_list = c('data')
+      cmd_list = save_variable_function(variable_list)
+      lapply(cmd_list, function(x) eval(parse(text = x)))
+      try(save_input_function(input))
+      read_test = F
+      if(read_test == T){
+        variable_list = c(variable_list,'input')
+        cmd_list = read_variable_function(variable_list)
+        for(cmd in cmd_list){
+          print(cmd)
+          try(eval(parse(text = cmd)))
+        }
+      }
     }
     data
     list(data = data, ccc = ccc)
@@ -1169,6 +1191,14 @@ shinyServer(function(input, output) {
   
   output$ccc_2 = renderUI({
     selectInput('mix_clust_col_num_2','Continuous Variable List 2', change_data_list()$ccc, multiple = T,selected = continuous_list_2,width = 600)
+  })
+  
+  select_matrix = reactive({
+    matrix_name_list = c(input$data_select,input$data_source,input$calc_select,'matrix')
+    matrix_name_list = matrix_name_list[matrix_name_list != 'none']
+    
+    matrix_name = paste(matrix_name_list,collapse = '_')
+    matrix_name
   })
   
   change_data_w = reactive({
@@ -1187,7 +1217,27 @@ shinyServer(function(input, output) {
   })
   change_data_l = reactive({
     w_data = change_data_w()
-    data = melt(w_data, measure.vars = select_cols())
+    print('')
+    print(dim(w_data))
+    entry = "pFEV1_matrix"
+    entry = select_matrix()
+    entry
+    melt_columns = c(colnames(w_data)[colnames(w_data) %in% factor_columns],'cluster')
+    melt_columns
+    #data = melt_processed_data(processed_data,c(melt_columns),entry)$long_df
+    temp_melt = melt(processed_data[,entry], id.vars = MRN)
+    colnames(temp_melt) = c('MRN','variable','value')
+    temp_melt = temp_melt[temp_melt$MRN %in% w_data$MRN,]
+    #head(temp_melt)
+    #data = processed_data[]
+    temp_data = w_data[,melt_columns][match(w_data$MRN,temp_melt$MRN),]
+    data = cbind(temp_data,temp_melt)
+    
+    #data$variable = temp_melt$X2
+    #data = data[data$MRN %in% w_data$MRN,]
+    dim(data)
+    
+    #data = melt(w_data, measure.vars = select_cols())
     data$time = as.numeric(as.character(data$variable))
     data_w = data
     ##View(data_l)
@@ -1715,14 +1765,14 @@ shinyServer(function(input, output) {
   
   output$line_pFEV = renderPlot({
     r_data = pFEV_lf_r()
-    title = paste(input$data_select,' values for ',length(unique(r_data$MRN))," Patients")
+    title = paste(select_matrix(),' values for ',length(unique(r_data$MRN))," Patients")
     line_plot_function(r_data,title,input)
 
   })
   
   output$smooth_line_pFEV = renderPlot({
     r_data = pFEV_lf_r()
-    title = paste('SMOOTHED curve fitted to',input$data_select,' values for ',length(unique(r_data$MRN))," Patients")
+    title = paste('SMOOTHED curve fitted to',select_matrix(),' values for ',length(unique(r_data$MRN))," Patients")
     smooth_line_plot_function(r_data,title,input)
 
   })
@@ -1730,7 +1780,7 @@ shinyServer(function(input, output) {
   ################  _BOXPLOTS #######################
   output$boxplot_pFEV = renderPlot({
     full_data = pFEV_lf_r()
-    title = paste(input$data_select,' values for ',length(unique(full_data$MRN))," Patients")
+    title = paste(select_matrix(),' values for ',length(unique(full_data$MRN))," Patients")
     boxplot_function(full_data,title,input)
   })
   
@@ -1739,7 +1789,7 @@ shinyServer(function(input, output) {
   output$boxplot_pFEV_cluster = renderPlot({
     full_data = pFEV_lf_r()
     global_factor = 'cluster'
-    title = paste(input$data_select,'values for ',length(unique(full_data$MRN))," Patients")
+    title = paste(select_matrix(),'values for ',length(unique(full_data$MRN))," Patients")
     cols = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
   
     boxplot_4_cluster_function(full_data,title,global_factor,cols,input)
@@ -1758,7 +1808,7 @@ shinyServer(function(input, output) {
   output$interaction_plot = renderPlot({
     full_data = pFEV_lf_r()
     global_factor = 'cluster'
-    title = paste(input$data_select,' values for ',length(unique(full_data$MRN))," Patients")
+    title = paste(select_matrix(),' values for ',length(unique(full_data$MRN))," Patients")
     cols = factor(c(input$pre_range[1]:input$post_range[2]))
     bias_col = 'Status'
     plot_data = full_data[full_data$variable %in% cols,]
@@ -1796,7 +1846,7 @@ shinyServer(function(input, output) {
       theme(axis.text.x = element_text(size=14, angle=90)) + 
       #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
       
-      ggtitle(paste("Mean of ",input$data_select,'Data'))
+      ggtitle(paste("Mean of ",select_matrix(),'Data'))
   })
 
   
@@ -2565,8 +2615,10 @@ shinyServer(function(input, output) {
       mean_df = reactive({
         full_data = pFEV_wf
         full_data = pFEV_wf_r()
+        full_data = change_data_l()
+        full_data = full_data[!duplicated(full_data$MRN),]
         full_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
-        #print(dim(full_data))
+        print(dim(full_data))
         #long_data = pFEV_lf_r()
         #long_data = change_data_l()
         #cluster_data = change_data_w()[change_data_w()$cluster %in% input$cluster_select_clusters,]
@@ -3258,6 +3310,7 @@ shinyServer(function(input, output) {
   
       discrete_cluster = reactive({
         full_data = change_data()
+        
         #print(colnames(full_data))
         if(input$run_clustering == T){
           cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
@@ -3382,7 +3435,7 @@ shinyServer(function(input, output) {
               data = discrete_cluster_D()$o_data
               weights = discrete_cluster_D()$weights
               D = discrete_cluster_D()$D
-              mix.heatmap(data,dend.subjects = D,rowmar = 10,D.variables = NULL,legend.mat = T,varweights = weights)
+              mix.heatmap(data,dend.subjects = D,rowmar = 15,D.variables = NULL,legend.mat = T,varweights = weights)
             })
   
             #### __DISTANCE SCATTER PLOTS ####
@@ -3594,7 +3647,8 @@ shinyServer(function(input, output) {
           
           output$continuous_manova_full = renderDataTable({
 
-            full_data = change_data_w()
+            full_data = change_data_l()
+            full_data = full_data[!duplicated(full_data$MRN),]
             cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
             print(dim(cluster_data))
             

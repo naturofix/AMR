@@ -49,7 +49,7 @@ info_tab = 'Session Info'
 
 defaults = 'David'
 save_workspace = F
-read_workspace = T
+read_workspace = F
 save_data = F
 
 #display_data_tables = F
@@ -102,7 +102,7 @@ if(read_workspace == T){
     #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
     #clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
     clustering = as.data.frame(gs_read(ss=gs, ws= "Full cohort"))
-    default_gs = as.data.frame(gs_read(ss=gs, ws= "App Defaults"))
+    default_gs = as.data.frame(gs_read(ss=gs, ws= "App Defaults 2"))
     #colnames(clustering)
     #saveRDS(file = 'clustering_8_new.rds',object = clustering)
     saveRDS(file = 'full_cohort.rds',object = clustering)
@@ -579,6 +579,10 @@ if(read_workspace == T){
     #processed_data$i_pFEV1_matrix
     processed_data$i_pFVC_matrix = impute_data(processed_data$pFVC_matrix)
     processed_data$i_pRatio_matrix = impute_data(processed_data$pRatio_matrix)
+    #o_data = processed_data$i
+    #impute_NA_function = function(o_data,i_data){
+    #  last_index = 
+    #}
     #View(processed_data)
      
     pFEV_ts = as.ts(t(pFEV_w))
@@ -853,6 +857,144 @@ if(read_workspace == T){
     before = colnames(pFEV_w)[c(1:25)]
     
     after = colnames(pFEV_w)[c(25:49)]
+  
+  ##### RATIO CALCULATIONS ##################
+    #pFEV_2_zero = reactive({
+    # full_data = comp_data()
+      #full_data = pFEV_wf_r()
+      matrix_column_list = c("i_pFEV1_matrix","pFEV1_matrix","pFVC_matrix","pRatio_matrix","i_pFEV1_matrix","i_pFVC_matrix","i_pRatio_matrix","sm_i_pFEV1_matrix","sm_i_pFVC_matrix","sm_i_pRatio_matrix","d1_pFEV1_matrix","d1_pFVC_matrix","d1_pRatio_matrix","d2_pFEV1_matrix","d2_pFVC_matrix","d2_pRatio_matrix")
+      matrix_entry = matrix_column_list[1]
+      for(matrix_entry in matrix_column_list){
+        cmd = paste0("data = processed_data$",matrix_entry)
+        print(cmd)
+        eval(parse(text = cmd))
+        entry_name = gsub('_matrix','',matrix_entry)
+        
+        # ZERO DATA #####
+        pre_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n < 0]
+        pre_times
+        post_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n > 0]
+        post_times
+        zero_data = data[,'0']
+        zero_data
+        
+        pre_data = data[,pre_times]
+        post_data = data[,post_times]
+        
+        pre_ratio_data = log2(zero_data/pre_data)
+        #colnames(pre_ratio_data) = paste0('log2zero_',pre_times)
+        post_ratio_data = log2(post_data/zero_data)
+        #colnames(post_ratio_data) = paste0('log2zero_',post_times)
+        
+        ratio_data = cbind(pre_ratio_data,post_ratio_data)
+        colnames(ratio_data)
+        cmd = paste0('processed_data$',entry_name,'_log2zero_matrix = as.matrix(ratio_data)')
+        print(cmd)
+        eval(parse(text = cmd))
+        
+        pre_per_data =  (zero_data-pre_data)/pre_data*100
+        #colnames(pre_per_data) = paste0('per2zero_',pre_times)
+        post_per_data = (post_data-zero_data)/zero_data*100
+        #colnames(post_per_data) = paste0('per2zero_',post_times)
+        per_data = cbind(pre_per_data,post_per_data)
+        cmd = paste0('processed_data$',entry_name,'_per2zero_matrix = as.matrix(per_data)')
+        print(cmd)
+        eval(parse(text = cmd))
+        
+        # SYM DATA ####
+          ratio_df = data.frame(MRN = processed_data$MRN)
+          log_df = data.frame(MRN = processed_data$MRN)
+          per_df = data.frame(MRN = processed_data$MRN)
+          i = 1
+          for(i in sym_times_cols){
+            #print(i)
+            r1 = data[,as.character(-(i))]
+            #r1
+            r2 = data[,as.character((i))]
+            #r2
+            #log2(r2/r1)
+            #as.character(i)
+            ratio_df[,paste0(i)] = r2/r1
+            log_df[,paste0(i)] = log2(r2/r1)
+            per_df[,paste0(i)] = (r2-r1)/r1*100
+            
+            
+          }
+          ratio_df = ratio_df[,-1]
+          log_df = log_df[,-1]
+          per_df = per_df[,-1]
+          
+          ratio_df
+          cmd = paste0('processed_data$',entry_name,'_ratio_matrix = as.matrix(ratio_df)')
+          print(cmd)
+          eval(parse(text = cmd))
+          cmd = paste0('processed_data$',entry_name,'_log_matrix = as.matrix(log_df)')
+          print(cmd)
+          eval(parse(text = cmd))
+          cmd = paste0('processed_data$',entry_name,'_per_matrix = as.matrix(per_df)')
+          print(cmd)
+          eval(parse(text = cmd))
+          
+        # PER SYM DATA #####
+          # per_sym_data = reactive({ # calcuates the ratios and percentages of timepoints across zero, -12 compared to 12, -3 compared to 3
+
+ 
+            ratio_df = data.frame(MRN = processed_data$MRN)
+            i = 1
+            for(i in sym_times_cols){
+            
+              pre = per_data[,paste0(as.character(-(i)))]
+         
+              post = per_data[,paste0(as.character((i)))]
+      
+              
+              ratio = (post-pre)/abs(post)*100
+              ratio[is.nan(as.numeric(ratio))] = NA
+              ratio[is.infinite(ratio)] = NA
+              ratio_df[,paste0(i)] = ratio
+            }
+            ratio_df = ratio_df[,-1]
+            #View(ratio_df)
+            ratio_df
+            cmd = paste0('processed_data$',entry_name,'_per_rel_matrix = as.matrix(ratio_df)')
+            print(cmd)
+            eval(parse(text = cmd))
+            
+        #LOG SYM DATA ######
+            #log_sym_data = reactive({ # calcuates the ratios and percentages of timepoints across zero, -12 compared to 12, -3 compared to 3
+              
+
+            ratio_df = data.frame(MRN = processed_data$MRN)
+            i = 1
+            for(i in sym_times_cols){
+              #print(i)
+              pre = ratio_data[,paste0(as.character(-(i)))]
+              #pre
+              #print(r1)
+              post = ratio_data[,paste0(as.character((i)))]
+              #r2
+              #print(r2)
+              #print(log2(r2/r1))
+              #as.character(i)
+              ratio = pre-post
+              #print(ratio)
+              ratio[is.nan(as.numeric(ratio))] = NA
+              ratio[is.infinite(ratio)] = NA
+              #print(ratio)
+              ratio_df[,paste0(i)] = ratio
+         
+            }
+            ratio_df = ratio_df[,-1]
+            #View(ratio_df)
+            ratio_df
+            cmd = paste0('processed_data$',entry_name,'_ratio_rel_matrix = as.matrix(ratio_df)')
+            print(cmd)
+            eval(parse(text = cmd))
+
+        
+        }
+
+  colnames(processed_data)
     
   
   }else{
@@ -883,8 +1025,8 @@ if(read_workspace == T){
   # }
   
   
-  
-  matrix_column_list = c("i_pFEV1_matrix","pFEV1_matrix","pFVC_matrix","pRatio_matrix","i_pFEV1_matrix","i_pFVC_matrix","i_pRatio_matrix","sm_i_pFEV1_matrix","sm_i_pFVC_matrix","sm_i_pRatio_matrix","d1_pFEV1_matrix","d1_pFVC_matrix","d1_pRatio_matrix","d2_pFEV1_matrix","d2_pFVC_matrix","d2_pRatio_matrix")
+  matrix_column_list = grep('matrix',colnames(processed_data),value = T)
+  #matrix_column_list = c("i_pFEV1_matrix","pFEV1_matrix","pFVC_matrix","pRatio_matrix","i_pFEV1_matrix","i_pFVC_matrix","i_pRatio_matrix","sm_i_pFEV1_matrix","sm_i_pFVC_matrix","sm_i_pRatio_matrix","d1_pFEV1_matrix","d1_pFVC_matrix","d1_pRatio_matrix","d2_pFEV1_matrix","d2_pFVC_matrix","d2_pRatio_matrix")
   processed_long = data.frame(empty = character(0))
   dim(processed_long)
   colnames(processed_data)[!colnames(processed_data) %in% full_factor_columns]

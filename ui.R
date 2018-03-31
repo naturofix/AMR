@@ -5,18 +5,13 @@ shinyUI(fluidPage(
   fluidRow(
     column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
     
-    
+
     
 
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
            uiOutput("cluster_select_clusters"),
-           radioButtons('data_source','Select Data Type',c('pFEV1','pFVC','pRatio'),inline = T),
-           radioButtons("data_select", 'Select Data',
-                        choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
-                        choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = data_select),
-    
     tabsetPanel(selected = default_tab,
  
     #### DATA TABLES ####
@@ -371,6 +366,15 @@ shinyUI(fluidPage(
     ), #Clustering
     
   ##### PLOTS ######
+    tabPanel('Post Clustering Analysis',
+             radioButtons('data_source','Select Data Type',c('pFEV1','pFVC','pRatio'),inline = T),
+             radioButtons("data_select", 'Select Data',
+                          choiceNames = list('original',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
+                          choiceValues = list('none',"i",'i_NA', 'sm_i', 'd1','d1_ri','d2'),inline = T,selected = 'i'),
+             radioButtons('calc_select','Select Calculations',c('none','log2zero','per2zero','ratio','per','log','per_rel','ratio_rel'),inline = T),
+             
+   
+             tabsetPanel(
     tabPanel('Plots',
 
               column(12,
@@ -667,7 +671,7 @@ shinyUI(fluidPage(
                         plotOutput('bos3_surv_factor_plot_smooth')
                )
              )
-             ), # BOSS
+             ))), # BOSS
 
           
 

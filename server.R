@@ -807,7 +807,10 @@ shinyServer(function(input, output) {
   
   output$pre_hist = renderPlot({
     death_list = death_list()
+    #death_list
+    #print(dim(death_list))
     death_list = death_list[pre_retained_patients()]
+    death_list
     breaks = (max(death_list) - min(death_list))
     
     

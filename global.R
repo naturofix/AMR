@@ -50,7 +50,7 @@ info_tab = 'Session Info'
 
 defaults = 'David'
 save_workspace = F
-read_workspace = T
+read_workspace = F
 save_data = F
 
 #display_data_tables = F
@@ -102,8 +102,10 @@ if(read_workspace == T){
     #sheet_list
     #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
     #clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
-    clustering = as.data.frame(gs_read(ss=gs, ws= "Full cohort"))
-    default_gs = as.data.frame(gs_read(ss=gs, ws= "App Defaults 2"))
+    #clustering = as.data.frame(gs_read(ss=gs, ws= "Data for App 2"))
+    clustering = as.data.frame(gs_read(ss=gs, ws= "clustering_2018_04_04"))
+    
+    default_gs = as.data.frame(gs_read(ss=gs, ws= "Defaults for App 2"))
     #colnames(clustering)
     #saveRDS(file = 'clustering_8_new.rds',object = clustering)
     saveRDS(file = 'full_cohort.rds',object = clustering)
@@ -120,6 +122,8 @@ if(read_workspace == T){
   }
   
   colnames(clustering)
+  last_updated = colnames(clustering)[1]
+  last_updated
   #### process defaults #####
   default_df = default_gs[!is.na(default_gs$value),]
   #View(default_df)
@@ -144,10 +148,12 @@ if(read_workspace == T){
   }
   
   colnames(clustering) = clustering[1,]
+  colnames(clustering)
   variable_type = clustering[2,]
   variable_type
   unique(unlist(variable_type))
-  continuous_columns = names(variable_type[,variable_type == 'Continuous' | variable_type == 'pFVC' | variable_type == 'pRatio' ])
+  #continuous_columns = names(variable_type[,variable_type == 'Continuous' | variable_type == 'pFVC' | variable_type == 'pRatio' ])
+  
   continuous_columns = names(variable_type[,variable_type == 'Continuous'])# | variable_type == 'pFVC' | variable_type == 'pRatio' ])
   
   continuous_columns
@@ -161,8 +167,11 @@ if(read_workspace == T){
   discrete_numeric_columns = names(variable_type[,variable_type == 'DiscreteNumeric'])
   discrete_numeric_columns
   
-  pFEV1_column_names = names(variable_type[,variable_type == 'pFEV1'])
+  other_columns = names(variable_type[,variable_type == 'other'])
+  other_columns
   
+  pFEV1_column_names = names(variable_type[,variable_type == 'pFEV1'])
+  pFEV1_column_names
   
   pFVC_column_names = names(variable_type[,variable_type == 'pFVC'])
   
@@ -227,7 +236,7 @@ if(read_workspace == T){
   ### ALL COLUMNS #####
   all_continuous_columns = c(continuous_columns,continuous_date_columns,pFEV_cols)
   all_discrete_columns = c('MRN','MRN_original',discrete_numeric_columns,discrete_term_columns) # full_factor_columns
-  all_columns = c(all_discrete_columns,all_continuous_columns,continuous_date_columns,pFVC_column_names,pRatio_column_names)
+  all_columns = c(all_discrete_columns,all_continuous_columns,continuous_date_columns,pFVC_column_names,pRatio_column_names,other_columns)
   #Columns in program not in googlesheets
   missing_columns = all_columns[!all_columns %in% colnames(clustering)]
   missing_columns
@@ -298,6 +307,7 @@ if(read_workspace == T){
     i = i + 1
     dup = duplicated(row_names)
   }
+  dups = duplicated(row_names)
   #row_names
   
   #row_names = row_names[!is.na(row_names)]
@@ -599,141 +609,144 @@ if(read_workspace == T){
     
     i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
     view = F
-    if(view == T){
-      View(i_pFEV_wf)
+    
+    run_BOS_calc = T
+    if(run_BOS_calc == T){
+      if(view == T){
+        View(i_pFEV_wf)
+        
+        View(processed_data$i_pFEV1_matrix)
+        
+        a_i = i_pFEV_wf[1,colnames(i_pFEV_ts)]
+        a_i
+        b_i = processed_data$i_pFEV1_matrix[1,]
+        b_i
+        }
       
-      View(processed_data$i_pFEV1_matrix)
+      i_pFEV_wf$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
+      i_pFEV_wf$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
+      i_pFEV_wf$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
       
-      a_i = i_pFEV_wf[1,colnames(i_pFEV_ts)]
-      a_i
-      b_i = processed_data$i_pFEV1_matrix[1,]
-      b_i
-      }
+      
+      processed_data$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
+      processed_data$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
+      processed_data$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
+      
+      #BOS = 0.8
+      #v = processed_data$pFEV1_matrix[1,]
+      #BOS_calc_matrix_function(0.8,v)
+      ##### NOT WORKING NEEDS AN UPGRADE ######
+      pFEV1 = processed_data$i_pFEV1_matrix
+      head(pFEV1)
+      pRatio = processed_data$i_pRatio_matrix
+      head(pRatio)
+      BOS = 0.8
+      RAS = 0.7
     
-    i_pFEV_wf$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
-    i_pFEV_wf$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
-    i_pFEV_wf$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
-    
-    
-    processed_data$BOS1 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.8,x,colnames(i_pFEV_ts)))
-    processed_data$BOS2 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.66,x,colnames(i_pFEV_ts)))
-    processed_data$BOS3 = apply(i_pFEV_wf[,colnames(i_pFEV_ts)],1,function(x) BOS_calc_function(0.5,x,colnames(i_pFEV_ts)))
-    
-    #BOS = 0.8
-    #v = processed_data$pFEV1_matrix[1,]
-    #BOS_calc_matrix_function(0.8,v)
-    ##### NOT WORKING NEEDS AN UPGRADE ######
-    pFEV1 = processed_data$i_pFEV1_matrix
-    head(pFEV1)
-    pRatio = processed_data$i_pRatio_matrix
-    head(pRatio)
-    BOS = 0.8
-    RAS = 0.7
   
-
-    
-    BOS_list = c()
-    
-    test_MRN = '234078a'
-    i = grep(test_MRN,processed_data$MRN)
-    processed_data$MRN[i]
-    i = 267
-    for(i in c(1:dim(processed_data)[1])){
-      BOS1 = NA
-      print(i)
-      x = processed_data[i,]
-      v = x[,'i_pFEV1_matrix']
-      y = x[,'i_pRatio_matrix']
-      BOS1 = RAS_matrix_calc_function(0.8,v,y)
-      BOS1
-      print(BOS1)
-      #print(length(BOS1))
-      if(length(BOS1) == 0){
+      
+      BOS_list = c()
+      
+      test_MRN = '234078a'
+      i = grep(test_MRN,processed_data$MRN)
+      processed_data$MRN[i]
+      i = 267
+      for(i in c(1:dim(processed_data)[1])){
         BOS1 = NA
+        print(i)
+        x = processed_data[i,]
+        v = x[,'i_pFEV1_matrix']
+        y = x[,'i_pRatio_matrix']
+        BOS1 = RAS_matrix_calc_function(0.8,v,y)
+        BOS1
+        print(BOS1)
+        #print(length(BOS1))
+        if(length(BOS1) == 0){
+          BOS1 = NA
+        }
+        BOS_list = c(BOS_list,BOS1)
       }
-      BOS_list = c(BOS_list,BOS1)
-    }
-    BOS_list
-    processed_data$RAS = BOS_list
-    
-    BOS_list = c()
-    for(i in c(1:dim(processed_data)[1])){
-      BOS1 = NA
-      #print(i)
-      x = processed_data[i,]
-      v = x[,'i_pFEV1_matrix']
-      y = x[,'i_pRatio_matrix']
-      BOS1 = BOS_RAS_matrix_calc_function(0.8,v,y)
-      #print(BOS1)
-      #print(length(BOS1))
-      if(length(BOS1) == 0){
+      BOS_list
+      processed_data$RAS = BOS_list
+      
+      BOS_list = c()
+      for(i in c(1:dim(processed_data)[1])){
         BOS1 = NA
+        #print(i)
+        x = processed_data[i,]
+        v = x[,'i_pFEV1_matrix']
+        y = x[,'i_pRatio_matrix']
+        BOS1 = BOS_RAS_matrix_calc_function(0.8,v,y)
+        #print(BOS1)
+        #print(length(BOS1))
+        if(length(BOS1) == 0){
+          BOS1 = NA
+        }
+        BOS_list = c(BOS_list,BOS1)
       }
-      BOS_list = c(BOS_list,BOS1)
-    }
-    #BOS1_list
-    processed_data$BOS1_RAS = BOS_list
-    
-    BOS_list = c()
-    for(i in c(1:dim(processed_data)[1])){
-      BOS1 = NA
-      #print(i)
-      x = processed_data[i,]
-      v = x[,'i_pFEV1_matrix']
-      y = x[,'i_pRatio_matrix']
-      BOS1 = BOS_RAS_matrix_calc_function(0.66,v,y)
-      #print(BOS1)
-      #print(length(BOS1))
-      if(length(BOS1) == 0){
+      #BOS1_list
+      processed_data$BOS1_RAS = BOS_list
+      
+      BOS_list = c()
+      for(i in c(1:dim(processed_data)[1])){
         BOS1 = NA
+        #print(i)
+        x = processed_data[i,]
+        v = x[,'i_pFEV1_matrix']
+        y = x[,'i_pRatio_matrix']
+        BOS1 = BOS_RAS_matrix_calc_function(0.66,v,y)
+        #print(BOS1)
+        #print(length(BOS1))
+        if(length(BOS1) == 0){
+          BOS1 = NA
+        }
+        BOS_list = c(BOS_list,BOS1)
       }
-      BOS_list = c(BOS_list,BOS1)
-    }
-    #BOS1_list
-    processed_data$BOS2_RAS = BOS_list
-    
-    BOS_list = c()
-    for(i in c(1:dim(processed_data)[1])){
-      BOS1 = NA
-      #print(i)
-      x = processed_data[i,]
-      v = x[,'i_pFEV1_matrix']
-      y = x[,'i_pRatio_matrix']
-      BOS1 = BOS_RAS_matrix_calc_function(0.5,v,y)
-      #print(BOS1)
-      #print(length(BOS1))
-      if(length(BOS1) == 0){
+      #BOS1_list
+      processed_data$BOS2_RAS = BOS_list
+      
+      BOS_list = c()
+      for(i in c(1:dim(processed_data)[1])){
         BOS1 = NA
+        #print(i)
+        x = processed_data[i,]
+        v = x[,'i_pFEV1_matrix']
+        y = x[,'i_pRatio_matrix']
+        BOS1 = BOS_RAS_matrix_calc_function(0.5,v,y)
+        #print(BOS1)
+        #print(length(BOS1))
+        if(length(BOS1) == 0){
+          BOS1 = NA
+        }
+        BOS_list = c(BOS_list,BOS1)
       }
-      BOS_list = c(BOS_list,BOS1)
+      #BOS1_list
+      processed_data$BOS3_RAS = BOS_list
+      BOS_columns = c('BOS1','BOS2','BOS3','RAS','BOS1_RAS','BOS2_RAS','BOS3_RAS')
+      full_factor_columns = c(full_factor_columns,BOS_columns)
+      full_factor_columns
+      
+      
+      #processed_data$BOS_1_RAS = apply(processed_data, 1 ,
+                                       #function(x) BOS_RAS_matrix_calc_function(0.8,x[,'i_pFEV1_matrix'],x[,'i_pRatio_matrix']))
+      #processed_data$BOS1_RAS
+      #processed_data$BOS2 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.66,x))
+      #processed_data$BOS3 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.5,x))
+      
+      
+      #i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
+      new_bos_cols = c("RAS","BOS1_RAS","BOS1_RAS","BOS3_RAS")
+      i_pFEV_lf = melt(i_pFEV_wf, id.vars = c(colnames(full_fac_0),'BOS1','BOS2','BOS3'), measure.vars = colnames(pFEV_w))
+      colnames(i_pFEV_lf)
+      i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
+      
+      pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
+      
+      i_pFEV_lf$i = pFEV_lf$value
+      i_pFEV_lf$data = pFEV_lf$value
+      i_pFEV_lf$i[is.na(i_pFEV_lf$data)] = '0'
+      i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
     }
-    #BOS1_list
-    processed_data$BOS3_RAS = BOS_list
-    BOS_columns = c('BOS1','BOS2','BOS3','RAS','BOS1_RAS','BOS2_RAS','BOS3_RAS')
-    full_factor_columns = c(full_factor_columns,BOS_columns)
-    full_factor_columns
-    
-    
-    #processed_data$BOS_1_RAS = apply(processed_data, 1 ,
-                                     #function(x) BOS_RAS_matrix_calc_function(0.8,x[,'i_pFEV1_matrix'],x[,'i_pRatio_matrix']))
-    #processed_data$BOS1_RAS
-    #processed_data$BOS2 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.66,x))
-    #processed_data$BOS3 = apply(processed_data$i_pFEV1_matrix,1,function(x) BOS_calc_matrix_function(0.5,x))
-    
-    
-    #i_pFEV_wf[,c("BOS1mnth","BOS1","BOS2mnth",'BOS2',"BOS3mnth",'BOS3')]
-    new_bos_cols = c("RAS","BOS1_RAS","BOS1_RAS","BOS3_RAS")
-    i_pFEV_lf = melt(i_pFEV_wf, id.vars = c(colnames(full_fac_0),'BOS1','BOS2','BOS3'), measure.vars = colnames(pFEV_w))
-    colnames(i_pFEV_lf)
-    i_pFEV_lf$time = as.numeric(as.character(i_pFEV_lf$variable))
-    
-    pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
-    
-    i_pFEV_lf$i = pFEV_lf$value
-    i_pFEV_lf$data = pFEV_lf$value
-    i_pFEV_lf$i[is.na(i_pFEV_lf$data)] = '0'
-    i_pFEV_lf$i[!is.na(i_pFEV_lf$data)] = '1'
-    
   
     
     ############## differential ###################
@@ -1067,3 +1080,4 @@ if(read_workspace == T){
     save.image('workspace.RData')
   }
 }
+

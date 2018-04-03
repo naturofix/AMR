@@ -160,6 +160,16 @@ shinyServer(function(input, output) {
     
     
     output$na2z = renderDataTable(clust_0)
+    
+    output$data_matrix = renderDataTable({
+      df = processed_data
+      colnames(processed_data)
+      df = change_data_w()
+      print(select_matrix())
+      print(colnames(df))
+      df_m = df[,select_matrix()]
+      df_m
+    })
 
   #### PATIENT DATA ####
     #### _MISSINGNESS ############# 
@@ -752,6 +762,7 @@ shinyServer(function(input, output) {
   
   pFEV_wf_c = reactive({
     o_data = pFEV_wf
+    o_data = processed_data
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$ratio_data)
     #o_data = cbind(pFEV_wf, pFEV_2_zero()$per_data)
     #o_data = cbind(pFEV_wf, pFEV_sym())
@@ -1146,7 +1157,7 @@ shinyServer(function(input, output) {
     data_list = input$data_set
     print(data_list)
     for(data_entry in data_list){
-      cmd = paste0("o_data = processed_data$",data_entry,"_matrix")
+      cmd = paste0("o_data = data$",data_entry,"_matrix")
       eval(parse(text = cmd))
       head(o_data)
       o_data = as.data.frame(o_data)
@@ -1155,12 +1166,12 @@ shinyServer(function(input, output) {
       ccc = c(ccc,colnames(o_data))
       #print(head(o_data))
       #print(rownames(o_data))
-      o_data$MRN = rownames(o_data)
-      new_data = o_data[o_data$MRN %in% pre_retained_patients(),]
+      #o_data$MRN = rownames(o_data)
+      #new_data = o_data[o_data$MRN %in% pre_retained_patients(),]
       #print()
       #dim(new_data)
-      new_data = within(new_data, rm(MRN))
-      data = cbind(data,new_data)
+      #new_data = within(new_data, rm(MRN))
+      data = cbind(data,o_data)
     }
     
     save_test = F
@@ -1241,6 +1252,7 @@ shinyServer(function(input, output) {
     data$time = as.numeric(as.character(data$variable))
     data_w = data
     ##View(data_l)
+    data$variable = as.factor(data$variable)
     data
   })
   
@@ -1763,27 +1775,117 @@ shinyServer(function(input, output) {
     data
   })
   
-  output$line_pFEV = renderPlot({
+  output$line_pFEV_title_ui = renderUI(textInput('line_pFEV_title','Title',paste(select_matrix(), 'line plot')))
+  output$line_pFEV_y_ui = renderUI(textInput('line_pFEV_y','y title',gsub('_matrix','',select_matrix())))
+  
+  output$line_pFEV_ui = renderUI({
+    tabsetPanel(
+    tabPanel('Line Plot',
+             
+             column(12,tags$hr()),
+             column(6,textInput('line_pFEV_title','Title',paste(select_matrix(), 'line plot'))),
+             column(3,textInput('line_pFEV_x','x title','months')),
+             column(3,textInput('line_pFEV_y','y title',gsub('_matrix','',select_matrix()))),
+
+             column(11,plotOutput('line_pFEV')),
+             column(1,downloadButton('line_pFEV_download','')),
+             column(12,tags$hr()),
+             
+            column(12,tags$hr()),
+            column(6,textInput('smooth_line_pFEV_title','Title',paste(select_matrix(), 'smoothed'))),
+            column(3,textInput('smooth_line_pFEV_x','x title','months')),
+            column(3,textInput('smooth_line_pFEV_y','y title',gsub('_matrix','',select_matrix()))),
+            
+            column(11,plotOutput('smooth_line_pFEV')),
+            column(1,downloadButton('smooth_line_pFEV_download','')),
+            column(12,tags$hr())
+             
+             
+             
+    ),
+    tabPanel('Boxplot',
+             #column(12,
+                    column(6,textInput('boxplot_pFEV_title','Title',paste(select_matrix(), 'boxplot'))),
+                    column(3,textInput('boxplot_pFEV_x','x title','months')),
+                    column(3,textInput('boxplot_pFEV_y','y title',gsub('_matrix','',select_matrix()))),
+                    
+                    column(11,plotOutput('boxplot_pFEV')),
+                    column(1,downloadButton('boxplot_pFEV_download','')),
+                    column(12,tags$hr()),
+                    
+                    
+                    column(6,textInput('boxplot_pFEV_mean_title','Title',paste(select_matrix(), 'boxplot mean'))),
+                    column(3,textInput('boxplot_pFEV_mean_x','x title','months')),
+                    column(3,textInput('boxplot_pFEV_mean_y','y title',gsub('_matrix','',select_matrix()))),
+                    
+                    column(11,plotOutput('boxplot_pFEV_mean')),
+                    column(1,downloadButton('boxplot_pFEV_mean_download','')),
+                    column(12,tags$hr())
+                    
+             
+    ))
+    # tabPanel('Interaction',
+    #          HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor.")),
+    #          column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
+    #          
+    #          plotOutput('interaction_plot')
+    # )))),
+    
+  })
+  
+  line_pFEV = reactive({
     r_data = pFEV_lf_r()
     title = paste(select_matrix(),' values for ',length(unique(r_data$MRN))," Patients")
-    line_plot_function(r_data,title,input)
-
+    p = line_plot_function(r_data,input$line_pFEV_title,input,input$line_pFEV_x,input$line_pFEV_y)
+    p
   })
-  
-  output$smooth_line_pFEV = renderPlot({
+  output$line_pFEV = renderPlot(line_pFEV())
+  output$distance_density = renderPlot(distance_density())
+  output$line_pFEV_download <- downloadHandler(
+    filename = paste0(select_matrix(),'_line.png'),
+    content = function(file) {
+      ggsave(file,line_pFEV(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+    }
+  )
+
+  output$smooth_line_pFEV_title_ui = renderUI(textInput('smooth_line_pFEV_title','Title',paste(select_matrix(), 'smoothed')))
+  #column(3,textInput('smooth_line_pFEV_x','x title','months')),
+  output$smooth_line_pFEV_y_ui = renderUI(textInput('smooth_line_pFEV_y','y title',gsub('_matrix','',select_matrix())))
+  smooth_line_pFEV = reactive({
     r_data = pFEV_lf_r()
     title = paste('SMOOTHED curve fitted to',select_matrix(),' values for ',length(unique(r_data$MRN))," Patients")
-    smooth_line_plot_function(r_data,title,input)
-
+    p = smooth_line_plot_function(r_data,input$smooth_line_pFEV_title,input,input$smooth_line_pFEV_x,input$smooth_line_pFEV_y)
+    p 
   })
+  output$smooth_line_pFEV = renderPlot(smooth_line_pFEV())
+  
+  output$smooth_line_pFEV_download <- downloadHandler(
+    filename = paste0(select_matrix(),'smooth_line.png'),
+    content = function(file) {
+      ggsave(file,smooth_line_pFEV(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+    }
+  )
 
   ################  _BOXPLOTS #######################
-  output$boxplot_pFEV = renderPlot({
+  
+  output$boxplot_pFEV_title_ui = renderUI(textInput('boxplot_pFEV_title','Title',paste(select_matrix(), 'boxplot')))
+  #column(3,textInput('boxplot_pFEV_x','x title','months')),
+  output$boxplot_pFEV_y_ui = renderUI(textInput('boxplot_pFEV_y','y title',gsub('_matrix','',select_matrix())))
+  
+  boxplot_pFEV = reactive({
     full_data = pFEV_lf_r()
     title = paste(select_matrix(),' values for ',length(unique(full_data$MRN))," Patients")
-    boxplot_function(full_data,title,input)
+    boxplot_function(full_data,input$boxplot_pFEV_title,input,input$boxplot_pFEV_x,input$boxplot_pFEV_y)
   })
   
+  output$boxplot_pFEV = renderPlot(boxplot_pFEV())
+    
+  output$boxplot_pFEV_download <- downloadHandler(
+    filename = paste0(select_matrix(),'boxplot.png'),
+    content = function(file) {
+      ggsave(file,boxplot_pFEV(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+    }
+  )
 
   
   output$boxplot_pFEV_cluster = renderPlot({
@@ -1833,7 +1935,12 @@ shinyServer(function(input, output) {
   },height = 1600)
   
 
-  output$boxplot_pFEV_mean = renderPlot({
+  output$boxplot_pFEV_mean_title_ui = renderUI(textInput('boxplot_pFEV_mean_title','Title',paste(select_matrix(), 'boxplot mean')))
+  #column(3,textInput('boxplot_pFEV_mean_x','x title','months')),
+  output$boxplot_pFEV_mean_y_ui = renderUI(textInput('boxplot_pFEV_mean_y','y title',gsub('_matrix','',select_matrix())))
+  
+  
+  boxplot_pFEV_mean = reactive({
     full_data = pFEV_lf_r()
     cols = factor(c(input$pre_range[1]:input$post_range[2]))
     plot_data = full_data[full_data$variable %in% cols,]
@@ -1846,9 +1953,19 @@ shinyServer(function(input, output) {
       theme(axis.text.x = element_text(size=14, angle=90)) + 
       #scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
       
-      ggtitle(paste("Mean of ",select_matrix(),'Data'))
+      ggtitle(input$boxplot_pFEV_mean_title) + 
+      xlab(input$boxplot_pFEV_mean_x)+
+      ylab(input$boxplot_pFEV_mean_y)
   })
+  
+  output$boxplot_pFEV_mean = renderPlot(boxplot_pFEV_mean())
 
+  output$boxplot_pFEV_mean_download <- downloadHandler(
+    filename = paste0(select_matrix(),'boxplot_mean.png'),
+    content = function(file) {
+      ggsave(file,boxplot_pFEV_mean(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+    }
+  )
   
   
 
@@ -2067,7 +2184,7 @@ shinyServer(function(input, output) {
                     significance_table_formatting_function(df,input$mtc)
                     })
                   
-                  output$pp_t_test_ranges_full = renderDataTable({
+                  pp_t_test_ranges_full = reactive({
                     full_data = pFEV_lf_r()
                     factor = input$global_factor
                     pre1 = input$pre_range[1]
@@ -2089,8 +2206,23 @@ shinyServer(function(input, output) {
                     }
                     df
                     df = col_rearrange_function(df,3)
+                    df
+                    #significance_table_formatting_function(df,input$mtc)
+                  })
+                  
+                  output$pp_t_test_ranges_full = renderDataTable({
+                    df = pp_t_test_ranges_full()
                     significance_table_formatting_function(df,input$mtc)
                   })
+                    
+                  
+                  
+                  output$pp_t_test_ranges_full_download <- downloadHandler(
+                    filename = paste0(select_matrix(),'_t_test_',input$pre_range[1],'_',input$post_range[2],'_ranges.csv'),
+                    content = function(file) {
+                      write.csv(pp_t_test_ranges_full(), file)
+                    }
+                  )
                   
                   pp_ranges_data = reactive({
                     full_data = pFEV_lf_r()
@@ -2107,9 +2239,30 @@ shinyServer(function(input, output) {
                     pp_data
                   })
                   
-                  output$boxplot_pp_ranges = renderPlot({
-                    t_boxplot_function(pp_ranges_data(),input$global_factor)
+                  output$boxplot_pp_ranges_title_ui = renderUI({
+                    textInput('boxplot_pp_ranges_title','Title',paste(select_matrix(), 'boxplot (', input$pre_range[1],' vs ',input$post_range[2],')'))
                   })
+                  output$boxplot_pp_ranges_x_ui = renderUI({
+                    textInput('boxplot_pp_ranges_x','x title','')
+                  })
+                  output$boxplot_pp_ranges_y_ui = renderUI({
+                    textInput('boxplot_pp_ranges_y','y title',gsub('_matrix','',select_matrix()))
+                  })
+                  
+                  boxplot_pp_ranges = reactive({
+                    t_boxplot_function(pp_ranges_data(),input$global_factor,input$boxplot_pp_ranges_title,input$boxplot_pp_ranges_x,input$boxplot_pp_ranges_y)
+                  })
+                  
+                  output$boxplot_pp_ranges = renderPlot({
+                    boxplot_pp_ranges()
+                  })
+                  
+                  output$boxplot_pp_ranges_download <- downloadHandler(
+                    filename = paste0(select_matrix(),'boxplot_t_test_ranges.png'),
+                    content = function(file) {
+                      ggsave(file,boxplot_pp_ranges(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+                    }
+                  )
  
                   
       ### __Ratio  FULL #### 
@@ -2135,19 +2288,28 @@ shinyServer(function(input, output) {
         })
  
       ### __Percentage ####
-        output$percentage_change_t_test_full = renderDataTable({
-          full_data = change_data_w()
-          global_factor = input$global_factor
-          cols_num = comp_colnames
+        percentage_change_t_test_full = reactive({
+          
+          
+          #full_data = change_data_w()
+          #print(dim(full_data))
+          #global_factor = input$global_factor
+          #cols_num = comp_colnames
           #cols_num = cols_num[as.numeric(cols_num) >= input$pre_range & as.numeric(cols_num) <= input$post_range]
-          prefix = 'per2zero_'
-          prefix = input$vs_zero_prefix
+          #prefix = 'per2zero_'
+          #prefix = input$vs_zero_prefix
           
           #cols_num = cols_num[cols_num %in% colnames(full_data)]
-          selected_columns = paste0(prefix,cols_num)
-          selected_columns = selected_columns[selected_columns %in% colnames(full_data)]
-          selected_w = melt(full_data, measure.vars = selected_columns)
-          selected_w
+          #selected_columns = paste0(prefix,cols_num)
+          #selected_columns = selected_columns[selected_columns %in% colnames(full_data)]
+          #selected_w = melt(full_data, measure.vars = selected_columns)
+          #selected_w
+          #full_data = change_data_l()
+          selected_w = change_data_l()
+          print(dim(selected_w))
+          global_factor = input$global_factor
+          
+          
           
           df_b = data.frame(estimate = numeric(0), estimate1  = numeric(0), estimate2 = numeric(0),
                             statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
@@ -2155,7 +2317,15 @@ shinyServer(function(input, output) {
                             alternative = numeric(0),
                             Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
           df = df_b
-          cols = unique(abs(as.numeric(cols_num)))
+          #cols = unique(abs(as.numeric(cols_num)))
+          cols_num = unique(selected_w$time)
+          #cols_num
+          #cols_num = cols_num[cols_num != 0]
+          cols = cols_num[cols_num > 0]
+          cols
+          #cols = unique()
+          i = cols[2]
+          i
           for(i in cols){
             #print(paste(factor(-i)))
             #print(full_data[,factor(-i)])
@@ -2164,17 +2334,28 @@ shinyServer(function(input, output) {
             
             #raw_data[,paste(factor(i))] = full_data[,paste(factor(i))]
             
-            col1 = paste0(prefix,i)
-            col2 = paste0(prefix,-i)
+            col1 = paste0(i)
+            col1
+            col2 = paste0(-i)
+            col2
             #raw_data[,col1] = full_data[,col1]
             #raw_data[,col2] = full_data[,col1]
             #View(raw_data)
             #output$percentage_df = renderDataTable(raw_data)
+            global_factor = factor_list[1]
+            global_factor
             for(global_factor in factor_list){
-              factor_levels = unique(full_data[,global_factor])
+              factor_levels = unique(selected_w[,global_factor])
+              factor_levels
+              
+              entry = factor_levels[1]
               for(entry in factor_levels){
-                pre_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col1]
-                post_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col2]
+                pre_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$time %in% col1]
+                #pre_data = selected_w$value[selected_w[,global_factor] == entry]
+                
+                length(pre_data)
+                post_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$time %in% col2]
+                length(post_data)
                 #df1 = data.frame(pre = pre_data,post = post_data)
                 #df1$Factor = global_factor
                 #df1$Status = entry
@@ -2184,6 +2365,7 @@ shinyServer(function(input, output) {
                 #print(pre_data)
                 #print(post_data)
                 df_n = tryCatch(tidy(t.test(pre_data,post_data)), error = function(e) e = df_b)
+                dim(df_n)
                 if(dim(df_n)[1] > 0){
                   df_n$Factor = global_factor
                   df_n$Status = entry
@@ -2196,32 +2378,37 @@ shinyServer(function(input, output) {
           }
           df = col_rearrange_function(df,3)
           df
-          significance_table_formatting_function(df,input$mtc)
           
         })
         
+        output$percentage_change_t_test_full = renderDataTable({
+          df = percentage_change_t_test_full()
+          significance_table_formatting_function(df,input$mtc)
+          
+          })
+        
         percentage_change_t_test = reactive({
-          full_data = change_data_w()
-
-          raw_data = data.frame(MRN = full_data$MRN)
+          selected_w = change_data_l()
+          print(dim(selected_w))
+          raw_data = data.frame(MRN = unique(selected_w$MRN))
          
           #print(raw_data$MRN)
           global_factor = input$global_factor
-          prefix = 'per2zero_'
-          prefix = input$vs_zero_prefix
+          #prefix = 'per2zero_'
+          #prefix = input$vs_zero_prefix
           
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
           cols_num = c(input$pre_range[1],input$post_range[2])
           cols_num = cols_num[!cols_num == 0]
-          cols_num = cols_num[cols_num %in% colnames(full_data)]
-          selected_columns = paste0(prefix,cols_num)
+          cols_num = cols_num[cols_num %in% selected_w$time]
+          #selected_columns = paste0(prefix,cols_num)
          
-          selected_data = full_data[,selected_columns]
-          selected_data
+          #selected_data = full_data[,selected_columns]
+          #selected_data
          
-          selected_w = melt(full_data, measure.vars = selected_columns)
-          selected_w
+          #selected_w = melt(full_data, measure.vars = selected_columns)
+          #selected_w
         
           df_b = data.frame(estimate = numeric(0), estimate1  = numeric(0), estimate2 = numeric(0),
                             statistic = numeric(0),   p.value = numeric(0), parameter = numeric(0),
@@ -2238,17 +2425,19 @@ shinyServer(function(input, output) {
            #print(paste(factor(t1)))
            #print(full_data[,factor(t2)])
             
-            raw_data[,paste(factor(t1))] = full_data[,paste(factor(t1))]
-            raw_data[,'0'] = full_data[,'0']
-            raw_data[,paste(factor(t2))] = full_data[,paste(factor(t2))]
+            raw_data[,paste(factor(t1))] = selected_w$value[selected_w$time == t1]
+            raw_data[,'0'] = selected_w$value[selected_w$time == 0]
+            raw_data[,paste(factor(t2))] = selected_w$value[selected_w$time == t2]
             
-            col1 = paste0(prefix,t1)
-            col2 = paste0(prefix,t2)
-            raw_data[,col1] = full_data[,col1]
-            raw_data[,col2] = full_data[,col2]
+            col1 = paste0(t1)
+            col2 = paste0(t2)
+            #raw_data[,col1] = full_data[,col1]
+            #raw_data[,col2] = full_data[,col2]
             #View(raw_data)
             
-            factor_levels = unique(full_data[,global_factor])
+            factor_levels = unique(selected_w[,global_factor])
+            entry = factor_levels[1]
+            entry
             for(entry in factor_levels){
               pre_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col1]
               post_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col2]
@@ -2403,7 +2592,7 @@ shinyServer(function(input, output) {
         
       })
         
-        output$pp_t_test_zero_full = renderDataTable({
+      pp_t_test_zero_full = reactive({
           #df = data.frame(Factor = numeric(0))
           
           df_b = data.frame(estimate = numeric(0),
@@ -2427,12 +2616,40 @@ shinyServer(function(input, output) {
           ##View(df_s)
           #df_s
           df = col_rearrange_function(df,3)
-          significance_table_formatting_function(df,input$mtc)
+          df
+          #significance_table_formatting_function(df,input$mtc)
         })
+      
+      output$pp_t_test_zero_full = renderDataTable({
+        df = pp_t_test_zero_full()
+        significance_table_formatting_function(df,input$mtc)
+        
+      })
+      
+      output$pp_t_test_zero_full_download <- downloadHandler(
+        filename = paste0(select_matrix(),'_t_test_',input$pre_range[1],'_0_',input$post_range[2],'.csv'),
+        content = function(file) {
+          write.csv(pp_t_test_zero_full(), file)
+        }
+      )
+        
+      
       output$pp_t_table_zero = renderDataTable({
         df = pp_t_test_zero()
         significance_table_formatting_function(df,input$mtc)
       })
+
+      
+      output$boxplot_pp_zero_title_ui = renderUI({
+        textInput('boxplot_pp_zero_title','Title',paste(select_matrix(), 'boxplot (', input$pre_range[1],' vs 0 vs ',input$post_range[2],')'))
+      })
+      output$boxplot_pp_zero_x_ui = renderUI({
+        textInput('boxplot_pp_zero_x','x title','')
+      })
+      output$boxplot_pp_zero_y_ui = renderUI({
+        textInput('boxplot_pp_zero_y','y title',gsub('_matrix','',select_matrix()))
+      })
+      
       boxplot_pp_zero_data = reactive({
         full_data = pFEV_lf_r()
         #df_s = pp_t_test_zero()
@@ -2443,9 +2660,19 @@ shinyServer(function(input, output) {
         ##View(df)
         df
       })
-      output$boxplot_pp_zero = renderPlot({
-        boxplot_pp_zero_plot_function(boxplot_pp_zero_data())
+      boxplot_pp_zero = reactive({
+        boxplot_pp_zero_plot_function(boxplot_pp_zero_data(),input$boxplot_pp_zero_title,input$boxplot_pp_zero_x,input$boxplot_pp_zero_y)
       })
+      
+      output$boxplot_pp_zero = renderPlot({boxplot_pp_zero()})
+      
+      output$boxplot_pp_zero_download <- downloadHandler(
+        filename = paste0(select_matrix(),'boxplot',input$pre_range[1],'_0_',input$post_range[2],'.png'),
+        #filename = gsub('-','neg_',filename),
+        content = function(file) {
+          ggsave(file,boxplot_pp_zero(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+        }
+      )
       
       ##### _VERTIVAL T TESTS ####
       horizontal_stats = reactive({
@@ -2791,6 +3018,11 @@ shinyServer(function(input, output) {
       
       output$pFEV_per2zero = renderDataTable(table_formatting_function(pFEV_2_zero()$per_data))
       
+      output$ratio_input_ui = renderUI({
+        selectInput('ratio_num','timepoints',unique(change_data_l()$variable),multiple = T,selected = seq(input$pre_range[1],input$post_range[2],by = 1),width = 600)
+      })
+
+      
       output$raw_sym_data = renderDataTable({
         
         data_name = input$col_select_prefix
@@ -2976,8 +3208,10 @@ shinyServer(function(input, output) {
       })
       
       output$scale_slide = renderUI({
-        full_data = change_data_w()
-        plot_data = melt(full_data, measure.vars = sym_cols())
+        full_data = change_data_l()
+        #plot_data = melt(full_data, measure.vars = sym_cols())
+        plot_data = full_data[full_data$variable %in% input$ratio_num,]
+        #print(dim())
         #print(plot_data$value)
         plot_min = round(min(plot_data$value,na.rm = T),3)
         plot_max = round(max(plot_data$value,na.rm = T),3)
@@ -2992,11 +3226,39 @@ shinyServer(function(input, output) {
       })
       
       output$sym_ratio_boxplot = renderPlot({
-        full_data = change_data_w()
+        # full_data = change_data_w()
+        # print(dim(full_data))
+        # plot_data = melt(full_data, measure.vars = sym_cols())
+        # global_factor = 'Status'
+        # global_factor = input$global_factor
+        # ggplot(plot_data, aes_string(x = 'variable', y = 'value', col = global_factor)) +
+        #   coord_cartesian(ylim = c(as.numeric(input$sym_y_lim[1]),as.numeric(input$sym_y_lim[2]))) + 
+        #   geom_hline(yintercept = 0) + 
+        #   
+        #   geom_boxplot()
         
-        plot_data = melt(full_data, measure.vars = sym_cols())
+        full_data = change_data_l()
+        plot_data = full_data[full_data$variable %in% input$ratio_num,]
         global_factor = 'Status'
         global_factor = input$global_factor
+        
+        save_test = F
+        if(save_test == T){
+          variable_list = c('full_data','plot_data')
+          cmd_list = save_variable_function(variable_list)
+          lapply(cmd_list, function(x) eval(parse(text = x)))
+          try(save_input_function(input))
+          read_test = F
+          if(read_test == T){
+            variable_list = c(variable_list,'input')
+            cmd_list = read_variable_function(variable_list)
+            for(cmd in cmd_list){
+              print(cmd)
+              try(eval(parse(text = cmd)))
+            }
+          }
+        }
+        
         ggplot(plot_data, aes_string(x = 'variable', y = 'value', col = global_factor)) +
           coord_cartesian(ylim = c(as.numeric(input$sym_y_lim[1]),as.numeric(input$sym_y_lim[2]))) + 
           geom_hline(yintercept = 0) + 
@@ -3011,18 +3273,29 @@ shinyServer(function(input, output) {
         #ratio_colnames = paste0('log2(',sym_times_cols,')')
         #per_colnames = paste0('per_',sym_times_cols)
         
-        full_data = change_data_w()
+        full_data = change_data_l()
         global_factor = input$global_factor
         factor_list = unique(full_data[,global_factor])
         #factor_list
         entry = factor_list[1]
-        sub_data = full_data[full_data[,global_factor] == entry,sym_cols()]
+        full_data = cbind(change_data_w()[,c('MRN','cluster')],change_data_w()[,select_matrix()])
+        #View(sub_data)
+        #sub_data$MRN = rownames(sub_data)
+        #sub_data$cluster = change_data_w()$cluster[match(change_data_w()$MRN,sub_data)]
+        #sub_data = full_data[full_data[,global_factor] == entry,sym_cols()]
+        sub_data = full_data[full_data[,global_factor] == entry,input$ratio_num]
+        #View(sub_data)
         mean_ratio_df = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+        #View(mean_ratio_df)
+        colnames(mean_ratio_df) = colnames(sub_data)
         mean_ratio_df$Factor = global_factor
         mean_ratio_df$Status = entry
+        entry = factor_list[2]
         for(entry in factor_list[-1]){
-          sub_data = full_data[full_data[,global_factor] == entry,sym_cols()]
+          sub_data = full_data[full_data[,global_factor] == entry,input$ratio_num]
           mean_ratio_df_n = data.frame(t(apply(sub_data,2, function(x) mean(x,na.rm=T))))
+          colnames(mean_ratio_df_n) = colnames(sub_data)
+          
           mean_ratio_df_n$Factor = global_factor
           mean_ratio_df_n$Status = entry
           mean_ratio_df = rbind(mean_ratio_df,mean_ratio_df_n)
@@ -3048,18 +3321,19 @@ shinyServer(function(input, output) {
         anova_df = anova_df_b
         #full_data = sym_df
         global_factor = 'HLAType'
-        full_data = change_data_w()
+        #full_data = change_data_w()
         global_factor = input$global_factor
         #ratio_colnames = paste0('log2(',sym_times_cols,')')
         #per_colnames = paste0('per_',sym_times_cols)
-        
-        ratio_stat_data = melt(full_data, measure.vars = sym_cols())
+        full_data = change_data_l()
+        ratio_stat_data = full_data[full_data$variable %in% input$ratio_num,]
+        #ratio_stat_data = melt(full_data, measure.vars = sym_cols())
         #View(ratio_stat_data)
         #print(colnames(ratio_stat_data))
         #print(ratio_stat_data$value)
         #per_stat_data = melt(full_data, measure.vars = sym_per_colnames)
         time = sym_ratio_colnames[7]
-        for(time in sym_cols()){
+        for(time in input$ratio_num){
           time_data = ratio_stat_data[ratio_stat_data$variable == time,]
           #cmd = paste("anova_df = tidy(manova(cbind(variable,value) ~ ",global_factor,", data = stat_data))")
           anova_df_n = tryCatch(tidy(anova(lm(time_data$value ~ time_data[,global_factor]))), error = function(e) e = anova_df_b)
@@ -3079,18 +3353,21 @@ shinyServer(function(input, output) {
         
         #full_data = sym_df
         global_factor = 'HLAType'
-        full_data = change_data_w()
+        #full_data = change_data_w()
         ##View(full_data)
         global_factor = input$global_factor
-        sym_times_cols_selected = sym_cols()
+        #sym_times_cols_selected = sym_cols()
         #print(sym_times_cols_selected)
         #ratio_colnames = paste0('log2(',sym_times_cols_selected,')')
         #per_colnames = paste0('per_',sym_times_cols)
         
-        ratio_stat_data = melt(full_data, measure.vars = sym_times_cols_selected)
+        #ratio_stat_data = melt(full_data, measure.vars = sym_times_cols_selected)
+        full_data = change_data_l()
+        ratio_stat_data = full_data[full_data$variable %in% input$ratio_num,]
+        manova_df = pairwise_manova_function(ratio_stat_data,global_factor,input)
+        #manova_df$range = paste(sym_times_cols_selected,collapse = ', ')
+        manova_df$range = paste(input$ratio_num,collapse = ', ')
         
-        manova_df = pairwise_manova_function(ratio_stat_data,global_factor)
-        manova_df$range = paste(sym_times_cols_selected,collapse = ', ')
         manova_df
         
       })
@@ -3117,7 +3394,7 @@ shinyServer(function(input, output) {
         t_df = t_df_b
         #full_data = sym_df
         global_factor = "HLAType"
-        full_data = change_data_w()
+        full_data = change_data_l()
         
         #ratio_colnames = paste0('log2(',sym_times_cols,')')
         #per_colnames = paste0('per_',sym_times_cols)
@@ -3133,8 +3410,9 @@ shinyServer(function(input, output) {
         #time
         i = 1
         j = 2
-        ratio_data = melt(full_data,measure.vars = sym_cols())
-        for(time in sym_cols()){
+        #ratio_data = melt(full_data,measure.vars = sym_cols())
+        ratio_data = full_data[full_data$variable %in% input$ratio_num,]
+        for(time in input$ratio_num){
           time_data = ratio_data[ratio_data$variable == time,]
           for(i in c(1:l)){
             for(j in c(1:l)){
@@ -3180,7 +3458,7 @@ shinyServer(function(input, output) {
         t_df = t_df_b
         #full_data = sym_df
         global_factor = "HLAType"
-        full_data = change_data_w()
+        full_data = change_data_l()
         
         #ratio_colnames = paste0('log2(',sym_times_cols,')')
         #per_colnames = paste0('per_',sym_times_cols)
@@ -3196,8 +3474,9 @@ shinyServer(function(input, output) {
         #time
         i = 1
         j = 2
-        ratio_data = melt(full_data,measure.vars = sym_cols())
-        for(time in sym_cols()){
+        #ratio_data = melt(full_data,measure.vars = sym_cols())
+        ratio_data = full_data[full_data$variable %in% input$ratio_num,]
+        for(time in input$ratio_num){
           time_data = ratio_data[ratio_data$variable == time,]
           for(i in c(1:l)){
             #for(j in c(1:l)){
@@ -3291,7 +3570,7 @@ shinyServer(function(input, output) {
         significance_table_formatting_function(df,input$mtc)
         
       })
-      output$selected_manova_table_cluster = renderDataTable({
+      selected_manova_table_cluster = reactive({
         #data = pFEV_lf
         #data = pFEV_lf_r()
         data = change_data_l_clust()
@@ -3301,9 +3580,24 @@ shinyServer(function(input, output) {
         cols = factor(c(input$pre_range[1]:input$post_range[2]))
         function_data = data[data$variable %in% cols,]
         df = pairwise_manova_function(function_data,global_factor,input)
-        significance_table_formatting_function(df,input$mtc)
-        
+        df
+        #df = significance_table_formatting_function(df,input$mtc)
+        #df
+
       })
+      
+      output$selected_manova_table_cluster = renderDataTable({
+        df = selected_manova_table_cluster()
+        significance_table_formatting_function(df,input$mtc)
+        })
+      
+      output$selected_manova_table_cluster_download <- downloadHandler(
+        filename = 'manova_cluster.csv',
+        content = function(file) {
+          write.csv(selected_manova_table_cluster(), file)
+        }
+      )
+        
       
   
   # CLUSTERING ---------------------------------
@@ -3362,7 +3656,7 @@ shinyServer(function(input, output) {
             output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
 
             
-          output$discrete_cluster_plot = renderPlot({
+          discrete_cluster_plot = reactive({
               print('discrete_cluster_plot')
               D = discrete_cluster_D()$D
               dendr <- dendro_data(D, type = "rectangle") 
@@ -3370,11 +3664,16 @@ shinyServer(function(input, output) {
               cut = input$clutree_num
               cut
               p = dendrogram_plot_function(dendr,x_cluster,cut,input)
-              print(p)
-              
-
+              p
             })  
+          output$discrete_cluster_plot = renderPlot({discrete_cluster_plot()})
           
+          output$discrete_cluster_plot_download <- downloadHandler(
+            filename = 'dendogram.png',
+            content = function(file) {
+              ggsave(file,discrete_cluster_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
             
             output$discrete_x_table = renderDataTable({
               x_cluster = discrete_cluster_D()$x_cluster
@@ -3431,12 +3730,31 @@ shinyServer(function(input, output) {
             output$discrete_cutree_line = renderPlot(discrete_cutree_line_plots()$p)
             output$discrete_cutree_mean = renderPlot(discrete_cutree_line_plots()$s)
             
-            output$mix_clu = renderPlot({
+            mix_clu = reactive({
               data = discrete_cluster_D()$o_data
               weights = discrete_cluster_D()$weights
               D = discrete_cluster_D()$D
               mix.heatmap(data,dend.subjects = D,rowmar = 15,D.variables = NULL,legend.mat = T,varweights = weights)
-            })
+              
+              })
+            
+            output$mix_clu = renderPlot(mix_clu())
+            
+            
+            
+            output$mix_clu_download <- downloadHandler(
+              filename = 'clumix.png',
+              content = function(file) {
+                png(file, height = input$ggsave_height, width = input$ggsave_width, units = 'in', res = 300)
+                data = discrete_cluster_D()$o_data
+                weights = discrete_cluster_D()$weights
+                D = discrete_cluster_D()$D
+                mix.heatmap(data,dend.subjects = D,rowmar = 15,D.variables = NULL,legend.mat = T,varweights = weights)
+                
+                dev.off()
+                #ggsave(file,mix_clu(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+              }
+            )
   
             #### __DISTANCE SCATTER PLOTS ####
             
@@ -3456,7 +3774,9 @@ shinyServer(function(input, output) {
               ggplot(xy, aes(x, y, colour=cluster)) + 
                 geom_point(size=3)
             })
-            output$distance_density = renderPlot({
+            
+            
+            distance_density = reactive({
               xy = distance_model()
               #saveRDS(xy, 'temp/xy.rds')
               #xy = readRDS('temp/xy.rds')
@@ -3476,10 +3796,23 @@ shinyServer(function(input, output) {
                 }
               }
               
-              ggplot(data, aes(x, y, colour=cluster)) + 
+              p = ggplot(data, aes(x, y, colour=cluster)) + 
                 geom_point( size=3) +
                 geom_density2d(alpha=0.5)
+              p = p + ggtitle(input$distance_density_title)
+              p = p + xlab(input$distance_density_x)
+              p = p + ylab(input$distance_density_y)
+              p
             })
+            output$distance_density = renderPlot(distance_density())
+            output$distance_density_download <- downloadHandler(
+              filename = 'distance_density.png',
+              content = function(file) {
+                ggsave(file,distance_density(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+              }
+            )
+            
+            
             output$distance_polygon = renderPlot({
               xy = distance_model()
               ggplot(xy, aes(x, y, colour=cluster,fill = cluster)) + 
@@ -3517,6 +3850,8 @@ shinyServer(function(input, output) {
             df_tc = clust_comparison_total(df,'cluster')
             df_tc
           })
+            
+          
           
           output$cluster_analysis = DT::renderDataTable({
             df = cluster_analysis_total()
@@ -3524,6 +3859,14 @@ shinyServer(function(input, output) {
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
             proportion_table_formating_factor(df,col_range,colour,input$mtc)
           })
+          
+          output$cluster_analysis_download <- downloadHandler(
+            filename = 'chi_squared_factor_proportions.csv',
+            content = function(file) {
+              write.csv(cluster_analysis_total(), file)
+            }
+          )
+          
           cluster_analyis_selected_df = reactive({
             df = cluster_analysis_total()
             data = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
@@ -3547,6 +3890,7 @@ shinyServer(function(input, output) {
             df_tc = clust_comparison_within(df,'cluster',input)
             df_tc
           })
+        
 
           
           output$cluster_analysis_within_table = DT::renderDataTable({
@@ -3558,12 +3902,98 @@ shinyServer(function(input, output) {
             proportion_table_formating_within(df,col_range,colour,input$mtc)
           })
           
+          output$cluster_analysis_within_download <- downloadHandler(
+            filename = 'cluster_analysis_within_proportions.csv',
+            content = function(file) {
+              write.csv(cluster_analysis_within(), file)
+            }
+          )
           
           cluster_analysis_within_table_selected_df = reactive({
             df = cluster_analysis_within()
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
             df_selected
           })
+          
+          output$cluster_analysis_within_table_selected_table = DT::renderDataTable({
+            df = cluster_analysis_within_table_selected_df()
+            colour = 'lightblue'
+            col_range = c(3:(2+input$clutree_num)) # find a better way to do this
+            print(col_range)
+            print(colnames(df))
+            col_range = input$cluster_select_clusters
+            print(col_range)
+            proportion_table_formating_within(df,col_range,colour,input$mtc)
+          })
+          
+          
+          chisq_within_p = reactive({
+            data = cluster_analysis_within()
+            factors = unique(data$Factor)
+            factors
+            factor = factors[2]
+            factor
+            clusters = input$cluster_select_clusters
+            clusters
+            cluster = clusters[1]
+            df_p = data.frame(NULL)
+            df_p
+            for(factor in factors){
+              print(factor)
+              for(cluster in clusters){
+                print(cluster)
+                values = data[data$Factor == factor, cluster]
+                status = data[data$Factor == factor,'Status']
+                print(values)
+                values = values[!is.na(values)]
+                if(length(values) > 1){
+                  result = tidy(chisq.test(values))
+                  result_cols = colnames(result)
+                  result
+                  result$Factor = factor
+                  result$cluster = cluster
+                  result$proportions = paste(values,collapse = ', ')
+                  result$Status = paste(status,collapse = ', ')
+                  result
+                  if(dim(df_p)[1] == 0){
+                    df_p = result
+                    
+                  }else{
+                    df_p = rbind(df_p,result)
+                  }
+                }
+              }  
+            }
+            df_p = df_p[,c('cluster','Factor','Status','proportions',result_cols)]
+            colnames(df_p)
+            df_p
+          })
+          
+          output$cluster_analysis_within_p_table = DT::renderDataTable({
+            df = chisq_within_p()
+            significance_table_formatting_function(df,input$mtc)
+
+          })
+          
+          output$cluster_analysis_within_p_download <- downloadHandler(
+            filename = 'cluster_analysis_within_proportions_stat.csv',
+            content = function(file) {
+              write.csv(chisq_within_p(), file)
+            }
+          )
+          
+          cluster_analysis_within_p_table_selected_df = reactive({
+            df = chisq_within_p()
+            df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
+            df_selected
+          })
+          
+          output$cluster_analysis_within_p_table_selected_table = DT::renderDataTable({
+            df = cluster_analysis_within_p_table_selected_df()
+            significance_table_formatting_function(df,input$mtc)
+            
+          })
+     
 
           
           output$cluster_analysis_within_table_selected_table = DT::renderDataTable({
@@ -3603,12 +4033,27 @@ shinyServer(function(input, output) {
             chi_df
             significance_table_formatting_function(chi_df,input$mtc)
           })
-          output$chisq_cluster_full = renderDataTable({
+          
+         chisq_cluster_full = reactive({
             full_data = cluster_analysis_total()
             chi_df = chisq_total(full_data,input)
             chi_df
+            #significance_table_formatting_function(chi_df,input$mtc)
+          })
+          
+          output$chisq_cluster_full = renderDataTable({
+            chi_df = chisq_cluster_full()
             significance_table_formatting_function(chi_df,input$mtc)
           })
+          
+          output$chisq_cluster_full_download <- downloadHandler(
+            filename = 'chi_squared_factor_stat.csv',
+            content = function(file) {
+              write.csv(chisq_cluster_full(), file)
+            }
+          )
+          
+          
           output$chisq_cluster_within = renderDataTable({
             print('chisq_cluster_within')
             data = cluster_analysis_within_table_selected_df()
@@ -3622,6 +4067,13 @@ shinyServer(function(input, output) {
             chi_df
             significance_table_formatting_function(chi_df,input$mtc)
           })
+          
+          output$chisq_cluster_within_full_download <- downloadHandler(
+            filename = 'chi_squared_within_stat.csv',
+            content = function(file) {
+              write.csv(cluster_analysis_within(), file)
+            }
+          )
           
           ##### MANOVA #####
           
@@ -3690,7 +4142,7 @@ shinyServer(function(input, output) {
 
           })
           
-          output$continuous_manova_cluster = renderDataTable({
+          continuous_manova_cluster = reactive({
             full_data = change_data_w()
             cluster_data = full_data
             
@@ -3711,10 +4163,22 @@ shinyServer(function(input, output) {
               df = rbind(df,df_n[1,])
               
             }
-            significance_table_formatting_function(df,input$mtc)
+            df
+            #significance_table_formatting_function(df,input$mtc)
             
           })
         
+          output$continuous_manova_cluster = renderDataTable({
+            df = continuous_manova_cluster()
+            significance_table_formatting_function(df,input$mtc)
+          })
+          
+          output$continuous_manova_cluster_download <- downloadHandler(
+            filename = 'anova_cluster.csv',
+            content = function(file) {
+              write.csv(continuous_manova_cluster(), file)
+            }
+          )
  
 ########## BOS PLOTS ###########
 
@@ -4293,12 +4757,32 @@ shinyServer(function(input, output) {
     if(input$rename_clusters == T){
       cluster_name_list_full = c(cluster_name_list, sapply(length(cluster_name_list):input$clutree_num, function(i) paste('Cluster', i)))
       lapply(1:input$clutree_num, function(i) { 
-        column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
-                    choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
+        #column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
+        #            choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
+        column(4,textInput(paste0('cluster_', i), paste('Cluster', i),
+                             value = cluster_name_list_full[i]))
       })
     }
 
   })
+
+  custom_theme = reactive({
+    theme_replace(axis.title.x = element_text(size=input$axis_title_x,face = 'bold'))
+    theme_replace(axis.title.y = element_text(size=input$axis_title_y,angle = 90,face = "bold"))
+    theme_replace(axis.text.x = element_text(size=input$axis_text_x))
+    theme_replace(axis.text.y = element_text(size = input$axis_text_y, angle = 90))
+    theme_replace(plot.title = element_text(size = input$plot_title_size,hjust = input$plot_title_hjust, vjust = input$plot_title_vjust,face = 'bold'))
+    theme_replace(legend.title = element_text(size = input$legend_title_size, face = 'bold'))
+    theme_replace(legend.text=element_text(size=input$legend_text_size))
+    theme_replace(plot.margin = margin(t=20))
+    #theme_replace(plot.margin = margin(t=20, r = 20, b=40, l=20))
+    
+    th = theme_get()
+    th
+  })
+  
+  output$custom_theme = renderPrint(custom_theme())
+  
   
 
   #})

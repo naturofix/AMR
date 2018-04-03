@@ -4,9 +4,6 @@ shinyUI(fluidPage(
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
     column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
-    
-
-    
 
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
@@ -129,13 +126,32 @@ shinyUI(fluidPage(
                          tags$h5('Retained patient information'),
                   textOutput('pre_num_patients')),
                   column(12,
-                  textOutput('pre_patients_text'))
+                  textOutput('pre_patients_text')),
                   #uiOutput('scale_slide_1')
                   #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
                   
                   #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
                   #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
-                  
+                  tabsetPanel(
+                  # CUSTOMISE PLOTS ####
+                  tabPanel('Customize Plots',
+                           column(6,numericInput('ggsave_height','Save Height','9')),
+                           column(6,numericInput('ggsave_width','Save_Width Size','12')),
+                           
+                           column(4,numericInput('plot_title_size','Plot Title Size','20')),
+                           column(4,numericInput('plot_title_hjust','Plot Title hjust','0.5')),
+                           column(4,numericInput('plot_title_vjust','Plot Title vjust','4')),
+                           column(6,numericInput('legend_title_size','Legend Title Size','15')),
+                           column(6,numericInput('legend_text_size','Legend Title Size','12')),
+                           column(6,numericInput('axis_title_x','Size of X axis label','15')),
+                           column(6,numericInput('axis_title_y','Size of Y axis label','15')),
+                           column(6,numericInput('axis_text_x','Size of X axis','12')),
+                           column(6,numericInput('axis_text_y','Size of X axis','12')),
+                           
+                           
+                           verbatimTextOutput('custom_theme')
+                           
+                  ))
               ),
               
               tabPanel('Post Clustering Selection',
@@ -297,12 +313,29 @@ shinyUI(fluidPage(
                                
                                
                                column(12,uiOutput('name_clusters_ui')),
+                               column(12,tags$hr()),
                                column(12,
-                                      plotOutput('discrete_cluster_plot'),  
-                                      plotOutput('mix_clu'),
+                                      
+                                      column(5,textInput('discrete_cluster_title','Title','Patient Dendogram')),
+                                      column(3,textInput('discrete_cluster_x','x title','Patients')),
+                                      column(3,textInput('discrete_cluster_y','y title','Distance')),
+                                      column(1,radioButtons('patient_labels','Patient_label',c(T,F),selected = F,inline = F)),
                                       
                                       
-                                      plotOutput('distance_density'),
+                                      column(11,plotOutput('discrete_cluster_plot')),
+                                      column(1,downloadButton('discrete_cluster_plot_download','')),
+                                      column(12,tags$hr()),
+                                      column(11,plotOutput('mix_clu')),
+                                      column(1,downloadButton('mix_clu_download','')),
+                                      column(12,tags$hr()),
+                                      
+                                      column(6,textInput('distance_density_title','Title','Distance Density Plot')),
+                                      column(3,textInput('distance_density_x','x title','x')),
+                                      column(3,textInput('distance_density_y','y title','y')),
+                                  
+                                      column(11,plotOutput('distance_density')),
+                                      column(1,downloadButton('distance_density_download','')),
+                                      column(12,tags$hr()),
                                       
                                       radioButtons("data_select_clust", 'Select Data applied to plots below',
                                                    choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
@@ -313,11 +346,16 @@ shinyUI(fluidPage(
                                       
                                       tags$h5('Full Range'),
                                       plotOutput('boxplot_pFEV_cluster_full'),
-                                      tags$h5(textOutput('manova_clustering_text')),
-                                      dataTableOutput('selected_manova_table_cluster'),
+                                      column(12,tags$hr()),
+                                      column(12,tags$h5(textOutput('manova_clustering_text'))),
+                                      column(11,dataTableOutput('selected_manova_table_cluster')),
+                                      column(1,downloadButton('selected_manova_table_cluster_download','')),
                                       
-                                      tags$h5('ANOVA of continuous variables across clusters'),
-                                      dataTableOutput('continuous_manova_cluster')
+                                      column(12,tags$hr()),
+                                      column(12,tags$h5('ANOVA of continuous variables across clusters')),
+                                      column(11,dataTableOutput('continuous_manova_cluster')),
+                                      column(1,downloadButton('continuous_manova_cluster_download',''))
+                                      
                                ))# column(12)
                                
                         ), # Dendogram
@@ -330,16 +368,24 @@ shinyUI(fluidPage(
                                    tabsetPanel(
                                      tabPanel('Proportions',
                                               
-                                              tags$h6('Chi-squared used to determines if the proportions of a specific factor criteria is randomly distributed between clusters. Proportions of each row sums to 100. Random would equate to equal propotions across clusters. Chi-squared tests if the deviation from random is significant.'),
+                                              tags$h6('Chi-squared used to determines if the proportions of a single factor criteria is randomly distributed between clusters. Proportions of each row sums to 100. Random would equate to equal propotions across clusters. Chi-squared tests if the deviation from random is significant.'),
                                               tabsetPanel(
                                                 tabPanel('Selected',dataTableOutput('cluster_analyis_selected_table')),
-                                                tabPanel('Full',dataTableOutput('cluster_analysis')))),
-                                     tabPanel('Stat',
-                                              tags$h6('Chi-squared used to determines if the proportions between factor criteria are significantly different from each other.'),
+                                                tabPanel('Full',
+                                                         column(11,dataTableOutput('cluster_analysis')),
+                                                         column(1,downloadButton('cluster_analysis_download',''))
+                                                         
+                                                         ))),
+                                     tabPanel('Matrix',
+                                              tags$h6('Chi-squared used to determines if the matrix of proportions between factors within a variable across clusters are significantly different from each other.'),
                                               
                                               tabsetPanel(
                                                 tabPanel('Selected',dataTableOutput('chisq_cluster')),
-                                                tabPanel('Full',dataTableOutput('chisq_cluster_full')     
+                                                tabPanel('Full',
+                                                                  
+                                                    column(11,dataTableOutput('chisq_cluster_full')),
+                                                    column(1,downloadButton('chisq_cluster_full_download',''))
+                                                       
                                                 )))
                                    )),
                           tabPanel('Cluster',
@@ -348,61 +394,208 @@ shinyUI(fluidPage(
                                    tabsetPanel(
                                      tabPanel('Proportions',
                                               tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
+                                              tags$div(
+                                                HTML(paste(tags$span(style="color:red", 'Not sure the p values here are valid, the proportions are calculated for each factor within a cluster (down). These p values can be see in Stat -> Proportions. Here the p values are calculated across the clusters')))
+                                              ),
                                               tabsetPanel(
                                                 tabPanel('Selected',dataTableOutput('cluster_analysis_within_table_selected_table')),
-                                                tabPanel('Full',dataTableOutput('cluster_analysis_within_table'))
+                                                tabPanel('Full',
+                                                         column(11,dataTableOutput('cluster_analysis_within_table')),
+                                                         column(1,downloadButton('cluster_analysis_within_table_download',''))
+                                                         
+                                                         )
                                               )),
                                      tabPanel("Stat",
-                                              tags$h6('Chi-squared used to determines if the factor criteria proportions between clusters are signficantly different from each factor. The clusters can be selected to determine if there are specific differences between clusters.'),
-                                              
                                               tabsetPanel(
-                                                tabPanel('Selected',dataTableOutput('chisq_cluster_within')),
-                                                tabPanel('Full',dataTableOutput('chisq_cluster_within_full'))
+                                              tabPanel('Proportions',
+                                                       tabsetPanel(
+                                                         tabPanel('Selected', dataTableOutput('cluster_analysis_within_p_table_selected_table')),
+                                                         tabPanel('Full',
+                                                            column(11,dataTableOutput('cluster_analysis_within_p_table')),
+                                                            column(1,downloadButton('cluster_analysis_within_p_download'))
+                                                         )
+                                                       )),
+                                              tabPanel('Matrix',
+                                                tags$h6('Chi-squared used to determines if the matrix of factor criteria proportions between clusters are signficantly different from each factor. The clusters can be selected to determine if there are specific differences between clusters.'),
+                                                
+                                                tabsetPanel(
+                                                  tabPanel('Selected',dataTableOutput('chisq_cluster_within')),
+                                                  tabPanel('Full',
+                                                           column(11,dataTableOutput('chisq_cluster_within_full')),
+                                                           column(1,downloadButton('chisq_cluster_within_full_download',''))
+                                                           
+                                                           )
+                                                ))
                                               ))
                                    ))
-                        ))# chi-squared
+                        )),# chi-squared
+               
+               # _Continuous Variable #####
+               tabPanel('Continuous Variables', tabsetPanel(
+                 # __Mean Table ##############
+                 tabPanel('Mean Table',
+                          
+                          dataTableOutput('pFEV_mean_table')
+                 ),
+                 # __ANOVA ###################
+                 tabPanel('ANOVA',
+                          #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
+                          
+                          #column(12,uiOutput("cluster_select_clusters_anova")),
+                          tabsetPanel(
+                            tabPanel('Individual',
+                                     selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
+                                     
+                                     plotOutput('anova_cluster_plot'),
+                                     dataTableOutput('continuous_manova_single')
+                            ),
+                            tabPanel('Full',dataTableOutput('continuous_manova_full'))
+                          )
+                 )
+               )
 
              ) 
-    ), #Clustering
+    )), #Clustering
     
-  ##### PLOTS ######
+  ##### POST CLUSTERING ANALSYSI ######
     tabPanel('Post Clustering Analysis',
              radioButtons('data_source','Select Data Type',c('pFEV1','pFVC','pRatio'),inline = T),
              radioButtons("data_select", 'Select Data',
                           choiceNames = list('original',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
                           choiceValues = list('none',"i",'i_NA', 'sm_i', 'd1','d1_ri','d2'),inline = T,selected = 'i'),
-             radioButtons('calc_select','Select Calculations',c('none','log2zero','per2zero','ratio','per','log','per_rel','ratio_rel'),inline = T),
+             radioTooltip(id = "data_select", choice = "none", title = "Original Data", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "i", title = "Imputed from original data to fill in missing values", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "i_NA", title = "NOT WORKING : Imputed data removed after last original value, to remove patients that had died", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "sm_i", title = "Imputed data smoothed", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "d1", title = "First Differential of imputed smoothed data", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "d1_r1", title = "NOT WORKING", placement = "right", trigger = "hover"),
+             radioTooltip(id = "data_select", choice = "d2", title = "Second Differential of imputed smoothed data", placement = "right", trigger = "hover"),
              
+             
+             #column(3,
+            #        radioButtons("radioSelection", label = "So many options!", choices = c("A", "B", "C"))
+             #),
+            # radioTooltip(id = "radioSelection", choice = "A", title = "Button 1 Explanation", placement = "right", trigger = "hover"),
+            # radioTooltip(id = "radioSelection", choice = "B", title = "Button 2 Explanation", placement = "right", trigger = "hover"),
+            # radioTooltip(id = "radioSelection", choice = "C", title = "Button 3 Explanation", placement = "right", trigger = "hover"),
+             
+             
+             
+             radioButtons('calc_select','Select Calculations',
+                          choiceNames = list('none','log2zero','per2zero','ratio(post/pre)','percentage(post/pre)','log2(ratio)','relative percentage','relative log2(ratio)'),
+                          choiceValues = list('none','log2zero','per2zero','ratio','per','log','per_rel','ratio_rel'),
+                          inline = T),
+                radioTooltip(id = "calc_select", choice = "none", title = "no manipulation of data", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "log2zero", title = "log2(treatment (zero) timepoint / pre treatment timepoint)     --or--    log2(post treatment timepoint / treatment (zero) timepoint) ", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "per2zero", title = "(treatment (zero) timepoint - pre treatment timepoint)/pre treatment timepoint * 100   --or--    (post treatment timepoint - treatment (zero) timepoint) / treatment (zero) timepoint * 100 ", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "ratio", title = "post treatment timepoint / pre treatment timepoint", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "log", title = "log2(post treatment timepoint / pre treatment timepoint)", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "per", title = "(post treatment timepoint / pre treatment timepoint) / pre treatment timepoint * 100", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "per_rel", title = "(per post timepoint / per pre timepoint) / abs(per pre timepoint) * 100", placement = "right", trigger = "hover"),
+                radioTooltip(id = "calc_select", choice = "ratio_rel", title = "pre log2zero - post log2zero", placement = "right", trigger = "hover"),
+            
    
-             tabsetPanel(
+             tabsetPanel(selected = 'Statistics',
+                         
+    ##### _PLOTS####                     
+    tabPanel('Data Matrix', dataTableOutput('data_matrix')),
     tabPanel('Plots',
+             tabsetPanel(
+               tabPanel('Line Plot',
+                        
+                        column(12,tags$hr()),
+                        column(6,uiOutput('line_pFEV_title_ui')),
+                        column(3,textInput('line_pFEV_x','x title','months')),
+                        column(3,uiOutput('line_pFEV_y_ui')),
+                        
+                        column(11,plotOutput('line_pFEV')),
+                        column(1,downloadButton('line_pFEV_download','')),
+            
+                        
+                        column(12,tags$hr()),
+                        column(6,uiOutput('smooth_line_pFEV_title_ui')),
+                        column(3,textInput('smooth_line_pFEV_x','x title','months')),
+                        column(3,uiOutput('smooth_line_pFEV_y_ui')),
+                        
+                        column(11,plotOutput('smooth_line_pFEV')),
+                        column(1,downloadButton('smooth_line_pFEV_download','')),
+                        column(12,tags$hr())
+                        
+                        
+                        
+               ),
+               tabPanel('Boxplot',
+                        #column(12,
+                        
+                        column(6,uiOutput('boxplot_pFEV_title_ui')),
+                        column(3,textInput('boxplot_pFEV_x','x title','months')),
+                        column(3,uiOutput('boxplot_pFEV_y_ui')),
+                        
+                        #column(6,textInput('boxplot_pFEV_title','Title',paste(select_matrix(), 'boxplot'))),
+                        #column(3,textInput('boxplot_pFEV_x','x title','months')),
+                        #column(3,textInput('boxplot_pFEV_y','y title',gsub('_matrix','',select_matrix()))),
 
-              column(12,
-                     tabsetPanel(
+                        column(11,plotOutput('boxplot_pFEV')),
+                        column(1,downloadButton('boxplot_pFEV_download','')),
+                        column(12,tags$hr()),
+
+
+                        column(6,uiOutput('boxplot_pFEV_mean_title_ui')),
+                        column(3,textInput('boxplot_pFEV_mean_x','x title','months')),
+                        column(3,uiOutput('boxplot_pFEV_mean_y_ui')),
+
+                        #column(6,textInput('boxplot_pFEV_mean_title','Title',paste(select_matrix(), 'boxplot mean'))),
+                        #column(3,textInput('boxplot_pFEV_mean_x','x title','months')),
+                        #column(3,textInput('boxplot_pFEV_mean_y','y title',gsub('_matrix','',select_matrix()))),
+                        
+                        
+                        column(11,plotOutput('boxplot_pFEV_mean')),
+                        column(1,downloadButton('boxplot_pFEV_mean_download','')),
+                        column(12,tags$hr())
+
+
+               )
+               )),
+             
+             
+             #uiOutput('line_pFEV_ui')),
+
+              # column(12,
+              #        tabsetPanel(
+              #          tabPanel('plot',uiOutput('line_pFEV_ui')),
 
                     ######## _LINE PLOTS ###########
                     
 
                     
-                    tabPanel('Line Plot',
-                             
-                             column(12,plotOutput('line_pFEV')),
-                             column(12,plotOutput('smooth_line_pFEV'))
-                             
-                             ),
+                    # tabPanel('Line Plot',
+                    #          
+                    #          column(12,tags$hr()),
+                    #          
+                    #          #column(6,textInput('line_pFEV_title','Title','Distance Density Plot')),
+                    #          #column(3,textInput('line_pFEV_x','x title','x')),
+                    #          #column(3,textInput('line_pFEV_y','y title','y')),
+                    #          uiOutput('line_pFEV_ui'),
+                    #          column(11,plotOutput('line_pFEV')),
+                    #          column(1,downloadButton('line_pFEV_download','')),
+                    #          column(12,tags$hr()),
+                    #          
+                    #          column(12,plotOutput('smooth_line_pFEV'))
+                    #          
+                    #          ),
                     ######## _BOXPLOTS ##########
-                    tabPanel('Boxplot',
-                             column(12,
-                                    plotOutput('boxplot_pFEV'),
-                                    plotOutput('boxplot_pFEV_mean'))
-                             
-                             ),
-                    tabPanel('Interaction',
-                             HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor.")),
-                             column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
-                             
-                             plotOutput('interaction_plot')
-                             )))),
+                    # tabPanel('Boxplot',
+                    #          column(12,
+                    #                 plotOutput('boxplot_pFEV'),
+                    #                 plotOutput('boxplot_pFEV_mean'))
+                    #          
+                    #          ),
+                    # tabPanel('Interaction',
+                    #          HTML(paste("The primary separation factor is separated into different plots. The Interactors Selector box is used to choose additional factors. Mean line plots are then generated illustrating the how these factors separate the data within the main factor.")),
+                    #          column(3,selectInput('interactors','Ineteractors',c(full_factor_columns,'cluster','cluster_d1'),multiple = T,selected = 'Status')),
+                    #          
+                    #          plotOutput('interaction_plot')
+                    #          )))),
                     
 
       ############## STAT ################
@@ -428,10 +621,26 @@ shinyUI(fluidPage(
                                                                
                                                                tabsetPanel(
                                                                    tabPanel('Selected',
-                                                                          plotOutput('boxplot_pp_zero'),
+                                                                            column(12,tags$hr()),
+                                                                            column(6,uiOutput('boxplot_pp_zero_title_ui')),
+                                                                            column(3,uiOutput('boxplot_pp_zero_x_ui')),
+                                                                            column(3,uiOutput('boxplot_pp_zero_y_ui')),
+                                                                            #uiOutput('boxplot_pp_zero_x_ui'),
+                                                                            #column(3,textInput('line_pFEV_x','x title','months')),
+                                                                            #column(3,textInput('line_pFEV_y','y title',gsub('_matrix','',select_matrix()))),
+                                                                            
+                                                                            column(11,plotOutput('boxplot_pp_zero')),
+                                                                            column(1,downloadButton('boxplot_pp_zero_download','')),
+                                                                            column(12,tags$hr()),
+                                                                          
+                                                                          #plotOutput('boxplot_pp_zero'),
                                                                           dataTableOutput('pp_t_table_zero')
                                                                    ),
-                                                                   tabPanel('Full',dataTableOutput("pp_t_test_zero_full"))
+                                                                   tabPanel('Full',
+                                                                            column(11,dataTableOutput("pp_t_test_zero_full")),
+                                                                            column(1,downloadButton('pp_t_test_zero_full_download',''))
+                                                                            
+                                                                   )
                                                                )
                                                       ),
                                                       tabPanel('Post / Treatment vs Treatment / Pre',
@@ -443,7 +652,7 @@ shinyUI(fluidPage(
                                                                           plotOutput('percentage_boxplot'),
                                                                           dataTableOutput('percentage_table')
                                                                           ),
-                                                                 tabPanel('Data', dataTableOutput('percentage_df')),
+                                                                 #tabPanel('Data', dataTableOutput('percentage_df')),
                                                                  tabPanel('Full', dataTableOutput('percentage_change_t_test_full'))
                                                                )
                                                                ),
@@ -456,10 +665,21 @@ shinyUI(fluidPage(
                                                                                 
                                                                                 tabsetPanel(
                                                                                   tabPanel('Selected',
-                                                                                           plotOutput('boxplot_pp_ranges'),
+                                                                                           column(12,tags$hr()),
+                                                                                           column(6,uiOutput('boxplot_pp_ranges_title_ui')),
+                                                                                           column(3,uiOutput('boxplot_pp_ranges_x_ui')),
+                                                                                           column(3,uiOutput('boxplot_pp_ranges_y_ui')),
+                              
+                                                                                           column(11,plotOutput('boxplot_pp_ranges')),
+                                                                                           column(1,downloadButton('boxplot_pp_ranges_download','')),
+                                                                                           column(12,tags$hr()),
+                                                                                           
+                                                                                         
                                                                                            dataTableOutput('pp_t_table_ranges')
                                                                                   ),
-                                                                                  tabPanel('Full',dataTableOutput('pp_t_test_ranges_full'))
+                                                                                  tabPanel('Full',
+                                                                                           column(11,dataTableOutput('pp_t_test_ranges_full')),
+                                                                                           column(1,downloadButton('pp_t_test_ranges_full_download','')))
                                                                                   
                                                                                 )
                                                                                 
@@ -487,13 +707,14 @@ shinyUI(fluidPage(
                                                                                    #              choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
                                                                                    #              choiceValues = list("sym_ratio_colnames",'sym_log_ratio_colnames','sym_per_colnames', 'sym_rel_per_colnames'), select ='sym_rel_per_colnames', inline = T),
                                                                                    # 
-                                                                                   radioButtons("col_select_prefix", 'Ratio generated by equation described below',
-                                                                                                choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
-                                                                                                choiceValues = list("ratio_",'log2_','per_', 'per_rel_'), select ='log2_', inline = T),
-                                                                                   selectInput('ratio_num','timepoints',sym_times_cols,multiple = T,selected = sym_times_cols,width = 600),
+                                                                                   #radioButtons("col_select_prefix", 'Ratio generated by equation described below',
+                                                                                  #              choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
+                                                                                  #              choiceValues = list("ratio_",'log2_','per_', 'per_rel_'), select ='log2_', inline = T),
+                                                                                  uiOutput('ratio_input_ui'),
+                                                                                  #selectInput('ratio_num','timepoints',sym_times_cols,multiple = T,selected = sym_times_cols,width = 600),
                                                                                    
                                                                                    #tags$h4('Ratios generates symmetrically across treatment i.e(-3/3) and then statistics performed on these ratios'),
-                                                                                   tags$h5(textOutput('sym_equation')),
+                                                                                   #tags$h5(textOutput('sym_equation')),
                                                                                    uiOutput('scale_slide'),
                                                                                    
                                                                                    plotOutput('sym_ratio_boxplot'),
@@ -593,33 +814,10 @@ shinyUI(fluidPage(
                                                               )
                                                  ))
                                       ))
-                             ),
-                             # Continuous Variable #####
-                             tabPanel('Continuous Variables', tabsetPanel(
-                               # _Mean Table ##############
-                               tabPanel('Mean Table',
-                                        
-                                        dataTableOutput('pFEV_mean_table')
-                               ),
-                               # _ANOVA ###################
-                               tabPanel('ANOVA',
-                                        #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
-                                        
-                                        #column(12,uiOutput("cluster_select_clusters_anova")),
-                                        tabsetPanel(
-                                          tabPanel('Individual',
-                                                   selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
-                                                   
-                                                   plotOutput('anova_cluster_plot'),
-                                                   dataTableOutput('continuous_manova_single')
-                                          ),
-                                          tabPanel('Full',dataTableOutput('continuous_manova_full'))
-                                        )
-                               )
                              ))
                              )
                              
-                    ),#Stats
+                    )),#Stats
                     
                     
 
@@ -671,13 +869,14 @@ shinyUI(fluidPage(
                         plotOutput('bos3_surv_factor_plot_smooth')
                )
              )
-             ))), # BOSS
+             ), # BOSS
 
           
 
     ######### R SESSION INFO #########
           tabPanel('R Info',
           tabsetPanel(selected = info_tab,
+
           tabPanel('Session Info',
                               htmlOutput('citation1')
                               

@@ -33,11 +33,12 @@ library(ggdendro)
 library(zoo)
 library(broom)
 library(ggsignif)
+library(shinyBS)
 
 
 
 
-
+original_theme = theme_get()
 
 source('functions.R')
 source('defaults.R')
@@ -49,7 +50,7 @@ info_tab = 'Session Info'
 
 defaults = 'David'
 save_workspace = F
-read_workspace = F
+read_workspace = T
 save_data = F
 
 #display_data_tables = F
@@ -870,7 +871,7 @@ if(read_workspace == T){
         eval(parse(text = cmd))
         entry_name = gsub('_matrix','',matrix_entry)
         
-        # ZERO DATA #####
+        # ZERO DATA #########
         pre_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n < 0]
         pre_times
         post_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n > 0]
@@ -948,7 +949,7 @@ if(read_workspace == T){
               post = per_data[,paste0(as.character((i)))]
       
               
-              ratio = (post-pre)/abs(post)*100
+              ratio = (post-pre)/abs(pre)*100
               ratio[is.nan(as.numeric(ratio))] = NA
               ratio[is.infinite(ratio)] = NA
               ratio_df[,paste0(i)] = ratio
@@ -1059,7 +1060,7 @@ if(read_workspace == T){
   }
   
   #View(processed_long)
-  
+  ### GGplot set theme ###
   
   if(save_workspace == T){
     print('save workspace')

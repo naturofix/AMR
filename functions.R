@@ -1,6 +1,20 @@
 
 
 #### save variable functions ####
+#save_plot_function = function(){
+  
+  # column(12,tags$hr()),
+  # 
+  # column(6,textInput('distance_density_title','Title','Distance Density Plot')),
+  # column(3,textInput('distance_density_x','x title','x')),
+  # column(3,textInput('distance_density_y','y title','y')),
+  # 
+  # column(11,plotOutput('distance_density')),
+  # column(1,downloadButton('distance_density_download','')),
+  # column(12,tags$hr()),
+  
+#}
+
 save_varaible_code = function(){
   
   
@@ -330,8 +344,8 @@ renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
   }
 }
 
-line_plot_function = function(plot_data,title,input){
-  save_test = T
+line_plot_function = function(plot_data,title,input,xlab = '',ylab = ''){
+  save_test = F
   if(save_test == T){
     variable_list = c('plot_data','title')
     cmd_list = save_variable_function(variable_list)
@@ -356,12 +370,15 @@ line_plot_function = function(plot_data,title,input){
     geom_point(aes_string(col = input$global_factor)) +
     stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
     
-    theme(axis.text.x = element_text(size=8, angle=90)) +
+    #theme(axis.text.x = element_text(size=8, angle=90)) +
     xlim(input$pre_range[1],input$post_range[2]) +
-    ggtitle(title)
+    ggtitle(title) + 
+    xlab(xlab)+
+    ylab(ylab)
+    
 }
 
-smooth_line_plot_function = function(plot_data,title,input){
+smooth_line_plot_function = function(plot_data,title,input,xlab = '',ylab = ''){
   global_factor = 'Status'
   global_factor = input$global_factor
   ggplot(plot_data, aes_string(x = 'time', y = 'value', col = global_factor )) + 
@@ -373,7 +390,9 @@ smooth_line_plot_function = function(plot_data,title,input){
     
     theme(axis.text.x = element_text(size=8, angle=90)) +
     xlim(input$pre_range[1],input$post_range[2]) +
-    ggtitle(title)
+    ggtitle(title)+
+    xlab(xlab)+
+    ylab(ylab)
 }
 
 
@@ -399,19 +418,44 @@ D_line_plot_function = function(plot_data,title,input){
     ggtitle(title)
 }
 
-boxplot_function = function(full_data,title,input){
+boxplot_function = function(full_data,title,input,xlab = '', ylab = ''){
+  save_test = F
+  if(save_test == T){
+    variable_list = c('full_data','title','xlab','ylab')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list,'input')
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
+    }
+  }
+  
+  
   cols = factor(c(input$pre_range[1]:input$post_range[2]))
   plot_data = full_data[full_data$variable %in% cols,]
+  #plot_data$value = as.numeric(plot_data$value)
+  plot_data$variable = as.factor(plot_data$variable)
+  #plot_data$cluster = as.factor(plot_data$cluster)
+  #str(plot_data)
   scale_cols = pFEV_numeric_colnames_f[pFEV_numeric_colnames_f %in% cols]
-  ggplot(plot_data, aes(x = variable, y = value)) + 
-    
+  ggplot(plot_data, aes_string(x = 'variable', 
+                               col = input$global_factor,
+                               y = 'value'
+                               )) + 
+
     geom_boxplot(aes_string(col = input$global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
     theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
-    #geom_vline(aes(xintercept = which(levels(plot_data$variable) == '0'))) +
-    
-    ggtitle(title)
+    ggtitle(title) + 
+    xlab(xlab) + 
+    ylab(ylab)
 }
 
 boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
@@ -936,7 +980,7 @@ boxplot_pp_ranges_function = function(full_data,pre1,pre2,post1,post2,global_fac
   return(pp_data)
 }
 
-t_boxplot_function = function(pp_data,global_factor){
+t_boxplot_function = function(pp_data,global_factor,title = '',xlab = '',ylab = ''){
   #sig_col = c("white", "blanchedalmond")
   #if(!(0 %in% pp_data$significant)){
   #  sig_col = c("blanchedalmond")
@@ -949,7 +993,10 @@ t_boxplot_function = function(pp_data,global_factor){
   p = ggplot(pp_data, aes_string(x = 'treat',y = 'value',col=global_factor)) +
     facet_grid(. ~ Status) + 
     labs(col = global_factor) +
-    geom_boxplot() 
+    geom_boxplot() + 
+    ggtitle(title) + 
+    xlab(xlab) + 
+    ylab(ylab)
     #scale_fill_manual(values = sig_col)
   
   return(p)
@@ -1171,8 +1218,10 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
     pre_data = full_data$value[full_data[,factor] == entry & full_data$variable == t1]
     zero = full_data$value[full_data[,factor] == entry & full_data$variable == 0]
     post_data = full_data$value[full_data[,factor] == entry & full_data$variable == t2]
-    df1 = data.frame(Factor = factor, Status = entry,pre = pre_data,zero = zero,post = post_data)
-    
+    df1 = data.frame(Factor = factor, Status = entry,pre = pre_data,zero = zero, post = post_data)
+    #cmd = paste("df1 = data.frame(Factor = factor, Status = entry,",col1," = pre_data,zero = zero, ",col2," = post_data)")
+    #print(cmd)
+    #eval(parse(text = cmd))
     df = rbind(df,df1)
   }
   df_m = melt(df)
@@ -1198,7 +1247,7 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   return(df_m)
 }
 
-boxplot_pp_zero_plot_function = function(df_m){
+boxplot_pp_zero_plot_function = function(df_m,title = '',xlab = '',ylab = ''){
   #View(df_m)
   u = as.numeric(as.character(unique(df_m$Status)))
   u = factor(u[(order(u))])
@@ -1210,7 +1259,10 @@ boxplot_pp_zero_plot_function = function(df_m){
   p = ggplot(df_m, aes(x = variable,y=value,col=Status)) +
     geom_hline(yintercept=0)+
     geom_boxplot() +
-    facet_grid(. ~ Status)
+    facet_grid(. ~ Status) + 
+    ggtitle(title) + 
+    xlab(xlab) + 
+    ylab(ylab)
     #scale_x_discrete(limits = u)
     #scale_fill_manual(values = sig_col)
   
@@ -1691,19 +1743,40 @@ clust_comparison_within = function(df,clust_col,input){
   data = data[c(2:dim(data)[1]),]
   data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
   data = data[order(data$Factor,data$Status),]
-  data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
+  #data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
+
+  data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
+  #p.value
   return(data)
 }
 
 
 chisq_total = function(full_data,input){
+  save_test = F
+  if(save_test == T){
+    variable_list = c('full_data')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list,'input')
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
+    }
+  }
     cluster_list = c(3:(2+length(input$cluster_select_clusters))) #set by the table in 
+    cluster_list
     full_test_data = full_data[,cluster_list]
     full_test_data[is.na(full_test_data)] = 0
     chisq_result = chisq.test(full_test_data)
     chi_df = tidy(chisq_result)
     chi_df$Factor = 'All'
-    
+    chi_df$Status = 'All'
+    chi_df
     for(selected_factor in unique(full_data$Factor)){
       sub_data = full_data[full_data$Factor == selected_factor,]
       test_data = sub_data[,cluster_list]
@@ -1712,11 +1785,14 @@ chisq_total = function(full_data,input){
       
       chisq_result = tidy(chisq.test(test_data))
       chisq_result$Factor = selected_factor
+      status = paste(full_data$Status[full_data$Factor == selected_factor], collapse = ', ')
+      #status = status[!is.na(status)]
+      chisq_result$Status = status
       
       chi_df = rbind(chi_df,chisq_result)
     }
     chi_df$Cluster = paste(colnames(test_data),collapse=', ')
-    chi_df = chi_df[,c('Factor','Cluster',colnames(chi_df[c(1:(length(colnames(chi_df))-2))]))]
+    chi_df = chi_df[,c('Factor','Status','Cluster',colnames(chi_df[c(1:(length(colnames(chi_df))-2))]))]
     chi_df$p.value = signif(chi_df$p.value,3)
     chi_df$statistic = signif(chi_df$statistic,3)
     
@@ -1745,7 +1821,7 @@ chisq_within = function(data,input){
       print(cmd)
       eval(parse(text = cmd))
     }
-    input = readRDS('temp/save_input.rds')
+    #input = readRDS('temp/save_input.rds')
     
     
   }
@@ -1754,7 +1830,7 @@ chisq_within = function(data,input){
   factor_list = unique(data$Factor)
   factor_list
   
-  full_test_data = data[,cluster_list]
+  full_test_data = data[,input$cluster_select_clusters]
   full_test_data[is.na(full_test_data)] = 0
   full_test_data = t(full_test_data)
   
@@ -1765,14 +1841,20 @@ chisq_within = function(data,input){
  #print(chi_df)
   
   for(selected_factor in factor_list){
+    print(selected_factor)
     sub_data = data[data$Factor == selected_factor,]
     test_data = t(sub_data[,cluster_list])
+    print(test_data)
     test_data[is.na(test_data)] = 0
-    chisq_result = tidy(chisq.test(test_data))
-    chisq_result$Cluster = paste(cluster_list,collapse = ', ')
-    chisq_result$Factor = selected_factor
+    print(test_data)
+    if(sum(as.matrix(test_data)) > 0){
+      chisq_result = tidy(chisq.test(test_data))
+      chisq_result$Cluster = paste(cluster_list,collapse = ', ')
+      chisq_result$Factor = selected_factor
+      
+      chi_df = rbind(chi_df,chisq_result)
+    }
     
-    chi_df = rbind(chi_df,chisq_result)
   }
   
   chi_df = chi_df[,c('Cluster','Factor',colnames(chi_df[c(1:(length(colnames(chi_df))-2))]))]
@@ -1830,22 +1912,27 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,input){
       eval(parse(text = cmd))
     }
   }
-
+  clusters = unique(data$cluster)
+  clusters = clusters[!is.na(clusters)]
   p = ggplot() +
-    geom_segment(data = data, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) +
-    geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
+    geom_segment(data = data, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T)
+    if(input$patient_labels == T){
+    p = p + geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
               hjust = 1,angle = 90, size = 5, show.legend = F) +
-    scale_y_continuous(expand = c(.2, 0))+
-    #scale_color_discrete(breaks = data$cluster) +
-    theme(axis.line.y = element_blank(),
-          axis.title.y = element_blank(),
+      scale_y_continuous(expand = c(.2, 0))
+    }
+    p = p + scale_color_discrete(breaks = clusters)
+    p = p + theme(axis.line.y = element_blank(),
+          #axis.title.y = input$discrete_cluster_y,
           axis.ticks.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
+          #axis.title.x = input$discrete_cluster_x,
           panel.background = element_rect(fill = "white"),
-          panel.grid = element_blank()
+          panel.grid = element_blank())
+    p = p + ggtitle(input$discrete_cluster_title)
+    p = p + xlab(input$discrete_cluster_x)
+    p = p + ylab(input$discrete_cluster_y)
           
-    )
   print(p)
   return(p)
 }
@@ -3304,4 +3391,24 @@ processed_data_long_function = function(processed_data){
       
     }
   return(processed_long)
+}
+
+radioTooltip <- function(id, choice, title, placement = "bottom", trigger = "hover", options = NULL){
+  
+  options = shinyBS:::buildTooltipOrPopoverOptionsList(title, placement, trigger, options)
+  options = paste0("{'", paste(names(options), options, sep = "': '", collapse = "', '"), "'}")
+  bsTag <- shiny::tags$script(shiny::HTML(paste0("
+                                                 $(document).ready(function() {
+                                                 setTimeout(function() {
+                                                 $('input', $('#", id, "')).each(function(){
+                                                 if(this.getAttribute('value') == '", choice, "') {
+                                                 opts = $.extend(", options, ", {html: true});
+                                                 $(this.parentElement).tooltip('destroy');
+                                                 $(this.parentElement).tooltip(opts);
+                                                 }
+                                                 })
+                                                 }, 500)
+                                                 });
+                                                 ")))
+  htmltools::attachDependencies(bsTag, shinyBS:::shinyBSDep)
 }

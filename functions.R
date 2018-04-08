@@ -196,6 +196,8 @@ makePlotContainers <- function(plot_name_list, prefix="individual") {
   lst <- lapply(plot_name_list, function(plot_name) {
     output_name = paste(plot_name,prefix,sep = '_')
     print(output_name)
+  
+    textInput(paste(plot_name,prefix,'title',sep = '_'),'Title','Title')
     plotOutput(paste(plot_name,prefix,sep = '_'),height = 500)
   })
   
@@ -214,7 +216,7 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
   read_test = F
   if(read_test == T){
     #variable_list = c('m','data_df','sample_list','gene_list','sample_path_line','prefix')
-    
+    variable_list = c(variable_list,'input')
     cmd_list = read_variable_function(variable_list)
     
     for(cmd in cmd_list){
@@ -222,7 +224,7 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
     }
     #sapply(cmd_list, function(cmd) eval(parse(text = cmd)))
     
-    input = readRDS('temp/save_input.rds')
+    #input = readRDS('temp/save_input.rds')
   }
   
   #boxplot_path = sample_path_line
@@ -256,6 +258,7 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
       #full_data = processed_long
       
       data = full_data[full_data$MRN %in% patient,]
+      colnames(data)
       #print(dim(data))
 
       cols = data$time
@@ -327,11 +330,34 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
   }
 }
 
+
+
+
+
 renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
+  
+  save_test = F
+  if(save_test == T){
+    variable_list = c('BOS_columns','m_bos','prefix')
+    cmd_list = save_variable_function(variable_list)
+    lapply(cmd_list, function(x) eval(parse(text = x)))
+    try(save_input_function(input))
+    read_test = F
+    if(read_test == T){
+      variable_list = c(variable_list)
+      cmd_list = read_variable_function(variable_list)
+      for(cmd in cmd_list){
+        print(cmd)
+        try(eval(parse(text = cmd)))
+      }
+    }
+  }
+  
   x1 = as.numeric(input$bos_range[1])
   x2 = as.numeric(input$bos_range[2])
   global_factor = input$global_factor
-  
+  plot_name = BOS_columns[1]
+  plot_name
   for(plot_name in BOS_columns){
     local({
       output_name = paste(plot_name,prefix,sep = '_')
@@ -340,6 +366,7 @@ renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
       output[[output_name]] = renderPlot({
         print(p)
       })
+      
     })
   }
 }
@@ -1573,6 +1600,8 @@ clustering_function = function(full_data,r_list,d_num,
   #t_data = full_data[r_list,clust_col_list]
   #View(t_data)
   r_data = full_data[,clust_col_list]
+  rownames(r_data)
+  #rownames(r_data) = full_data$MRN
   #View(r_data)
   data = r_data
   #View(data)
@@ -3041,7 +3070,7 @@ BOSS_plot_smooth_per = function(bos_df){
 }
 
 
-BOS_factor_plot = function(m_bos,col_name,global_factor,x1,x2){
+BOS_factor_plot = function(m_bos,col_name,global_factor,x1,x2,title = '',xlab = '',ylab = '',input){
   m_bos3 = m_bos[m_bos$variable == col_name,]
   plot_data = m_bos3[m_bos3$Status != 'All',]
   all_data = m_bos3[m_bos3$Status == 'All',]
@@ -3050,12 +3079,18 @@ BOS_factor_plot = function(m_bos,col_name,global_factor,x1,x2){
     geom_vline(xintercept = 0) +
     geom_hline(yintercept = 0) +
     geom_line(lwd = 2) +
-    ggtitle(paste(col_name,'by', global_factor)) +
-
-    xlim(x1,x2)
-  if(dim(all_data)[1] > 0){
-    p = p + geom_line(data = all_data, aes(x = time, y = value), col = 'black',linetype="dotted")
-  }
+    ggtitle(title) +
+    xlab(xlab) + 
+    ylab(ylab)
+    if(input$bos_slider == 'plot_lim'){
+      p = p + xlim(x1,x2)
+    }
+    if(input$bos_slider == 'plot_lim'){
+      p = p + xlim(input$bos_range[1],input$bos_range[2])
+    }
+  #if(dim(all_data)[1] > 0){
+  #  p = p + geom_line(data = all_data, aes(x = time, y = value), col = 'black',linetype="dotted")
+  #}
   
   return(p)
 }
@@ -3362,8 +3397,12 @@ processed_data_long_function = function(processed_data){
   matrix_column_list = c("i_pFEV1_matrix","pFEV1_matrix","pFVC_matrix","pRatio_matrix","i_pFEV1_matrix","i_pFVC_matrix","i_pRatio_matrix","sm_i_pFEV1_matrix","sm_i_pFVC_matrix","sm_i_pRatio_matrix","d1_pFEV1_matrix","d1_pFVC_matrix","d1_pRatio_matrix","d2_pFEV1_matrix","d2_pFVC_matrix","d2_pRatio_matrix")
   processed_long = data.frame(empty = character(0))
   dim(processed_long)
-  colnames(processed_data)[!colnames(processed_data) %in% full_factor_columns]
-  factor_columns = full_factor_columns[full_factor_columns %in% colnames(processed_data)]
+  BOS_columns = c('RAS','RAS_recover','BOS1_RAS','BOS2_RAS','BOS3_RAS')
+  BOS_factor_columns = c(full_factor_columns,BOS_columns)
+  BOS_factor_columns
+  colnames(processed_data)
+  colnames(processed_data)[!colnames(processed_data) %in% BOS_factor_columns]
+  factor_columns = BOS_factor_columns[BOS_factor_columns %in% colnames(processed_data)]
   factor_columns
   #factor_columns = colnames(processed_data)[!colnames(processed_data) %in% matrix_column_list]
   #factor_columns
@@ -3412,3 +3451,100 @@ radioTooltip <- function(id, choice, title, placement = "bottom", trigger = "hov
                                                  ")))
   htmltools::attachDependencies(bsTag, shinyBS:::shinyBSDep)
 }
+
+KM_cluster_function = function(df_w,column_name,title,xlab,ylab,input){
+  if(input$bos_slider == 'data'){
+    df_w = df_w[df_w[,column_name] > input$bos_range[1] & df_w[,column_name] < input$bos_range[2],]
+  }
+  time_data = df_w[,column_name]
+  time_data
+  #time_data = time_data[time_data > input$bos_range[1] & time_data < input$bos_range[2]]
+  fit = survfit(Surv(time_data,time_data != 50)~1)
+  plot(fit,xlim = c(-24,24))
+  fit_cluster = survfit(Surv(time_data,time_data != 50)~df_w$cluster)
+  
+  #plot(fit,xlim = c(-24,24))
+  t_fit_cluster = tidy(fit_cluster)
+  t_fit_cluster$cluster = sapply(t_fit_cluster$strata , function(x)    unlist(strsplit(x,'='))[2])
+  #View(t_fit_cluster)
+  p = ggplot(t_fit_cluster) + 
+    geom_line(aes(x = time, y = estimate, col = cluster), size = 2) +
+    ggtitle(title) +
+    xlab(xlab) +
+    ylab(ylab)
+  if(input$bos_slider == 'plot_scale'){
+    p = p + scale_x_continuous(limits = c(input$bos_range[1],input$bos_range[2]))
+  }
+  if(input$bos_slider == 'plot_lim'){
+    p = p + xlim(input$bos_range[1],input$bos_range[2])
+  }
+  return(p)
+}
+
+KM_cluster_diff_function = function(df_w,column_name,input){
+  #if(input$bos_slider_data == T){
+    df_w = df_w[df_w[,column_name] > input$bos_range[1] & df_w[,column_name] < input$bos_range[2],]
+  #}
+  time_data = df_w[,column_name]
+  #time_data = time_data[time_data > input$bos_range[1] & time_data < input$bos_range[2]]
+  fit = survfit(Surv(time_data,time_data != 50)~1)
+  plot(fit,xlim = c(-24,24))
+  a = survdiff(Surv(time_data,time_data != 50)~df_w$cluster)
+  return(a)
+}
+
+KM_function = function(df_w,column_name){
+  times = seq(-24,24,1)
+  times
+  temp = data.frame(time = df_w[,column_name])
+  temp$hit = T
+  temp = temp[!is.na(temp$time),]
+  
+  temp_time_list = temp$time
+  temp_time_list
+  #temp_time_list = temp_time_list[!is.na(temp_time_list)]
+  temp_time_list
+  temp_list = unlist(sapply(times, function(x) ifelse(!(x %in% temp_time_list),x,NA)))
+  temp_list
+  temp_list = temp_list[!is.na(temp_list)]
+  temp_list
+  temp_n = data.frame(time = temp_list)
+  temp_n$hit = F
+  
+  surv_df = rbind(temp,temp_n)
+  survival.object = Surv(surv_df$time,surv_df$hit)
+  #KM_object<-survfit(survival.object~1)
+  data_list = list(data = surv_df, s.o = survival.object)
+  return(data_list)
+}
+
+
+KM_function_cluster = function(df_w,column_name){
+  times = seq(-24,24,1)
+  times
+  temp = data.frame(time = df_w[,column_name], cluster = df_w$cluster)
+  temp
+  temp = temp[!is.na(temp$time),]
+  
+  temp$hit = T
+  
+  temp_time_list = temp$time
+  temp_time_list
+  #temp_time_list = temp_time_list[!is.na(temp_time_list)]
+  temp_time_list
+  temp_list = unlist(sapply(times, function(x) ifelse(!(x %in% temp_time_list),x,NA)))
+  temp_list
+  temp_list = temp_list[!is.na(temp_list)]
+  temp_list
+  temp_n = data.frame(time = temp_list)
+  temp_n$cluster = NA
+  temp_n$hit = F
+  
+  surv_df = rbind(temp,temp_n)
+  surv_df
+  survival.object = Surv(surv_df$time,surv_df$hit)
+  #KM_object<-survfit(survival.object~1)
+  data_list = list(data = surv_df, s.o = survival.object)
+  return(data_list)
+}
+

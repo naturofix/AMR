@@ -3,6 +3,7 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
+    column(12,uiOutput('live_ui')),
     column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
 
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
@@ -831,19 +832,82 @@ shinyUI(fluidPage(
              radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = T,inline = T),
              
              column(12,sliderInput('bos_range','Timecourse Range',min = -48,max=48,step = 1,value = c(-24,24),width = 800)),
-             
-             tabsetPanel(
-               
+             column(6,radioButtons('bos_slider','Select Slider Effect',c('plot_lim','plot_scale','none'),inline = T)),
+             column(6,radioButtons('bos_slider_data','Limit data using slider',c(T,F),inline = T)),
+            # tabsetPanel(selected = 'Kaplan-Meier Survival Curves and the Log - Rank Test',
+            tabsetPanel(selected = 'Line Plots',
+                                     
                tabPanel('Line Plots',
+                        column(6,textInput('BOS_All_title','Title','BOS plot for all patients')),
+                        column(3,textInput('BOS_x','x  title','Months')),
+                        column(3,textInput('BOS_y','x  title','')),
+                        column(12,
+                        
                         plotOutput('bos_plots'),
-                        uiOutput('BOS_plot_ui')
+                        
+                        textInput('RAS_title','Title','RAS free'),               
+                        column(11,plotOutput('RAS_factor_plot')),
+                        column(1,downloadButton('RAS_factor_plot_download','')),
+                        
+                        textInput('BOS1_title','Title','BOS1 free'),               
+                        column(11,plotOutput('BOS1_factor_plot')),
+                        column(1,downloadButton('BOS1_factor_plot_download','')),
+                        
+                        textInput('BOS2_title','Title','BOS2 free'),               
+                        column(11,plotOutput('BOS2_factor_plot')),
+                        column(1,downloadButton('BOS2_factor_plot_download','')),
+                        
+                        textInput('BOS3_title','Title','BOS3 free'),               
+                        column(11,plotOutput('BOS3_factor_plot')),
+                        column(1,downloadButton('BOS3_factor_plot_download','')),
+                        
+                        
+                        textInput('Survival_title','Title','Survival free'),               
+                        column(11,plotOutput('Survival_factor_plot')),
+                        column(1,downloadButton('Survival_factor_plot_download',''))
+                        #download
+                        
+                        #uiOutput('BOS_plot_ui')
                         #plotOutput('RAS_factor_plot'),
                         #plotOutput('bos1_factor_plot'),
                         #plotOutput('bos2_factor_plot'),
                         #plotOutput('bos3_factor_plot'),
                         #plotOutput('bos3_surv_factor_plot')
                         #plotOutput('boss_3_factor_l')
+                        )
                ),
+               tabPanel('Kaplan-Meier Survival Curves and the Log - Rank Test',
+                        plotOutput('KM_cluster_RAS'),
+                        verbatimTextOutput('KM_cluster_RAS_text'),
+                        plotOutput('KM_cluster_BOS1_RAS'),
+                        verbatimTextOutput('KM_cluster_BOS1_RAS_text'),
+                        
+                        plotOutput('KM_cluster_BOS2_RAS'),
+                        verbatimTextOutput('KM_cluster_BOS2_RAS_text'),
+                        
+                        plotOutput('KM_cluster_BOS3_RAS'),
+                        verbatimTextOutput('KM_cluster_BOS3_RAS_text'),
+                        
+                        plotOutput('KM_cluster_Survival'),
+                        verbatimTextOutput('KM_cluster_Survival_text')
+                        
+                        #plotOutput('KM_RAS_plot'),
+                        #plotOutput('KM_RAS_BOS1_plot'),
+                        #plotOutput('KM_RAS_BOS2_plot'),
+                        #plotOutput('KM_RAS_BOS3_plot'),
+                        #plotOutput('KM_RAS_cluster_plot'),
+                        #verbatimTextOutput('KM_RAS_cluster_text'),
+                        
+                        #plotOutput('KM_BO1_RAS_cluster_plot'),
+                        #verbatimTextOutput('KM_BO1_RAS_cluster_text'),
+                        
+                        #plotOutput('KM_BO2_RAS_cluster_plot'),
+                        #verbatimTextOutput('KM_BO2_RAS_cluster_text'),
+                        
+                        #plotOutput('KM_BO3_RAS_cluster_plot'),
+                        #verbatimTextOutput('KM_BO3_RAS_cluster_text')
+                        
+                        ),
                #tabPanel('Patient Plots'),
                tabPanel('Tables', tabsetPanel(
                     tabPanel('Original',

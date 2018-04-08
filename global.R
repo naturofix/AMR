@@ -35,6 +35,9 @@ library(broom)
 library(ggsignif)
 library(shinyBS)
 
+library(survival)
+
+
 
 
 
@@ -61,6 +64,7 @@ if(read_workspace == T){
   load('workspace.RData')
   source('functions.R')
   run_clustering = F
+  read_workspace = T
   
 }else{
 
@@ -103,7 +107,10 @@ if(read_workspace == T){
     #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
     #clustering = as.data.frame(gs_read(ss=gs, ws= "NewClustering"))
     #clustering = as.data.frame(gs_read(ss=gs, ws= "Data for App 2"))
-    clustering = as.data.frame(gs_read(ss=gs, ws= "clustering_2018_04_04"))
+    #clustering = as.data.frame(gs_read(ss=gs, ws= "clustering_2018_04_04"))
+    
+    google_sheets_file = "Full cohort"
+    clustering = as.data.frame(gs_read(ss=gs, ws= google_sheets_file))
     
     default_gs = as.data.frame(gs_read(ss=gs, ws= "Defaults for App 2"))
     #colnames(clustering)
@@ -122,7 +129,7 @@ if(read_workspace == T){
   }
   
   colnames(clustering)
-  last_updated = colnames(clustering)[1]
+  last_updated = colnames(clustering)[2]
   last_updated
   #### process defaults #####
   default_df = default_gs[!is.na(default_gs$value),]
@@ -610,7 +617,7 @@ if(read_workspace == T){
     i_pFEV_wf = cbind(full_fac_0,i_pFEV_ts)
     view = F
     
-    run_BOS_calc = T
+    run_BOS_calc = F
     if(run_BOS_calc == T){
       if(view == T){
         View(i_pFEV_wf)
@@ -1079,5 +1086,6 @@ if(read_workspace == T){
     print('save workspace')
     save.image('workspace.RData')
   }
+  
 }
 

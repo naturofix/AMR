@@ -6,6 +6,14 @@ shinyServer(function(input, output) {
   
   r_values = reactiveValues(init = 0)
   
+  output$live_ui = renderUI({
+    if(read_workspace == T){
+      tags$h6('Data loaded from saved workspace')
+    }else{
+      tags$h6(paste(google_sheets_file,last_updated,sep = ' : '))
+    }
+  })
+  
   output$moreControls <- renderUI({
     tagList(
       sliderInput("n", "N", 1, 1000, 500),
@@ -846,6 +854,7 @@ shinyServer(function(input, output) {
   retained_patients = reactive(post_retained_patients())
   
   processed_data_w_r = reactive({
+    print('processed_data_w_r')
     o_data = processed_data
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
@@ -1145,6 +1154,7 @@ shinyServer(function(input, output) {
   })
 
   change_data_list = reactive({
+    print('change_data_list')
     #d1_data = i_pFEV_sm_d1_f_c()
     #print()
     #print(dim(d1_data))
@@ -1158,7 +1168,8 @@ shinyServer(function(input, output) {
     ccc = colnames(data)[colnames(data) %in% continuous_columns]
     data_list = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
     data_list = input$data_set
-    print(data_list)
+    #print(data_list)
+    data_entry = data_list[1]
     for(data_entry in data_list){
       cmd = paste0("o_data = data$",data_entry,"_matrix")
       eval(parse(text = cmd))
@@ -1749,6 +1760,7 @@ shinyServer(function(input, output) {
   })
   
   output$individual_patients_ui = renderUI({
+    print('individual_patients_ui')
     full_data = multi_patient_long_data()
     patient_list = input$multi_plot_patients
     dim(full_data)
@@ -4351,12 +4363,128 @@ shinyServer(function(input, output) {
           
           
           output$BOS_plot_ui = renderUI({
+            print('BOS_plot_ui')
             BOS_colnames = BOS_calc_list()$BOS_colnames
             renderPlots_BOS(BOS_colnames, bos_factor(),input,output,prefix = 'BOS')
             makePlotContainers(BOS_colnames, prefix="BOS") 
             
           })
+          #"RAS"          "RAS_recovery" "BOS1"         "BOS2"         "BOS3"         "Survival"
+          #output$RAS_plot = renderPlots_BOS = function(BOS_columns,m_bos,input,output,prefix = 'BOS'){
+          RAS_factor_plot = reactive({
+            print('RAS_plot')
+            
+            #BOS_colnames = BOS_calc_list()$BOS_colnames
+            #BOS_colnames
+            
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            plot_name = 'RAS'
+            plot_name
+            p = BOS_factor_plot(bos_factor(),plot_name,global_factor,x1,x2,input$RAS_title,input$BOS_x,input$BOS_y,input)
+            p
+          })
+          output$RAS_factor_plot = renderPlot({RAS_factor_plot()})
           
+          output$RAS_factor_plot_download <- downloadHandler(
+            filename = 'RAS_by_cluster.png',
+            content = function(file) {
+              ggsave(file,RAS_factor_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
+          
+          BOS1_factor_plot = reactive({
+            print('BOS1_plot')
+            
+            #BOS_colnames = BOS_calc_list()$BOS_colnames
+            #BOS_colnames
+            
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            plot_name = 'BOS1'
+            plot_name
+            p = BOS_factor_plot(bos_factor(),plot_name,global_factor,x1,x2,input$BOS1_title,input$BOS_x,input$BOS_y,input)
+            p
+          })
+          output$BOS1_factor_plot = renderPlot({BOS1_factor_plot()})
+          
+          output$BOS1_factor_plot_download <- downloadHandler(
+            filename = 'BOS1_by_cluster.png',
+            content = function(file) {
+              ggsave(file,BOS1_factor_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
+          
+          BOS2_factor_plot = reactive({
+            print('BOS2_plot')
+            
+            #BOS_colnames = BOS_calc_list()$BOS_colnames
+            #BOS_colnames
+            
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            plot_name = 'BOS2'
+            plot_name
+            p = BOS_factor_plot(bos_factor(),plot_name,global_factor,x1,x2,input$BOS2_title,input$BOS_x,input$BOS_y,input)
+            p
+          })
+          output$BOS2_factor_plot = renderPlot({BOS2_factor_plot()})
+          
+          output$BOS2_factor_plot_download <- downloadHandler(
+            filename = 'BOS2_by_cluster.png',
+            content = function(file) {
+              ggsave(file,BOS2_factor_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
+          
+          BOS3_factor_plot = reactive({
+            print('BOS3_plot')
+            
+            #BOS_colnames = BOS_calc_list()$BOS_colnames
+            #BOS_colnames
+            
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            plot_name = 'BOS3'
+            plot_name
+            p = BOS_factor_plot(bos_factor(),plot_name,global_factor,x1,x2,input$BOS3_title,input$BOS_x,input$BOS_y,input)
+            p
+          })
+          output$BOS3_factor_plot = renderPlot({BOS3_factor_plot()})
+          
+          output$BOS3_factor_plot_download <- downloadHandler(
+            filename = 'BOS3_by_cluster.png',
+            content = function(file) {
+              ggsave(file,BOS3_factor_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
+          
+          Survival_factor_plot = reactive({
+            print('Survival_plot')
+            
+            #BOS_colnames = BOS_calc_list()$BOS_colnames
+            #BOS_colnames
+            
+            x1 = as.numeric(input$bos_range[1])
+            x2 = as.numeric(input$bos_range[2])
+            global_factor = input$global_factor
+            plot_name = 'Survival'
+            plot_name
+            p = BOS_factor_plot(bos_factor(),plot_name,global_factor,x1,x2,input$Survival_title,input$BOS_x,input$BOS_y,input)
+            p
+          })
+          output$Survival_factor_plot = renderPlot({Survival_factor_plot()})
+          
+          output$Survival_factor_plot_download <- downloadHandler(
+            filename = 'Survival_by_cluster.png',
+            content = function(file) {
+              ggsave(file,Survival_factor_plot(),width = input$ggsave_width, height = input$ggsave_height,dpi = 300)
+            }
+          )
 
           
           output$RAS_recovery_factor_plot = renderPlot({
@@ -4373,76 +4501,76 @@ shinyServer(function(input, output) {
             
           })
           
-          output$RAS_factor_plot = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
-            m_bos = bos_factor()
-            #head(m_bos)
-            col_name = 'RAS'
-            #m_bos = m_bos[m_bos$Status != 'All',]
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            #p
-
-          })
-          output$bos1_factor_plot = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
-            m_bos = bos_factor()
-            #head(m_bos)
-            col_name = 'BOS1'
-            #m_bos = m_bos[m_bos$Status != 'All',]
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            #p
-
-
-          })
-          output$bos2_factor_plot = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
-            m_bos = bos_factor()
-            col_name = 'BOS2'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-
-          })
-          output$bos3_factor_plot = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
-            m_bos = bos_factor()
-            col_name = 'BOS3'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-
-          })
-          output$bos3_surv_factor_plot = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = input$global_factor
-            m_bos = bos_factor()
-            #head(m_bos)
-            col_name = 'Survival'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            
-          })
-          
-          output$bos3_surv_factor_plot_cluster = renderPlot({
-            x1 = as.numeric(input$bos_range[1])
-            x2 = as.numeric(input$bos_range[2])
-            global_factor = 'cluster'
-            m_bos = bos_factor()
-            col_name = 'Survival'
-            p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
-            print(p)
-            
-          })
-          
+          # output$RAS_factor_plot = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = input$global_factor
+          #   m_bos = bos_factor()
+          #   #head(m_bos)
+          #   col_name = 'RAS'
+          #   #m_bos = m_bos[m_bos$Status != 'All',]
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   #p
+          # 
+          # })
+          # output$bos1_factor_plot = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = input$global_factor
+          #   m_bos = bos_factor()
+          #   #head(m_bos)
+          #   col_name = 'BOS1'
+          #   #m_bos = m_bos[m_bos$Status != 'All',]
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   #p
+          # 
+          # 
+          # })
+          # output$bos2_factor_plot = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = input$global_factor
+          #   m_bos = bos_factor()
+          #   col_name = 'BOS2'
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          # 
+          # })
+          # output$bos3_factor_plot = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = input$global_factor
+          #   m_bos = bos_factor()
+          #   col_name = 'BOS3'
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          # 
+          # })
+          # output$bos3_surv_factor_plot = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = input$global_factor
+          #   m_bos = bos_factor()
+          #   #head(m_bos)
+          #   col_name = 'Survival'
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   
+          # })
+          # 
+          # output$bos3_surv_factor_plot_cluster = renderPlot({
+          #   x1 = as.numeric(input$bos_range[1])
+          #   x2 = as.numeric(input$bos_range[2])
+          #   global_factor = 'cluster'
+          #   m_bos = bos_factor()
+          #   col_name = 'Survival'
+          #   p = BOS_factor_plot(m_bos,col_name,global_factor,x1,x2)
+          #   print(p)
+          #   
+          # })
+          # 
           # output$bos3_surv_factor_plot_cluster = renderPlot({
           #   x1 = as.numeric(input$bos_range[1])
           #   x2 = as.numeric(input$bos_range[2])
@@ -4565,7 +4693,7 @@ shinyServer(function(input, output) {
     })
           
      BOS_calc_list = reactive({
-        
+        #print('BOS_calc_list')
         t1 = -6
         t2 = 6
         RAS_sequence_correction = F
@@ -4587,14 +4715,23 @@ shinyServer(function(input, output) {
         pRatio_name
         
         
-        t1 = input$bos_range[1]
-        t2 = input$bos_range[2]
+        #t1 = input$bos_range[1]
+        #t2 = input$bos_range[2]
         sequence_correction = input$sequence_correction
         first_and_last = input$first_and_last
         measured_columns = input$measured_columns
         data = processed_data_w_r()
         
-        print(dim(data))
+        if(input$bos_slider_data == T){
+          t1 = input$bos_range[1]
+          t2 = input$bos_range[2]
+        }else{
+          df_l = processed_data_l_r()
+          t1 = min(df_l$time)
+          t2 = max(df_l$time)
+        }
+        
+        #print(dim(data))
         BOS = 0.8
         RAS = 0.7
         RAS_list = c()
@@ -4605,7 +4742,7 @@ shinyServer(function(input, output) {
         i = 1
         for(i in c(1:dim(data)[1])){
           #BOS1 = NA
-          print(i)
+          #print(i)
           x = data[i,]
           v_o = (x[,pFEV1_name])
           v_o
@@ -4730,11 +4867,27 @@ shinyServer(function(input, output) {
         data$BOS1_RAS = BOS1_RAS_list
         data$BOS2_RAS = BOS2_RAS_list
         data$BOS3_RAS = BOS3_RAS_list
+        #print('test')
+        #print('test')
+        data$RAS_50 = data$RAS
+        data$RAS_50[is.na(data$RAS_50)] = 50
+        data$BOS1_RAS_50 = data$BOS1_RAS
+        data$BOS1_RAS_50[is.na(data$BOS1_RAS_50)] = 50
+        data$BOS2_RAS_50 = data$BOS2_RAS
+        data$BOS2_RAS_50[is.na(data$BOS2_RAS_50)] = 50
+        data$BOS3_RAS_50 = data$BOS3_RAS
+        data$BOS3_RAS_50[is.na(data$BOS3_RAS_50)] = 50
   
         BOS_colnames = c('RAS','RAS_recovery','BOS1','BOS2','BOS3',"Survival")
         
         data
         
+        print('BOS_processed_data_l_r')
+        save_test = F
+        if(save_test == T){
+          saveRDS(data,'temp/BOS_data_w.rds')
+        }
+        data = data[data$cluster %in% input$cluster_select_clusters,]
         list(data = data, BOS_colnames = BOS_colnames)
         
       })
@@ -4743,10 +4896,73 @@ shinyServer(function(input, output) {
     BOS_processed_data_w_r = reactive({BOS_calc_list()$data})
     
     BOS_processed_data_l_r = reactive({
+      print('BOS_processed_data_l_r')
+      saveRDS(BOS_processed_data_w_r(),'temp/BOS_data_w.rds')
       df = processed_data_long_function(BOS_processed_data_w_r())
+      saveRDS(df,'temp/BOS_data_l.rds')
+      colnames(df)
       df
       
     })
+    
+
+    
+    output$KM_cluster_RAS = renderPlot({
+      df_w = BOS_processed_data_w_r()
+      p = KM_cluster_function(df_w,'RAS_50','RAS','Months','',input)
+      print(p)
+    })
+    output$KM_cluster_BOS1_RAS = renderPlot({
+      df_w = BOS_processed_data_w_r()
+      p = KM_cluster_function(df_w,'BOS1_RAS_50','BOS1','Months','',input)
+      print(p)
+    })
+    output$KM_cluster_BOS2_RAS = renderPlot({
+      df_w = BOS_processed_data_w_r()
+      p = KM_cluster_function(df_w,'BOS2_RAS_50','BOS2','Months','',input)
+      print(p)
+    })
+    output$KM_cluster_BOS3_RAS = renderPlot({
+      df_w = BOS_processed_data_w_r()
+      p = KM_cluster_function(df_w,'BOS3_RAS_50','BOS3','Months','',input)
+      print(p)
+    })
+    output$KM_cluster_Survival = renderPlot({
+      df_w = BOS_processed_data_w_r()
+      p = KM_cluster_function(df_w,"MonthsToDeath",'Survival','Months','',input)
+      print(p)
+    })
+    
+    
+    output$KM_cluster_RAS_text = renderPrint({
+      df_w = BOS_processed_data_w_r()
+      a = KM_cluster_diff_function(df_w,'RAS_50',input)
+      print(a)
+    })
+    output$KM_cluster_BOS1_RAS_text = renderPrint({
+      df_w = BOS_processed_data_w_r()
+      a = KM_cluster_diff_function(df_w,'BOS1_RAS_50',input)
+      print(a)
+    })
+    output$KM_cluster_BOS2_RAS_text = renderPrint({
+      df_w = BOS_processed_data_w_r()
+      a = KM_cluster_diff_function(df_w,'BOS2_RAS_50',input)
+      print(a)
+    })
+    output$KM_cluster_BOS3_RAS_text = renderPrint({
+      df_w = BOS_processed_data_w_r()
+      a = KM_cluster_diff_function(df_w,'BOS3_RAS_50',input)
+      print(a)
+    })
+    output$KM_cluster_Survival_text = renderPrint({
+      df_w = BOS_processed_data_w_r()
+      a = KM_cluster_diff_function(df_w,"MonthsToDeath",input)
+      print(a)
+    })
+    
+      
+    
+    
     
     
     #calculate BOS columns on the fly
@@ -4755,6 +4971,9 @@ shinyServer(function(input, output) {
       
       BOS_processed_data_w_r()[,BOS_columns]
       })
+    
+    
+    
     
   output$name_clusters_ui = renderUI({
     if(input$rename_clusters == T){

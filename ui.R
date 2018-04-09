@@ -4,8 +4,8 @@ shinyUI(fluidPage(
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
     column(12,uiOutput('live_ui')),
-    column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
-
+    #column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
+    column(4,uiOutput('global_factor_ui')),
     column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
     column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
@@ -290,7 +290,6 @@ shinyUI(fluidPage(
                                selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
                                numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1),
                                numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
-                               radioButtons('rename_clusters','Rename Clusters',c(T,F),inline = TRUE),
                                radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
                         
                                
@@ -311,6 +310,9 @@ shinyUI(fluidPage(
                                
                         ),
                         column(12,
+                              column(12,tags$hr()),
+                              column(6,radioButtons('rename_clusters','Rename Clusters',c(T,F),inline = TRUE)),
+                              column(6,radioButtons('rename_menu_test','Renane Using',choiceNames = c('Text Entry','Drop-down menu'),choiceValues = c('text','menu'),selected = 'menu',inline = T)),
                                
                                
                                column(12,uiOutput('name_clusters_ui')),
@@ -834,8 +836,8 @@ shinyUI(fluidPage(
              column(12,sliderInput('bos_range','Timecourse Range',min = -48,max=48,step = 1,value = c(-24,24),width = 800)),
              column(6,radioButtons('bos_slider','Select Slider Effect',c('plot_lim','plot_scale','none'),inline = T)),
              column(6,radioButtons('bos_slider_data','Limit data using slider',c(T,F),inline = T)),
-            # tabsetPanel(selected = 'Kaplan-Meier Survival Curves and the Log - Rank Test',
-            tabsetPanel(selected = 'Line Plots',
+            tabsetPanel(selected = 'Kaplan-Meier Survival Curves and the Log - Rank Test',
+            #tabsetPanel(selected = 'Line Plots',
                                      
                tabPanel('Line Plots',
                         column(6,textInput('BOS_All_title','Title','BOS plot for all patients')),

@@ -3461,14 +3461,16 @@ KM_cluster_function = function(df_w,column_name,title,xlab,ylab,input){
   #time_data = time_data[time_data > input$bos_range[1] & time_data < input$bos_range[2]]
   fit = survfit(Surv(time_data,time_data != 50)~1)
   plot(fit,xlim = c(-24,24))
-  fit_cluster = survfit(Surv(time_data,time_data != 50)~df_w$cluster)
+  fit_cluster = survfit(Surv(time_data,time_data != 50)~df_w[,input$global_factor])
   
   #plot(fit,xlim = c(-24,24))
   t_fit_cluster = tidy(fit_cluster)
+  cmd = paste0("t_fit_cluster$",input$global_factor," = sapply(t_fit_cluster$strata , function(x)    unlist(strsplit(x,'='))[2])")
+  eval(parse(text = cmd))
   t_fit_cluster$cluster = sapply(t_fit_cluster$strata , function(x)    unlist(strsplit(x,'='))[2])
   #View(t_fit_cluster)
   p = ggplot(t_fit_cluster) + 
-    geom_line(aes(x = time, y = estimate, col = cluster), size = 2) +
+    geom_line(aes_string(x = 'time', y = 'estimate', col = input$global_factor), size = 2) +
     ggtitle(title) +
     xlab(xlab) +
     ylab(ylab)
@@ -3489,7 +3491,7 @@ KM_cluster_diff_function = function(df_w,column_name,input){
   #time_data = time_data[time_data > input$bos_range[1] & time_data < input$bos_range[2]]
   fit = survfit(Surv(time_data,time_data != 50)~1)
   plot(fit,xlim = c(-24,24))
-  a = survdiff(Surv(time_data,time_data != 50)~df_w$cluster)
+  a = survdiff(Surv(time_data,time_data != 50)~df_w[,input$global_factor])
   return(a)
 }
 

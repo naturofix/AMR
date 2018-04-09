@@ -111,6 +111,7 @@ if(read_workspace == T){
     
     google_sheets_file = "Full cohort"
     clustering = as.data.frame(gs_read(ss=gs, ws= google_sheets_file))
+    gs_updated = gs$updated
     
     default_gs = as.data.frame(gs_read(ss=gs, ws= "Defaults for App 2"))
     #colnames(clustering)
@@ -131,6 +132,8 @@ if(read_workspace == T){
   colnames(clustering)
   last_updated = colnames(clustering)[2]
   last_updated
+  
+  #gs_updated = gs$updated
   #### process defaults #####
   default_df = default_gs[!is.na(default_gs$value),]
   #View(default_df)

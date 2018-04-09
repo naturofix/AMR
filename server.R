@@ -10,7 +10,7 @@ shinyServer(function(input, output) {
     if(read_workspace == T){
       tags$h6('Data loaded from saved workspace')
     }else{
-      tags$h6(paste(google_sheets_file,last_updated,sep = ' : '))
+      tags$h6(paste(google_sheets_file,last_updated,gs_updated,sep = ' : '))
     }
   })
   
@@ -78,7 +78,7 @@ shinyServer(function(input, output) {
     output$data_table_ui = renderUI({
      
       #tabPanel("Data Tables",
-            display_data_tables = T
+            #display_data_tables = T
             if(display_data_tables == T){ 
                tabsetPanel(
                  tabPanel('Original',
@@ -1226,7 +1226,7 @@ shinyServer(function(input, output) {
     matrix_name
   })
   
-  change_data_w = reactive({
+  change_data_full_w = reactive({
     o_data = change_data()
     c_o_data = o_data
     m_data = discrete_cluster_D()$data
@@ -1234,9 +1234,17 @@ shinyServer(function(input, output) {
     c_m_data = m_data
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data = data[data$cluster %in% input$cluster_select_clusters,]
+    #data = data[data$cluster %in% input$cluster_select_clusters,]
     dim(data)
     data_l = data
+    data
+    
+  })
+  
+  change_data_w = reactive({
+    full_data = change_data_full_w()
+    cmd = paste0("data = full_data[full_data$",input$global_factor," %in% input$cluster_select_clusters,]")
+    eval(parse(text = cmd))
     data
     
   })
@@ -2570,6 +2578,7 @@ shinyServer(function(input, output) {
           
         })
         output$boxplot_pp_ratio_cluster = renderPlot({
+          print('boxplot_pp_ratio_cluster')
           title = paste0('T test of ',input$data_select_clust,' log2( 0/',input$pre_range[1],' )  vs log2( ',input$post_range[2],'/0 )')
           
           boxplot_pp_ratio_plot_function(boxplot_pp_ratio_data_cluster(),'cluster',title,input)
@@ -2859,7 +2868,9 @@ shinyServer(function(input, output) {
         full_data = pFEV_wf_r()
         full_data = change_data_l()
         full_data = full_data[!duplicated(full_data$MRN),]
-        full_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+        #full_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+        cmd = paste0("full_data = full_data[full_data$",input$global_factor," %in% input$cluster_select_clusters,]")
+        eval(parse(text = cmd))
         print(dim(full_data))
         #long_data = pFEV_lf_r()
         #long_data = change_data_l()
@@ -3957,7 +3968,7 @@ shinyServer(function(input, output) {
               print(factor)
               for(cluster in clusters){
                 print(cluster)
-                values = data[data$Factor == factor, cluster]
+                values = data[data$Factor == factor, input$clus]
                 status = data[data$Factor == factor,'Status']
                 print(values)
                 values = values[!is.na(values)]
@@ -4026,7 +4037,7 @@ shinyServer(function(input, output) {
           ### __CHISQ ####
           
           
-          output$cluster_select_clusters = renderUI({
+          output$cluster_select_clusters_old = renderUI({
             if(input$run_clustering == T){
               clusters <- unique(discrete_cluster_D()$data$cluster)
             }else{
@@ -4035,6 +4046,41 @@ shinyServer(function(input, output) {
             }
             selectInput("cluster_select_clusters", "Choose Clusters to Use in Analysis", choices = clusters, selected = clusters,multiple = T,width = 1500)
           })
+          
+          output$global_factor_ui = renderUI({
+            print('global_factor_ui')
+            factor_list = c(all_discrete_columns,'cluster')
+            factor_list = factor_list[order(factor_list)]
+            selectInput('global_factor','Factor to Separate by',factor_list,multiple = F,selected = 'cluster')
+            
+          })
+          
+          output$cluster_select_clusters = renderUI({
+            print('cluster_select_clusters')
+            factors = tryCatch(unique(change_data_full_w()[,input$global_factor]),error = function(e) {'error'})
+            factors
+            if(factors == 'error'){
+              HTML(paste(tags$span(style="color:red", 'Run Clustering before continuing ...')))
+              
+              #tags$h5('Run Clustering before continuing ....')
+            }else{
+              factors = factors[order(factors)]
+              
+              #factor_list = list(factors)
+              #factor_list
+              factor_list = lapply(factors, function(x) x)
+              names(factor_list) = factor(factors)
+              
+              factor_list
+              #if(input$run_clustering == T){
+              #  clusters <- unique(discrete_cluster_D()$data$cluster)
+              #}else{
+              #  cluster_data_list = readRDS('www/cluster_data_list.rds')
+              #  clusters = unique(cluster_data_list$data$cluster)
+              #}
+              selectInput("cluster_select_clusters", "Choose Elements to Use in Analysis", choices = factor_list,selected = factors,multiple = T,width = 1500)
+            }
+            })
           
           output$cluster_select_clusters_anova <- renderUI({
             #data = cluster_analysis_within_table_selected_df()
@@ -4095,7 +4141,10 @@ shinyServer(function(input, output) {
           output$anova_cluster_plot = renderPlot({
             global_factor = input$continuous_variable
             full_data = change_data_w()
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+            cluster_data = full_data
+            #cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+            #cmd = paste0("cluster_data = full_data[full_data$",input$global_factor," %in% input$cluster_select_clusters,]")
+            #eval(parse(text = cmd))
             plot_data = melt(cluster_data,measure.vars = global_factor)
             ggplot(plot_data, aes(x = cluster,y = value,col=cluster)) +
               geom_boxplot()
@@ -4103,7 +4152,8 @@ shinyServer(function(input, output) {
           
           output$continuous_manova_single = renderDataTable({
             full_data = change_data_w()
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+            cluster_data = full_data
+            #cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
             global_factor = input$continuous_variable
             x = cluster_data[,input$continuous_variable]
             y = cluster_data[,'cluster']
@@ -4116,7 +4166,8 @@ shinyServer(function(input, output) {
 
             full_data = change_data_l()
             full_data = full_data[!duplicated(full_data$MRN),]
-            cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
+            cluster_data = full_data
+            #cluster_data = full_data[full_data$cluster %in% input$cluster_select_clusters,]
             print(dim(cluster_data))
             
             variable_list = c('cluster_data','clustering_continuous_columns')
@@ -4887,7 +4938,9 @@ shinyServer(function(input, output) {
         if(save_test == T){
           saveRDS(data,'temp/BOS_data_w.rds')
         }
-        data = data[data$cluster %in% input$cluster_select_clusters,]
+        #data = data[data$cluster %in% input$cluster_select_clusters,]
+        cmd = paste0("data = data[data$",input$global_factor," %in% input$cluster_select_clusters,]")
+        eval(parse(text = cmd))
         list(data = data, BOS_colnames = BOS_colnames)
         
       })
@@ -4979,10 +5032,13 @@ shinyServer(function(input, output) {
     if(input$rename_clusters == T){
       cluster_name_list_full = c(cluster_name_list, sapply(length(cluster_name_list):input$clutree_num, function(i) paste('Cluster', i)))
       lapply(1:input$clutree_num, function(i) { 
-        #column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
-        #            choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
-        column(4,textInput(paste0('cluster_', i), paste('Cluster', i),
+        if(input$rename_menu_test == 'menu'){
+          column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
+                    choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
+        }else{
+          column(4,textInput(paste0('cluster_', i), paste('Cluster', i),
                              value = cluster_name_list_full[i]))
+        }
       })
     }
 

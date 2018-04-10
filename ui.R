@@ -139,18 +139,30 @@ shinyUI(fluidPage(
                            column(6,numericInput('ggsave_height','Save Height','9')),
                            column(6,numericInput('ggsave_width','Save_Width Size','12')),
                            
-                           column(4,numericInput('plot_title_size','Plot Title Size','20')),
-                           column(4,numericInput('plot_title_hjust','Plot Title hjust','0.5')),
-                           column(4,numericInput('plot_title_vjust','Plot Title vjust','4')),
+                           column(3,numericInput('plot_title_size','Plot Title Size','20')),
+                           column(3,numericInput('plot_title_hjust','hjust','0.5')),
+                           column(3,numericInput('plot_title_margin_t','top margin','5')),
+                           column(3,numericInput('plot_title_margin_b','bottom margin','10')),
+                           
+                           #column(4,numericInput('plot_title_vjust','Plot Title vjust','4')),
                            column(6,numericInput('legend_title_size','Legend Title Size','15')),
-                           column(6,numericInput('legend_text_size','Legend Title Size','12')),
-                           column(6,numericInput('axis_title_x','Size of X axis label','15')),
-                           column(6,numericInput('axis_title_y','Size of Y axis label','15')),
-                           column(6,numericInput('axis_text_x','Size of X axis','12')),
-                           column(6,numericInput('axis_text_y','Size of X axis','12')),
+                           column(6,numericInput('legend_text_size','Legend Text Size','12')),
+                           
+                           column(4,numericInput('axis_title_x','X axis title size','15')),
+                           column(4,numericInput('x_title_margin_t','title top margin','5')),
+                           column(4,numericInput('x_title_margin_b','title bottom margin','10')),
+                           column(6,numericInput('axis_text_x','X axis text size','12')),
+                           column(6,numericInput('axis_text_angle_x','X axis text angle','0')),
+                           
+                           column(4,numericInput('axis_title_y','Y axis title size','15')),
+                           column(4,numericInput('y_title_margin_l','title left margin','5')),
+                           column(4,numericInput('y_title_margin_r','title right margin','10')),
+                           column(6,numericInput('axis_text_y','Y axis text size','12')),
+                           column(6,numericInput('axis_text_angle_y','Y axis text angle','90')),
                            
                            
-                           verbatimTextOutput('custom_theme')
+                           
+                           column(12,verbatimTextOutput('custom_theme'))
                            
                   ))
               ),
@@ -834,8 +846,10 @@ shinyUI(fluidPage(
              radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = T,inline = T),
              
              column(12,sliderInput('bos_range','Timecourse Range',min = -48,max=48,step = 1,value = c(-24,24),width = 800)),
-             column(6,radioButtons('bos_slider','Select Slider Effect',c('plot_lim','plot_scale','none'),inline = T)),
-             column(6,radioButtons('bos_slider_data','Limit data using slider',c(T,F),inline = T)),
+             column(4,radioButtons('bos_slider','Select Slider Effect',c('plot_lim','plot_scale','none'),inline = T)),
+             column(4,radioButtons('bos_slider_data','Limit data using slider',c(T,F),inline = T)),
+             column(4,radioButtons('bos_slider_KM','Limit KM data using slider',c(T,F),selected = F, inline = T)),
+             column(12),
             tabsetPanel(selected = 'Kaplan-Meier Survival Curves and the Log - Rank Test',
             #tabsetPanel(selected = 'Line Plots',
                                      

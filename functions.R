@@ -305,7 +305,7 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
       #p = p +  scale_fill_identity(name = 'the fill', guide = 'legend',labels = c('m1')) +
       #          scale_colour_manual(name = 'the colour', 
       #                      values =c('black'='black','red'='red'), labels = c('c2','c1'))
-      p = p + theme(axis.text.x = element_text(size=8, angle=90)) +
+      #p = p + theme(axis.text.x = element_text(size=8, angle=90)) +
         #ylim(0,1) + 
         scale_x_continuous(breaks = scale_cols) +
         
@@ -415,7 +415,7 @@ smooth_line_plot_function = function(plot_data,title,input,xlab = '',ylab = ''){
     #geom_point() +
     #stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
     
-    theme(axis.text.x = element_text(size=8, angle=90)) +
+    #theme(axis.text.x = element_text(size=8, angle=90)) +
     xlim(input$pre_range[1],input$post_range[2]) +
     ggtitle(title)+
     xlab(xlab)+
@@ -430,7 +430,7 @@ mean_line_plot_function = function(plot_data,title,input){
     #geom_point(aes_string(col = input$global_factor)) +
     stat_summary(data = plot_data, fun.y=mean,geom="line",lwd=3,aes_string(x = 'time', y = 'value',group=input$global_factor,col = input$global_factor)) +
     
-    theme(axis.text.x = element_text(size=8, angle=90)) +
+    #theme(axis.text.x = element_text(size=8, angle=90)) +
     xlim(input$pre_range[1],input$post_range[2]) +
     ggtitle(title)
 }
@@ -439,7 +439,7 @@ D_line_plot_function = function(plot_data,title,input){
   ggplot(plot_data, aes(x = time, y = value,col = MRN)) +
     geom_line(aes(group = MRN)) +
     geom_vline(xintercept = 0) +
-    theme(axis.text.x = element_text(size=8, angle=90)) +
+    #theme(axis.text.x = element_text(size=8, angle=90)) +
     theme(legend.position="none") +
     xlim(input$pre_range[1],input$post_range[2]) +
     ggtitle(title)
@@ -478,7 +478,7 @@ boxplot_function = function(full_data,title,input,xlab = '', ylab = ''){
 
     geom_boxplot(aes_string(col = input$global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=input$global_factor,col = input$global_factor)) +
-    theme(axis.text.x = element_text(size=14, angle=90)) + 
+    #theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
     ggtitle(title) + 
     xlab(xlab) + 
@@ -495,7 +495,7 @@ boxplot_4_cluster_function = function(full_data,title,global_factor,cols,input){
     
     geom_boxplot(aes_string(col = global_factor)) +
     stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=global_factor,col = global_factor)) +
-    theme(axis.text.x = element_text(size=14, angle=90)) + 
+    #theme(axis.text.x = element_text(size=14, angle=90)) + 
     scale_x_discrete(breaks = scale_cols) +
     ggtitle(title)
 }
@@ -523,7 +523,7 @@ boxplot_i_summary_function = function(full_data,title,input){
     geom_vline(aes(xintercept = which(levels(summary_data$variable) %in% '0'))) +
     geom_boxplot(data = plot_data, aes_string(x = 'variable', y = 'value',col = input$global_factor)) +
     stat_summary(data = summary_data, fun.y=mean,geom="line",lwd=2,aes_string(x = 'variable', y = 'value',group=input$global_factor,col = input$global_factor)) +
-    theme(axis.text.x = element_text(size=14, angle=90)) +
+    #theme(axis.text.x = element_text(size=14, angle=90)) +
     scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
     ggtitle(title)
 }
@@ -3453,7 +3453,7 @@ radioTooltip <- function(id, choice, title, placement = "bottom", trigger = "hov
 }
 
 KM_cluster_function = function(df_w,column_name,title,xlab,ylab,input){
-  if(input$bos_slider == 'data'){
+  if(input$bos_slider_KM == T){
     df_w = df_w[df_w[,column_name] > input$bos_range[1] & df_w[,column_name] < input$bos_range[2],]
   }
   time_data = df_w[,column_name]
@@ -3484,9 +3484,9 @@ KM_cluster_function = function(df_w,column_name,title,xlab,ylab,input){
 }
 
 KM_cluster_diff_function = function(df_w,column_name,input){
-  #if(input$bos_slider_data == T){
+  if(input$bos_slider_KM == T){
     df_w = df_w[df_w[,column_name] > input$bos_range[1] & df_w[,column_name] < input$bos_range[2],]
-  #}
+  }
   time_data = df_w[,column_name]
   #time_data = time_data[time_data > input$bos_range[1] & time_data < input$bos_range[2]]
   fit = survfit(Surv(time_data,time_data != 50)~1)

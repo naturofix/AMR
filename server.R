@@ -5045,11 +5045,11 @@ shinyServer(function(input, output) {
   })
 
   custom_theme = reactive({
-    theme_replace(axis.title.x = element_text(size=input$axis_title_x,face = 'bold'))
-    theme_replace(axis.title.y = element_text(size=input$axis_title_y,angle = 90,face = "bold"))
-    theme_replace(axis.text.x = element_text(size=input$axis_text_x))
-    theme_replace(axis.text.y = element_text(size = input$axis_text_y, angle = 90))
-    theme_replace(plot.title = element_text(size = input$plot_title_size,hjust = input$plot_title_hjust, vjust = input$plot_title_vjust,face = 'bold'))
+    theme_replace(axis.title.x = element_text(size=input$axis_title_x,face = 'bold', margin = margin(t = input$x_title_margin_t, b = input$x_title_margin_b)))
+    theme_replace(axis.title.y = element_text(size=input$axis_title_y,angle = 90,face = "bold", margin = margin(r = input$y_title_margin_r, l = input$y_title_margin_l)))
+    theme_replace(axis.text.x = element_text(size=input$axis_text_x, angle = input$axis_text_angle_x))
+    theme_replace(axis.text.y = element_text(size = input$axis_text_y, angle = input$axis_text_angle_y))
+    theme_replace(plot.title = element_text(size = input$plot_title_size,hjust = input$plot_title_hjust,face = 'bold',margin = margin(b= input$plot_title_margin_b, t = input$plot_title_margin_t)))
     theme_replace(legend.title = element_text(size = input$legend_title_size, face = 'bold'))
     theme_replace(legend.text=element_text(size=input$legend_text_size))
     theme_replace(plot.margin = margin(t=20))

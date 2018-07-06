@@ -97,7 +97,67 @@ read_variable_function = function(variable_list){
   return(cmd_list)
 }
 
+hideTab_function = function(){
+  hideTab(inputId = 'Main', target = "Discrete Variables")
+  hideTab(inputId = 'Main', target = "Continuous Variables")
+  hideTab(inputId = 'Main', target = "Spirometry Patterns")
+  hideTab(inputId = 'Main', target = "BOS")
+  hideTab(inputId = 'Main', target = "Clustering")
+  hideTab(inputId = 'Main', target = "R Info")
+  
+  #Data_Table
+  hideTab(inputId = 'Data_Table', target = "Selected Data")
+  hideTab(inputId = 'Data_Table', target = "Data used for Clustering")
+  hideTab(inputId = 'Data_Table', target = "log 2 ratio vs zero")
+  hideTab(inputId = 'Data_Table', target = "percentage change vs zero")
+  hideTab(inputId = 'Data_Table', target = "Summary Table")
+  
+  
+  #hideTab(inputId = 'Main', target = "Data Tables")
+  hideTab(inputId = 'Patients', target = "Missingness Plot")
+  hideTab(inputId = 'Patients', target = "Post Clustering Selection")
+  #hideTab(inputId = 'Patients', target = 'Select Patients for Clustering')
+  
+  #hideTab(inputId = 'dendo', target = "Dendogram")
+  
+  #hideTab(inputId = 'clust_stat', target = "Summary Statistics")
+  
+  hideTab(inputId = "Discrete_Variables", target =  'Factor')
+  hideTab(inputId = "Ratio_Statistics", target =  'Two Sample t tests')
+  hideTab(inputId = "Ratio_Statistics", target =  'T test vs mean of zero')
+  
+}
 
+hideTab_function_upload = function(){
+  hideTab(inputId = 'Main', target = "Discrete Variables")
+  hideTab(inputId = 'Main', target = "Continuous Variables")
+  hideTab(inputId = 'Main', target = "Spirometry Patterns")
+  hideTab(inputId = 'Main', target = "BOS")
+  #hideTab(inputId = 'Main', target = "Clustering")
+  hideTab(inputId = 'Main', target = "R Info")
+  
+  #Data_Table
+  hideTab(inputId = 'Data_Table', target = "Selected Data")
+  hideTab(inputId = 'Data_Table', target = "Data used for Clustering")
+  hideTab(inputId = 'Data_Table', target = "log 2 ratio vs zero")
+  hideTab(inputId = 'Data_Table', target = "percentage change vs zero")
+  hideTab(inputId = 'Data_Table', target = "Summary Table")
+  
+  
+  #hideTab(inputId = 'Main', target = "Data Tables")
+  hideTab(inputId = 'Patients', target = "Missingness Plot")
+  hideTab(inputId = 'Patients', target = "Post Clustering Selection")
+  #hideTab(inputId = 'Patients', target = 'Select Patients for Clustering')
+  
+  #hideTab(inputId = 'dendo', target = "Dendogram")
+  
+  #hideTab(inputId = 'clust_stat', target = "Summary Statistics")
+  
+  hideTab(inputId = "Discrete_Variables", target =  'Factor')
+  hideTab(inputId = "Ratio_Statistics", target =  'Two Sample t tests')
+  hideTab(inputId = "Ratio_Statistics", target =  'T test vs mean of zero')
+  
+}
 source_https_2 <- function(url, ...) {
   # load package
   require(RCurl)
@@ -267,10 +327,14 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
       
       p = ggplot(data)
       
-
+      title = patient
+      if('cluster' %in% colnames(data)){
+        title = paste(patient,'-',unique(data$cluster))
+      }
       p = p + 
         geom_vline(xintercept = 0)
       if(input$retained_radiobutton == 'bos'){
+        #title = paste(patient,'-',unique(data$cluster) )
         if(length(data$RAS[!is.na(data$RAS)]) != 0){
           p = p + geom_vline(xintercept = data$RAS, color = 'blue',lwd = 1, linetype = 'solid')
         }
@@ -307,10 +371,10 @@ renderPlots = function(full_data, patient_list, input, output, prefix = 'individ
       #                      values =c('black'='black','red'='red'), labels = c('c2','c1'))
       #p = p + theme(axis.text.x = element_text(size=8, angle=90)) +
         #ylim(0,1) + 
-        scale_x_continuous(breaks = scale_cols) +
+        #scale_x_continuous(breaks = scale_cols) +
         
         #theme(legend.position="top", show.legend = T) + 
-        ggtitle(patient)
+      p = p + ggtitle(title)
       
       #p = p + scale_colour_manual(values = c('red','green','blue'), labels = c('1','2','3'))
   
@@ -1240,7 +1304,10 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
+  lev = levels(full_data[,factor])
   factor_levels = unique(full_data[,factor])
+  factor_levels = factor_levels[order(factor_levels)]
+  entry = factor_levels[1]
   for(entry in factor_levels){
     pre_data = full_data$value[full_data[,factor] == entry & full_data$variable == t1]
     zero = full_data$value[full_data[,factor] == entry & full_data$variable == 0]
@@ -1270,7 +1337,7 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   # #print(sig_list)
   # df_m$significant = factor(sig_list)
   #df_m$significant[df$variable == 'pre'] = factor(df_s$pre_significant[match(df_m$Status[df$variable == 'pre'],df_s$Status)])
-  
+  levels(df_m) = lev
   return(df_m)
 }
 
@@ -1303,6 +1370,7 @@ pp_t_test_ratio_function = function(full_data,factor,t1,t2){
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
   factor_levels = unique(full_data[,factor])
+  factor_levels
   for(entry in factor_levels){
     pre_data = full_data$value[full_data[,factor] == entry & full_data$variable == t1]
     zero = full_data$value[full_data[,factor] == entry & full_data$variable == 0]
@@ -1422,7 +1490,10 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
+  lev =levels(full_data[,global_factor])
+  lev
   factor_levels = unique(full_data[,global_factor])
+  factor_levels = factor_levels[order(factor_levels)]
   factor_levels
   df = data.frame(Factor = numeric(0), Status = numeric(0),pre = numeric(0),post = numeric(0))
   for(entry in factor_levels){
@@ -1437,65 +1508,30 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   
   df_m = melt(df)
   df_m$significant = factor(df_s$significant[match(df_m$Status,df_s$Status)])
-  
+  levels(df$Status) = lev
   df_m
 }
   #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
 boxplot_pp_ratio_plot_function = function(df_m,global_factor,title = 'T test of log2(ratio)',input){ 
-  
-  test_function = F
-  if(test_function == T){
-    variable_list = c("df_m","global_factor","title")
-    cmd_list =save_variable_function(variable_list)
-    for(cmd in cmd_list){
-      eval(parse(text = cmd))
-    }
-  }
-  read_function = F
-  if(read_function == T){
-    cmd_list = read_variable_function(variable_list)
-    for(cmd in cmd_list){
-      print(cmd)
-      eval(parse(text = cmd))
-    }
-  }
-  
-  
-  u = as.numeric(as.character(unique(df_m$Status)))
-  u = factor(u[(order(u))])
-  #sig_col = c("white", "blanchedalmond")
-  #if(!(0 %in% df_m$significant)){
-  #  sig_col = c("blanchedalmond")
-  #}
-  df_m = df_m[!is.na(df_m$value),]
-  #View(df_m)
+
   sig_col = c("white", "blanchedalmond")
   if(!(0 %in% df_m$significant)){
     sig_col = c("blanchedalmond")
   }
-  if(input$rename_clusters == F){
-    df_m$Status = factor(df_m$Status, levels = u)
-  }
-  #View(df_m)
-  p = ggplot(df_m, aes(x = Status,y=value,col=variable, fill = significant)) +
-    geom_hline(yintercept=0)+
-    geom_boxplot() +
-    scale_x_discrete(limits = u) + 
-    scale_fill_manual(values = sig_col)
-  # scale_fill_manual(values = sig_col)
-  #sig_col = c('white','azure1')
+
   p = ggplot(df_m, aes(x = variable,y=value,col=Status, fill = significant)) +
     geom_hline(yintercept=0)+
     geom_boxplot() +
     labs(col = global_factor) + 
     #scale_x_discrete(limits = u) + 
     scale_fill_manual(values = sig_col) + 
-    facet_grid(. ~ Status)+
+    #scale_color_discrete(breaks = levels(df_m$Status)) +
+    facet_grid(. ~ Status) +
     ggtitle(title)
     #geom_signif(comparisons = c('pre','post'),textsize = 1)
   # scale_fill_manual(values = sig_col)
   
-  
+  p
   return(p)
 }
 
@@ -1516,8 +1552,9 @@ full_t_test_function = function(){
     raw_data[,col2] = full_data[,col1]
     #View(raw_data)
     output$percentage_df = renderDataTable(raw_data)
-    
+    lev = levels[full_data[,global_factor]]
     factor_levels = unique(full_data[,global_factor])
+    factor_levels = factor_levels[order(factor_levels)]
     for(entry in factor_levels){
       pre_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col1]
       post_data = selected_w$value[selected_w[,global_factor] == entry & selected_w$variable %in% col2]
@@ -1539,6 +1576,7 @@ full_t_test_function = function(){
       
     }
   }
+  levels(df$Status) = lev
   df = col_rearrange_function(df,3)
   
 }
@@ -1896,12 +1934,15 @@ chisq_within = function(data,input){
 
 
 
-dendrogram_plot_function = function(dendr,x_cluster,cut,input){
+dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_patients,input){
   dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
-  
+  dendr
+
   ## identify all the line above cluster to remove the colours
   height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+  height
   cut.height <- mean(c(height[cut], height[cut-1]))
+  cut.height
   dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
                                   dendr$segments$y > cut.height, 1, 2)
   dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
@@ -1909,48 +1950,73 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,input){
   
   dendr$segments$cluster = factor(dendr$labels$cluster[match(dendr$segments$x,dendr$labels$x)])
   dc = as.data.frame(dendr$segments)
+  dc
   for(cl in unique(na.omit(dc$cluster))){
     maxx = max(dc$x[dc$cluster == cl],na.rm=T)
     minx = min(dc$x[dc$cluster == cl],na.rm=T)
     dc$cluster[dc$x <= maxx & dc$xend <= maxx & dc$x >= minx & dc$xend >= minx] = cl
   }
-  
+  dc
   dc$cluster[dc$line == 1] = NA
-  clusters = factor(unique(na.omit(dc$cluster)))
-  clusters = clusters[order(clusters)]
+  #clusters = factor(unique(na.omit(dc$cluster)))
+  #clusters = clusters[order(clusters)]
 
   data = dc
+  #View(data)
 
-
-  if(input$rename_clusters == T){
+  #if(input$rename_clusters == T){
     data$cluster = as.character(data$cluster)
     dendr$label$cluster = as.character(dendr$label$cluster)
     i = 4
-    clutree_num = 4
-    clutree_num = input$clutree_num
-    for(i in c(1:clutree_num)){
+    #clutree_num = 5
+    #clutree_num = input$clutree_num
+    for(i in c(1:cut)){
       #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
       
-      cmd = paste0("data$cluster[data$cluster == '",i,"'] = input$cluster_", i)
+      cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
       print(cmd)
       eval(parse(text = cmd))
       #cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = 'cluster_", i,"'")
       
-      cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = input$cluster_", i)
+      cmd = paste0("dendr$label$cluster[dendr$labels$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
       print(cmd)
       eval(parse(text = cmd))
     }
-  }
-  clusters = unique(data$cluster)
-  clusters = clusters[!is.na(clusters)]
+    
+  p_dendr = dendr$label[dendr$label$label %in% cluster_patients,]
+  p_dendr
+  #}
+  #clusters = unique(data$cluster)
+  #clusters = clusters[!is.na(clusters)]
+  data$cluster
+  dendr$label$cluster
+  #levels(data$cluster)
+  #cluster_levels = cluster[order(clusters)]
+  levels(data$cluster) = cluster_levels
+  levels(data$cluster)
+  #levels(dendr$label$cluster) = cluster_levels
+  
+  data$cluster
+  dendr$label$cluster
+  p_dendr$cluster
   p = ggplot() +
-    geom_segment(data = data, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T)
-    if(input$patient_labels == T){
-    p = p + geom_text(data = label(dendr), aes(x, y, label = label, colour = factor(cluster)), 
-              hjust = 1,angle = 90, size = 5, show.legend = F) +
-      scale_y_continuous(expand = c(.2, 0))
+    geom_segment(data = data, aes(x=x, y=y, xend=xend, yend=yend,colour = cluster),size = 1, show.legend = T) 
+    if(input$patient_labels == 'simple'){
+    p = p + geom_text(data = dendr$label, aes(x, y, label = label, colour = cluster), 
+              hjust = 1,angle = 90, size = 3, show.legend = F)
+      p = p + scale_y_continuous(expand = c(.2, 0))
+    #print(p)
     }
-    p = p + scale_color_discrete(breaks = clusters)
+    if(input$patient_labels == 'mapped'){
+      p = p + geom_text(data = dendr$label, aes(x, y, label = label, colour = cluster), 
+                        hjust = 1,angle = 90, size = 3, show.legend = F, alpha = 0.5)
+      #p = p + scale_y_continuous(expand = c(.2, 0))
+      p = p + geom_text(data = p_dendr, aes(x, y, label = label, colour = cluster), 
+                        hjust = 1,angle = 90, size = 5, show.legend = F)
+      p = p + scale_y_continuous(expand = c(.5, 0))
+      #print(p)
+    }
+    p = p + scale_color_discrete(breaks = levels(data$cluster))
     p = p + theme(axis.line.y = element_blank(),
           #axis.title.y = input$discrete_cluster_y,
           axis.ticks.x = element_blank(),
@@ -2055,6 +2121,283 @@ BOS_RAS_matrix_calc_function = function(BOS, v, y){
   }
 }
 
+RAS_matrix_calc_function_new_df = function(BOS_limit,RAS_limit,fall_limit,history,df,t){
+  print(dim(df))
+  print(t)
+  vmin = min(df %>% filter(pRatio > RAS_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+  vmin
+  vmax = max(df %>% filter(pRatio > RAS_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+  vmax
+  if(t < vmin){
+    if((vmin - history) < t){
+      vmin_6 = t
+      vmin_6
+    }else{
+      vmin_6 = max(df$time[df$time <= vmin-history],na.rm = T)
+      vmin_6
+    }
+  }else{
+    vmin_6 = NA
+  }
+  vmin_6
+  fall = (df$pRatio[df$time == vmin] - df$pRatio[df$time == vmin_6])/df$pRatio[df$time == vmin_6] * 100
+  fall
+  measure = grep(paste0('^',vmin,'$'),df$time)
+  measure
+  next_measure = measure+1
+  next_measure
+  if(vmin > t){
+    if(is.finite(vmax)){
+      if(is.finite(vmin) & is.finite(fall)){
+        if(df$pRatio[next_measure] > RAS_limit & df$pFEV[next_measure] < BOS_limit & fall > fall_limit){
+          return(df$time[next_measure])
+        }else{
+          t = df$time[next_measure]
+          a = RAS_matrix_calc_function_new_df(BOS_limit,RAS_limit,fall_limit,history,df,t)
+          a
+          return(a)
+        }
+      }else{
+        return(NA)
+      }
+    }else{
+      if(is.finite(vmin)){
+        return(df$time[measure])
+      }else{
+        return(NA)
+      }
+    }
+  }else{
+    return(NA)
+  }
+}
+
+
+BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df){
+  #print(t)
+  BOS_limit
+  dim(df)
+  t = min(df$time,as.na = T)
+  if(test == 'RAS'){
+    v_list = df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit) %>% pull(time)
+    v_list
+    #vmin = min(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    #vmax = max(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    vmax = max(v_list,na.rm = T)
+
+  }else{
+    if(length(df$pRatio[!is.na(df$pRatio)]) > 0){
+      v_list = df %>% filter(pRatio < RAS_upper_limit & pFEV < BOS_limit) %>% pull(time)
+    }else{
+      v_list = df %>% filter(pFEV < BOS_limit) %>% pull(time)
+    }
+    
+    v_list
+    #vmin = min(df %>% filter(pRatio < RAS_upper_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    #vmax = max(df %>% filter(pRatio < RAS_upper_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    vmax = max(v_list,na.rm = T)  
+  }
+  print(v_list)
+  
+  if(length(v_list) == 0){
+    return(list(concurrent_time = NA))
+  }
+  #print(paste('   vmax = ', vmax))
+  vmin = v_list[1]
+  for(vmin in v_list){
+    vmin
+    vmax
+    vmin_6 = NA
+    fall = NA
+    if(is.finite(t) & is.finite(vmin)){
+      if(t < vmin){
+        if((vmin - history) < t){
+          vmin_6 = NA
+          fall = NA
+        }else{
+          vmin_6 = max(df$time[df$time <= vmin-history],na.rm = T)
+          vmin_6
+          fall = (df$pRatio[df$time == vmin] - df$pRatio[df$time == vmin_6])/df$pRatio[df$time == vmin_6] * 100
+          fall
+        }
+      }
+    }
+    
+    #vmin_6
+    #fall
+    
+    measure = grep(paste0('^',vmin,'$'),df$time)
+    measure
+    next_measure = measure+concurrent
+    next_measure
+    pRatio = df$pRatio[next_measure]
+    pRatio
+    pFEV = df$pFEV[next_measure]
+    pFEV
+    fall
+    elapsed_time = vmin - t
+    elapsed_time
+    BOS_values = list(test = test, time = vmin, concurrent_time = df$time[next_measure], 'pRatio' = pRatio, 'pFEV' = pFEV, 'fall' = fall)
+    BOS_values
+    print(as.data.frame(BOS_values))
+    #cat(names(BOS_values))
+    #cat(paste(BOS_values))
+    #print(paste('    vmin = ',vmin,', pRatio = ',pRatio,', pFEV = ',pFEV,', fall = ',fall))
+    if(is.finite(vmax)){
+      if(is.finite(vmin)){
+        if(test == 'RAS'){
+          if(!is.finite(pRatio)){
+            return(list(concurrent_time = NA))
+          }
+          if(is.finite(fall)){
+            if(pRatio > RAS_lower_limit & pFEV < BOS_limit & fall > fall_limit){
+              return(BOS_values)
+            }
+          }
+        }else{
+          if(!is.finite(pFEV)){
+            return(list(concurrent_time = NA))
+          }
+          if(is.finite(pRatio)){
+            if(pRatio < RAS_lower_limit & pFEV < BOS_limit & elapsed_time >= history){
+              return(BOS_values)
+            }else{
+              if(is.finite(fall)){
+                if(pRatio < RAS_upper_limit & pFEV < BOS_limit & fall < fall_limit){
+                  return(BOS_values)
+                }
+              }
+            }
+          }else{
+            if(pFEV < BOS_limit & elapsed_time >= history){
+              return(BOS_values)
+            }
+          }
+        }
+        
+      }else{
+        return(list(concurrent_time = NA))
+      }
+    }else{
+      if(is.finite(vmin)){
+        return(BOS_values)
+      }else{
+        return(list(concurrent_time = NA))
+      }
+    }
+  }
+}
+
+
+BOS_RAS_matrix_calc_function_new_df = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,df,t){
+  #print(t)
+  dim(df)
+  if(test == 'RAS'){
+    #v_list = df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time)
+    #v_list
+    vmin = min(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    vmax = max(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+  }else{
+    #v_list = df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time)
+    #v_list
+    vmin = min(df %>% filter(pRatio < RAS_upper_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+    vmax = max(df %>% filter(pRatio < RAS_upper_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
+  }
+  #for(vmin in v_list){
+    vmin
+    vmax
+    vmin_6 = NA
+    if(is.finite(t) & is.finite(vmin)){
+      if(t < vmin){
+        if((vmin - history) < t){
+          vmin_6 = NA
+          fall = NA
+        }else{
+          vmin_6 = max(df$time[df$time <= vmin-history],na.rm = T)
+          vmin_6
+          fall = (df$pRatio[df$time == vmin] - df$pRatio[df$time == vmin_6])/df$pRatio[df$time == vmin_6] * 100
+          fall
+        }
+      }
+    }
+    
+    vmin_6
+    fall
+    
+    measure = grep(paste0('^',vmin,'$'),df$time)
+    measure
+    next_measure = measure+1
+    next_measure
+    pRatio = df$pRatio[next_measure]
+    pRatio
+    pFEV = df$pFEV[next_measure]
+    pFEV
+    fall
+    #if(vmin > t){
+      re_run = F
+      if(is.finite(vmax)){
+        if(is.finite(vmin)){
+          if(test == 'RAS'){
+            if(!is.finite(pRatio)){
+              return(NA)
+            }
+            if(is.finite(fall)){
+              if(pRatio > RAS_lower_limit & pFEV < BOS_limit & fall > fall_limit){
+                return(df$time[next_measure])
+              }else{
+                re_run = T
+              }
+            }else{
+              re_run = T
+            }
+          }else{
+            if(!is.finite(pFEV)){
+              return(NA)
+            }
+            if(is.finite(pRatio)){
+              if(pRatio < RAS_lower_limit & pFEV < BOS_limit){
+                return(df$time[next_measure])
+              }else{
+                if(is.finite(fall)){
+                  if(pRatio < RAS_upper_limit & pFEV < BOS_limit & fall < fall_limit){
+                    return(df$time[next_measure])
+                  }else{
+                    re_run = T
+                  }
+                }else{
+                    re_run = T
+                  }
+              }
+            }else{
+              if(pFEV < BOS_limit){
+                return(df$time[next_measure])
+              }else{
+                re_run = T
+              }
+            }
+          }
+        
+          if(re_run == T){
+            t = df$time[next_measure]
+            print(paste('   run again',t,vmax))
+            a = BOS_RAS_matrix_calc_function_new_df(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,df,t)
+            return(a)
+          }
+          
+        }else{
+          return(NA)
+        }
+      }else{
+        if(is.finite(vmin)){
+          return(df$time[next_measure])
+        }else{
+          return(NA)
+        }
+      }
+  #}
+}
+
+
 RAS_matrix_calc_function = function(BOS, v, y){
   RAS = 0.7
   row = rownames(v)
@@ -2104,6 +2447,62 @@ RAS_matrix_calc_function = function(BOS, v, y){
 }
 
 
+RAS_matrix_calc_function_new = function(BOS, v, y){
+  RAS = 0.7
+  RAS_top = 0.85
+  row = rownames(v)
+  row
+  
+  cols = colnames(v)
+  cols
+  
+  vmin = tryCatch(min(which(y > RAS & v < 0.8)), error = function(e) Inf)
+  vmin
+  vmax = tryCatch(max(which(y > RAS & v < 0.8)), error = function(e) Inf)
+  vmax
+
+  vmin_6 = max(as.numeric(cols[as.numeric(cols) <= as.numeric(cols[vmin]) -6]))
+  vmin_6 = which(as.numeric(cols) == vmin_6)
+  fall = (y[vmin_6]-y[vmin])/y[vmin_6] * 100
+  fall
+  if(vmin != length(y)){
+    if(is.finite(vmax)){
+      if(is.finite(vmin) & is.finite(fall)){
+        
+        
+        if(y[vmin + 1] > RAS & v[vmin + 1] < 0.8 & fall < 10){
+          #if(vmin > vmax){
+          #return(vmin + 1)
+          return(as.numeric(cols[vmin + 1]))
+        }else{
+          new_start = vmax
+          new_start = vmin + 1
+          cols = cols[c(new_start:length(y))]
+          cols
+          v = v[c(new_start:length(y))]
+          v
+          y = y[c(new_start:length(y))]
+          a = RAS_matrix_calc_function(BOS,v,y)
+          return(a)
+        }
+        
+        }else{
+          return(NA)
+        }
+    }else{
+      if(is.finite(vmin)){
+        return(as.numeric(cols[vmin]))
+      }else{
+        return(NA)
+      }
+    }
+  }else{
+    return(NA)
+  }
+}
+
+
+
 BOS_calc_matrix_function = function(BOS,v){
   #print(v)
   cols = colnames(v)
@@ -2145,6 +2544,7 @@ BOS_calc_matrix_function = function(BOS,v){
     return(NA)
   }
 }
+
 
 
 BOS_function_pFEV = function(full_data,imputed = F){
@@ -3111,16 +3511,21 @@ BOS_factor_plot_smooth = function(m_bos,col_name,global_factor,x1,x2){
 
 pairwise_manova_function = function(data,m_factor,input){
   df_b = data.frame(term = numeric(0), df = numeric(0), pillai = numeric(0), statistic = numeric(0), num.df = numeric(0), den.df = numeric(0), p.value = numeric(0), Factor = numeric(0), comparison = numeric(0), range = numeric(0), numbers = numeric(0))
+  dim(data)[1]
   if(dim(data)[1] > 1){
     
-  factor_list = paste(unlist(unique(data[,m_factor])))
+  factor_list = unlist(unique(data[,m_factor]))
   factor_list = factor_list[order(factor_list)]
   factor_list
   num = length(factor_list)
+  num
   if(num > 1){
-    cmd = paste('res.man = manova(cbind(variable,value) ~ ',m_factor,', data = data)')
+    cmd = paste0('res.man = manova(cbind(variable,value) ~ `',m_factor,'`, data = data)')
+    cmd
     eval(parse(text = cmd))
+    res.man
     df = tidy(res.man)
+    df
     if(num > 2){
       df$Factor = m_factor
       df$comparison = 'All'
@@ -3130,20 +3535,29 @@ pairwise_manova_function = function(data,m_factor,input){
       df$numbers = paste(nums, collapse = ', ')
       for(i in c(1:num)){
         i_entry = factor_list[i]
+        i_entry
         for(j in c(1:num)){
           j_entry = factor_list[j]
+          j_entry
           if(i < j){
             m_data = data[data[,m_factor] %in% c(i_entry,j_entry),]
-            df_n = df_b
-            df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
-            cmd = paste('df_n = tidy(manova(cbind(variable,value) ~ ',m_factor,', data = m_data))')
             
-            try(eval(parse(text = cmd)))
+            if(is.na(j_entry)){
+              m_data = rbind(m_data,data[is.na(data[,m_factor]),])
+            }
+            m_data[,m_factor]
+            if(length(unique(m_data[,m_factor])) > 1 & !is.na(j_entry)){
+              df_n = df_b
+              df_n = data.frame(term = m_factor, df = NA, pillai = NA, statistic = NA, num.df = NA, den.df = NA, p.value = NA, comparison = NA, numbers = NA)
+              cmd = paste0('df_n = tidy(manova(cbind(variable,value) ~ `',m_factor,'`, data = m_data))')
+              cmd
+              eval(parse(text = cmd))
               df_n$Factor = m_factor
               df_n$comparison = paste(i_entry,'vs',j_entry)
               df_n$range = paste0('(',input$pre_range[1],':',input$post_range[2],')')
               df_n$numbers = paste(length(m_data$value[m_data[,m_factor] == i_entry & !is.na(m_data$value)]),'vs',length(m_data$value[m_data[,m_factor] == j_entry  & !is.na(m_data$value)]))
               df = rbind(df,df_n)
+            }
 
             
           }
@@ -3313,13 +3727,27 @@ proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
   df[is.na(df)] = 0
 
   #df$p.value.original = df$p.value
-  #df$p.value = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
-  datatable(df,options = list(rownames = FALSE, pageLength = 500)) %>% 
+  df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
+  df$significant = ifelse(df[,mtc] < 0.05,1,0)
+  
+  datatable(df,options = list(rownames = FALSE, pageLength = 500,
+    columnDefs = list(list(targets = grep('significant',colnames(df)),
+                           visible = FALSE)))) %>%
     formatStyle(names(df[,col_range]),
                                                    background = styleColorBar(range(df[,col_range]), colour),
                                                    backgroundSize = '98% 88%',
                                                    backgroundRepeat = 'no-repeat',
                                                    backgroundPosition = 'center') %>%
+    formatStyle(
+      mtc, 'significant',
+      target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'lightyellow'))) %>% 
+    
+    formatStyle(
+      mtc, 'significant',
+      #target = 'row',
+      backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
+    
     formatSignif(colnames(select_if(df, is.numeric)),3)
   
 }
@@ -3398,7 +3826,7 @@ processed_data_long_function = function(processed_data){
   processed_long = data.frame(empty = character(0))
   dim(processed_long)
   BOS_columns = c('RAS','RAS_recover','BOS1_RAS','BOS2_RAS','BOS3_RAS')
-  BOS_factor_columns = c(full_factor_columns,BOS_columns)
+  BOS_factor_columns = c(full_factor_columns,'cluster',BOS_columns)
   BOS_factor_columns
   colnames(processed_data)
   colnames(processed_data)[!colnames(processed_data) %in% BOS_factor_columns]

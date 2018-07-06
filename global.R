@@ -1,20 +1,27 @@
 
 ## CRAN packages : install.packages('package_name')
+options(repos = BiocInstaller::biocinstallRepos())
+getOption("repos")
 install_packages = F
 if(install_packages == T){
   source("https://bioconductor.org/biocLite.R")
-    biocLite(c("marray",'Biobase')) # required for CluMix
+  
+    biocLite(c("marray",'Biobase','RTCGA.clinical')) # required for CluMix
 
   install.packages(c("shiny","shinythemes", "googlesheets","gplots", "ggplot2","CluMix",
-    "Amelia","reshape","imputeTS","pspline","DT","dendextend","plyr","dplyr","survival",
+    "Amelia","reshape","imputeTS","pspline","dendextend","plyr","dplyr","survival",
     "ggfortify","survminer","ggdendro","zoo","broom","ggsignif",'devtools'))
+  library(devtools)
+  install_version("DT", version = "0.2", repos = "http://cran.us.r-project.org")
 }
 
 library(shiny)
 library(shinythemes) #
+library(shinyFiles)
 library(googlesheets)
 library(gplots) #
 library(ggplot2)
+library(plot3D)
 library(CluMix)
 library(Amelia)#
 library(reshape)
@@ -26,6 +33,7 @@ library(DT)
 library(dendextend)
 library(plyr)
 library(dplyr)
+library(tidyr)
 library(survival)
 library(ggfortify)
 library(survminer)
@@ -35,7 +43,7 @@ library(broom)
 library(ggsignif)
 library(shinyBS)
 
-library(survival)
+#library(survival)
 
 
 
@@ -53,7 +61,7 @@ info_tab = 'Session Info'
 
 defaults = 'David'
 save_workspace = F
-read_workspace = F
+read_workspace = T
 save_data = F
 
 #display_data_tables = F
@@ -63,7 +71,20 @@ save_data = F
 if(read_workspace == T){
   load('workspace.RData')
   source('functions.R')
-  run_clustering = F
+  default_df = default_gs[!is.na(default_gs$value),]
+  last_updated = paste(' ### SAVED WORKSPACE from ###',last_updated)
+  #View(default_df)
+  use_gs_defaults = T
+  for(variable in default_df$variable){
+    #print(variable)
+    cmd = paste(variable,'=',default_df$value[default_df$variable == variable])
+    print(cmd)
+    
+    if(use_gs_defaults == T){
+      eval(parse(text = cmd))
+    }
+  }
+  #run_clustering = F
   read_workspace = T
   
 }else{
@@ -94,14 +115,16 @@ if(read_workspace == T){
   #post_exclude_list = readRDS('www/post_exclude_list.rds')
   
   si = sessionInfo()
-  enableBookmarking(store = "url")
+  #enableBookmarking(store = "url")
   ############ UPLOAD DATA ####################
   #g_sheet = F # decided is data is to be read from google sheets or not
   if(g_sheet == T){
     googlesheets::gs_auth(token = 'shiny_app_token.rds')
     
     key = "1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA"
-    gs = gs_url("https://docs.google.com/spreadsheets/d/1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA/edit?usp=sharing_eil&ts=59b28497")
+    gs_link = "https://docs.google.com/spreadsheets/d/1Bvwyd_TRH6M5bB3y6gBDYKYHpQXhox9L9NQTGTiV1IA/edit?usp=sharing_eil&ts=59b28497"
+
+    gs = gs_url(gs_link)
     sheet_list = gs_ws_ls(gs)
     #sheet_list
     #clustering = as.data.frame(gs_read(ss=gs, ws= "OldClustering"))
@@ -113,20 +136,18 @@ if(read_workspace == T){
     clustering = as.data.frame(gs_read(ss=gs, ws= google_sheets_file))
     gs_updated = gs$updated
     
-    default_gs = as.data.frame(gs_read(ss=gs, ws= "Defaults for App 2"))
+    default_gs = as.data.frame(gs_read(ss=gs, ws= "Defaults"))
     #colnames(clustering)
     #saveRDS(file = 'clustering_8_new.rds',object = clustering)
-    saveRDS(file = 'full_cohort.rds',object = clustering)
-    saveRDS(file = 'default_gs.rds', object = default_gs)
+    saveRDS(file = 'www/full_cohort.rds',object = clustering)
+    saveRDS(file = 'www/default_gs.rds', object = default_gs)
     
     #clustering2 = clustering
   }else{
     #clustering = readRDS('clustering4.rds') ## OLD CLUSTERING FILE
     #clustering = readRDS('clustering_8_new.rds')
-    clustering = readRDS('full_cohort.rds')
-    default_gs = readRDS('default_gs.rds')
-    
-    
+    clustering = readRDS('www/full_cohort.rds')
+    default_gs = readRDS('www/default_gs.rds')
   }
   
   colnames(clustering)
@@ -142,11 +163,12 @@ if(read_workspace == T){
     #print(variable)
     cmd = paste(variable,'=',default_df$value[default_df$variable == variable])
     print(cmd)
+    
     if(use_gs_defaults == T){
       eval(parse(text = cmd))
     }
   }
-  
+  cluster_name_list = paste(cluster_patient_mapping)
   #display_data_tables = T
   
   edit_colname_function = function(col_names){
@@ -374,6 +396,25 @@ if(read_workspace == T){
     cluster_factor = clustering[,discrete_numeric_columns]
     clust_fac_con = clustering[,discrete_term_columns]
     #View(clust_fac_con)
+    
+    term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
+    term = discrete_term_columns[3]
+    term
+    temp_df = clust_fac_con
+    temp_df
+    for(term in discrete_term_columns[discrete_term_columns != 'Coded MRN']){
+      reason = data.frame(Name = temp_df[,term],Number = as.numeric(factor(temp_df[,term])))
+      reason
+      reason = reason[order(reason$Number),]
+      reason = reason[!duplicated(reason),]
+      reason$Factor = term
+      reason$Number = trimws(factor(reason$Number))
+      reason = reason[,c('Factor','Number','Name')]
+      reason
+      term_mapping_df = rbind(term_mapping_df,reason)
+    }
+    
+    
     convert_factors = T # convert word columns to lowercase
     if(convert_factors==T){
       cluster_factor_con = apply(clust_fac_con, 2, function(x) tolower(factor(x)))
@@ -391,7 +432,7 @@ if(read_workspace == T){
     full_fac$MRN = clustering$MRN
     full_fac$MRN_original = clustering$MRN_original
     
-    full_fac = apply(full_fac,2, function(x) factor(x))
+    full_fac = apply(full_fac,2, function(x) trimws(factor(x)))
     
     
     
@@ -571,17 +612,7 @@ if(read_workspace == T){
     pFEV_lf$time = as.numeric(as.character(pFEV_lf$variable))
     pFEV_lf[,all_discrete_columns] = apply(pFEV_lf[,all_discrete_columns],2,function(x) factor(x))
     
-    term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
-    for(term in discrete_term_columns){
-      reason = data.frame(Name = processed_data_r[,term],Number = as.numeric(processed_data_r[,term]))
-      #reason
-      reason = reason[order(reason$Number),]
-      reason = reason[!duplicated(reason),]
-      reason$Factor = term
-      reason$Number = factor(reason$Number)
-      reason = reason[,c('Factor','Number','Name')]
-      term_mapping_df = rbind(term_mapping_df,reason)
-    }
+
     
     ####################### IMPUTE pFEV ####################### 
     

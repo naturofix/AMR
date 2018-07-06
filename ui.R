@@ -3,17 +3,38 @@ shinyUI(fluidPage(
   titlePanel("Retrospective Review of AMR Diagnosis and Outcomes"),
   #shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
   fluidRow(
-    column(12,uiOutput('live_ui')),
+  
+   
+    column(5,uiOutput('live_ui')),
+    column(2,actionButton('debug_button','Debug')),
+    column(5,textOutput('default_file_name')),
+    
     #column(4,selectInput('global_factor','Factor to Separate by',c(all_discrete_columns,'cluster'),multiple = F,selected = 'cluster')),
-    column(4,uiOutput('global_factor_ui')),
-    column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
-    column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
     column(12,
-           uiOutput("cluster_select_clusters"),
-    tabsetPanel(selected = default_tab,
+    column(4,uiOutput('global_factor_ui')),
+    #column(4,sliderInput('pre_range','Pre Treatment Range',min = -24,max=0,step = 1,value = pre_values, width = 800)),
+    #column(4,sliderInput('post_range','Post Treatment Range',min = 0,max=24,step = 1,value = post_values,width = 800)),
+    column(4,uiOutput('pre_range_ui')),
+    column(4,uiOutput('post_range_ui')),
+
+    
+    tabsetPanel(id = 'Main', selected = default_tab,
  
     #### DATA TABLES ####
       #uiOutput('data_table_ui'),
+      tabPanel('Defaults',
+               column(6,
+                      #shinyFilesButton('file_2', 'Load Default', 'Please select a dataset', FALSE),
+                      fileInput("file1", "Load Default File")
+               ),
+               column(6,downloadButton('downloadData', 'Save Default File')),
+               column(12,verbatimTextOutput('r_values_text'),
+                      verbatimTextOutput('d_list_text'),
+               
+                      verbatimTextOutput('d_list_new_text'))
+               
+               
+               ),
       tabPanel("Data Tables",
         uiOutput('data_table_ui')     
         # tabsetPanel(
@@ -79,11 +100,16 @@ shinyUI(fluidPage(
     #### PATIENT DATA ####
     
     tabPanel('Patients',
+        
+             
         textOutput('patients_text'),
+        
+
+        #textOutput('default_file_name'),
         #tabPanel('Pre Clustering Selection',
              #uiOutput('scale_slide_1'),
              
-             tabsetPanel(selected = 'Pre Clustering Selection',
+             tabsetPanel(id = "Patients", selected = 'Select Patients for Clustering',
                 ####_missingness####
                tabPanel('Missingness Plot',
                         tags$h5('Missing values in the pFEV data'),
@@ -91,17 +117,34 @@ shinyUI(fluidPage(
                         plotOutput('pFEV_na_hist')),
                
                 ####_selection####
-               tabPanel('Pre Clustering Selection',
-                  tags$h4(paste(length(duplicated_list), 'entries for individual patients, had duplicated pFEV values and were automatically removed')),
-                  textOutput('auto_removed_duplicates'),  
-                  HTML("<br>"),
-                  tags$h4(paste(length(excluded_patients_c), 'patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
-                  textOutput('auto_removed_patients'),
-                  HTML("<br><br>"),
+               tabPanel('Select Patients for Clustering',
+                  uiOutput('duplicate_remove_text_ui'),
+                  #tags$h4(paste(length(duplicated_list), 'entries for individual patients, had duplicated pFEV values and were automatically removed')),
+                  #HTML("<br>"),
+                  #tags$h4(paste(length(excluded_patients_c), 'patients with less than ',completeness,'% of the pFEV datapoints were automatically removed from the analysis')),
+                  #textOutput('auto_removed_patients'),
+                  #HTML("<br><br>"),
                   #selectInput('select_remove','remove',list(`< 20% of pFEV values` = 'completeness' ,duplicates = 'duplicates'),multiple = T, selected = c('completeness','duplicates')),
                   
-                  sliderInput('pre_death_cutoff','Exclude Patients that no longer have pFEV measures after timepoint ',min = -24,max=24,step = 1,value = -24,width = 800),
+          
+                  tags$h5('Select the column used to subset the data, then select the the categories within that column to retain'),
+                  column(6,uiOutput('subset_1_ui')),
+                  #column(4,selectInput('subset_1','Subset by 1',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
+                  column(6,uiOutput('out_select_factor_1')),
+                  #column(4,verbatimTextOutput('out_select_factor_1_options_text')),
+                  column(12),
+                  column(6,uiOutput('subset_2_ui')),
+                  #column(4,selectInput('subset_2','Subset by 2',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
+                  column(6,uiOutput('out_select_factor_2')),
+                  #column(4,verbatimTextOutput('out_select_factor_2_options_text')),
+                  column(12),
+                  column(6,uiOutput('subset_3_ui')),
+                  #column(4,selectInput('subset_3','Subset by 3',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
+                  column(6,uiOutput('out_select_factor_3')),
+                  #column(4,verbatimTextOutput('out_select_factor_3_options_text')),
                   
+                  column(9,sliderInput('pre_death_cutoff','Exclude Patients that no longer have pFEV measures after timepoint ',min = -24,max=24,step = 1,value = -24,width = 800)),
+                  column(3,numericInput('missing_pFEV','Minimum percentage of pFEV values',2)),
                   uiOutput('pre_remove_ui'),
                   #actionButton('pre_save','Save List'),
                   
@@ -109,33 +152,26 @@ shinyUI(fluidPage(
                   
                   tags$h5(textOutput('status_text')),
                   column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
-                                        choiceValues = list("1", "2","0"
-                                        ),inline = T,selected = '0')),
-                  tags$h5('Select the column used to to subset the data, then select the the categories within that column to retain'),
-                  
-                  column(6,selectInput('subset_1','Subset by 1',c('All',all_discrete_columns),multiple = F,selected = subset_1)),
-                  column(6,uiOutput('out_select_factor_1')),
-                  column(12),
-                  column(6,selectInput('subset_2','Subset by 2',c('All',all_discrete_columns),multiple = F,selected = subset_2)),
-                  column(6,uiOutput('out_select_factor_2')),
-                  column(12),
-                  column(6,selectInput('subset_3','Subset by 3',c('All',all_discrete_columns),multiple = F,selected = subset_3)),
-                  column(6,uiOutput('out_select_factor_3')),
-                  
-                  
+                                         choiceValues = list("1", "2","0"
+                                         ),inline = T,selected = '0')),
                   column(12,
                          tags$h5('Retained patient information'),
-                  textOutput('pre_num_patients')),
+                         textOutput('pre_num_patients')),
                   column(12,
-                  textOutput('pre_patients_text')),
+                         textOutput('pre_patients_text')),
+               
                   #uiOutput('scale_slide_1')
                   #column(6,selectInput('subset_list_0','Select',factor_list,multiple = T,selected = factor_list))
                   
                   #column(3,selectInput('subset_2','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All')),
                   #column(3,selectInput('subset_3','subset by',c('All',all_discrete_columns),multiple = F,selected = 'All'))
-                  tabsetPanel(
+                  
+                  #tabsetPanel(
                   # CUSTOMISE PLOTS ####
-                  tabPanel('Customize Plots',
+                  textOutput("default_file_name_2"),
+                  tabsetPanel(tabPanel('Customize Plots',
+                           column(12,radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'BH', inline = T)),
+                           
                            column(6,numericInput('ggsave_height','Save Height','9')),
                            column(6,numericInput('ggsave_width','Save_Width Size','12')),
                            
@@ -159,13 +195,15 @@ shinyUI(fluidPage(
                            column(4,numericInput('y_title_margin_r','title right margin','10')),
                            column(6,numericInput('axis_text_y','Y axis text size','12')),
                            column(6,numericInput('axis_text_angle_y','Y axis text angle','90')),
+                           column(12,
                            
+                                  actionButton('show_tabs_button','Show All Tabs'),
+                                  actionButton('hide_tabs_button','Hide Tabs'))
+                  
+                           #column(12,verbatimTextOutput('custom_theme'))
                            
-                           
-                           column(12,verbatimTextOutput('custom_theme'))
-                           
-                  ))
-              ),
+                  )
+              )),
               
               tabPanel('Post Clustering Selection',
                        sliderInput('post_death_cutoff','Exclude Patients that no longer have pFEV measures at ... ',min = -24,max=24,step = 1,value = -24,width = 800),
@@ -213,10 +251,15 @@ shinyUI(fluidPage(
                        #tags$h5('test')
               ),
               ####_plot####
-              
-              tabPanel('View Selected Patients',
-                       radioButtons('retained_radiobutton','Select Patient Lists', list(All = 'all',`Excluded Pre-clustering` = 'pre',`Excluded Post-clustering` = 'post',`Retained Patients` = 'retained', `BOS data` = 'bos'),selected = 'bos',inline = T),
-                       uiOutput('multi_plot_column_select_ui'),
+              #tabPanel('Select Patients',
+           
+                       
+                     
+                       #radioButtons('retained_radiobutton','Select Patient Lists', list(All = 'all',`Excluded Pre-clustering` = 'pre',`Excluded Post-clustering` = 'post',`Retained Patients` = 'retained', `BOS data` = 'bos'),selected = 'retained',inline = T),
+                       #uiOutput('multi_plot_column_select_ui'),
+              tabPanel('View Individual Patients',
+                       uiOutput('retained_radionButton_ui'),
+                       
                        textOutput('multi_patient_number'),
                        column(9,uiOutput('multi_plot_select_patient_ui')),
                        column(3,radioButtons('multi_subset','',c('subset','all'))),
@@ -232,10 +275,10 @@ shinyUI(fluidPage(
                            tabPanel('Wide', dataTableOutput('multi_patient_table_wide')),
                            tabPanel('Long', dataTableOutput('multi_patient_table_long'))
                          ))
-                       )
+                       #)
                        
                        
-              )
+              ))
               
              # tabPanel('Plots',
              #          tabsetPanel(
@@ -286,59 +329,111 @@ shinyUI(fluidPage(
              #                              uiOutput("plots")))
              #   #tabPanel('Excluded',column(12,uiOutput('excluded_plots')))
              # ))
-             )
+             )),
     
     #tabPanel('Post Clustering Selection')
-    ),
+    
     
     #### CLUSTERING #####         
     tabPanel('Clustering',
-             tabsetPanel(
-               tabPanel('Dendograms',
-                        
-                        column(6,
-                               selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = discrete_list_1,width = 600),
-                               numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 100, step = 1),
-                               selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
-                               numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1),
-                               numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1),
-                               radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
+             #tabsetPanel(id = 'Clustering',
+            #   tabPanel('Parameters',
+                        column(12,textOutput('clustered_patients_text')),
+                        column(10,uiOutput('mix_clust_col_fac_ui')),
+                        column(2,uiOutput("fac_weight_ui")),
+                        column(10,uiOutput('mix_clust_col_fac_2_ui')),
+                        column(2,uiOutput("fac_weight_2_ui")),
+                        column(12,uiOutput('data_set_ui')),
+            column(10,uiOutput('ccc_1')),
+            column(2,uiOutput('num_weight_ui')),
+            #numericInput('num_weight', "Weight of Continuous Variable for List 1 *", d_list()$values$c_weight_1, min = 0, max = 100, step = 1),
+            
+            #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+            column(10,uiOutput('ccc_2')),
+            column(2,uiOutput('num_weight_2_ui')),
+            
+                        #column(6,
+                               #uiOutput('mix_clust_col_fac_ui'),
+                               #uiOutput("fac_weight_ui"),
+                         #      uiOutput('mix_clust_col_fac_2_ui'),
+                        #       uiOutput('fac_weight_2_ui')
+                               #selectInput('mix_clust_col_fac','Discrete Factors List 1',discrete_columns_4_comparison,multiple = T,selected = discrete_list_1,width = 600),
+                               #numericInput('fac_weight', "Weight of Discrete Factors for List 1", d_weight_1, min = 0, max = 100, step = 1),
+                               #selectInput('mix_clust_col_fac_2','Discrete Factors List 2',discrete_columns_4_comparison,multiple = T,selected = discrete_list_2,width = 600),
+                               #numericInput('fac_weight_2', "Weight of Discrete Factors for List 2", d_weight_2, min = 0, max = 100, step = 1)
                         
                                
-                        ),
-                        column(6,
+                        #),
+                        #column(6,
                                #selectInput('mix_clust_col_num','Continuous Variable List 1',clustering_continuous_columns,multiple = T,selected = continuous_list_1,width = 600),
-                               uiOutput('ccc_1'),
+                               # uiOutput('ccc_1'),
+                               # uiOutput('num_weight_ui'),
+                               # #numericInput('num_weight', "Weight of Continuous Variable for List 1 *", d_list()$values$c_weight_1, min = 0, max = 100, step = 1),
+                               # 
+                               # #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
+                               # uiOutput('ccc_2'),
+                               # uiOutput('num_weight_2_ui'),
                                
-                               numericInput('num_weight', "Weight of Continuous Variable for List 1", c_weight_1, min = 0, max = 100, step = 1),
-                               
-                               #selectInput('mix_clust_col_num_2','Continuous Variable List 2',clustering_continuous_columns,multiple = T,,selected = continuous_list_2,width = 600),
-                               uiOutput('ccc_2'),
-                               numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
-                               selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
-                               
-                               textOutput('clustered_patients_text')
+                               #numericInput('num_weight_2', "Weight of Continuous Variable for List 2", c_weight_2, min = 0, max = 100, step = 1),
+                               #uiOutput('data_set_ui'),
+                               #selectInput('data_set','Datasets used for clustering',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = clustering_data_sets,multiple = T),
                                
                                
-                        ),
-                        column(12,
+                               
+                        #),
+                  
+                        
+                        #),
+                        #tabPanel('Dendogram',
+                                #column(12,numericInput('clutree_num', "Number of Clusters", num_clusters, min = 1, max = 50, step = 1)),
+                                #column(12,),
+           
+            
+                              column(12,
+                              #column(12,tags$hr()),
+                              #column(6,radioButtons('rename_clusters','Rename Clusters',c(T,F),inline = TRUE)),
+                              
+                              #column(6,uiOutput('rename_menu_test_ui')),
                               column(12,tags$hr()),
-                              column(6,radioButtons('rename_clusters','Rename Clusters',c(T,F),inline = TRUE)),
-                              column(6,radioButtons('rename_menu_test','Renane Using',choiceNames = c('Text Entry','Drop-down menu'),choiceValues = c('text','menu'),selected = 'menu',inline = T)),
+                              column(3,
+                                     uiOutput('clutree_num_ui'),
+                                     uiOutput('cluster_names_list_ui'),
+                                     uiOutput('add_cluster_name'),
+                                     actionButton('add_cluster_button','Click to Add')),
                                
-                               
-                               column(12,uiOutput('name_clusters_ui')),
+                              column(9,uiOutput('name_clusters_ui')),
+                              
+                      
                                column(12,tags$hr()),
+                              
+                              column(12,dataTableOutput('cluster_mapping_2'),
+                                     textOutput('cluster_levels_text')),
+                              #column(12,
+                                     #actionButton('run_clustering_button','Re-run Clustering')
+                              #       uiOutput('run_clustering_rb_ui')
+                                     #radioButtons('run_clustering','Run Clustering',c(F,T),selected = run_clustering,inline = T)
+                                     
+                              #),
+                              tabsetPanel(id = 'dendo', 
+                                          
+                              #tabPanel('Heatmap',
+                              #         plotOutput('mix_clu_1')
+                              #         ),
+                              tabPanel('Dendogram',
+                                                                 
                                column(12,
                                       
-                                      column(5,textInput('discrete_cluster_title','Title','Patient Dendogram')),
+                                      column(6,textInput('discrete_cluster_title','Title','Patient Dendogram')),
                                       column(3,textInput('discrete_cluster_x','x title','Patients')),
                                       column(3,textInput('discrete_cluster_y','y title','Distance')),
-                                      column(1,radioButtons('patient_labels','Patient_label',c(T,F),selected = F,inline = F)),
-                                      
-                                      
+                                      column(9),
+                                      column(3,selectInput('patient_labels','Patient_label',c('mapped','simple','none'),selected = 'mapped')),
+                                    
                                       column(11,plotOutput('discrete_cluster_plot')),
                                       column(1,downloadButton('discrete_cluster_plot_download','')),
+                                      
+                                      
+                                      
                                       column(12,tags$hr()),
                                       column(11,plotOutput('mix_clu')),
                                       column(1,downloadButton('mix_clu_download','')),
@@ -349,9 +444,16 @@ shinyUI(fluidPage(
                                       column(3,textInput('distance_density_y','y title','y')),
                                   
                                       column(11,plotOutput('distance_density')),
-                                      column(1,downloadButton('distance_density_download','')),
-                                      column(12,tags$hr()),
-                                      
+                                      column(1,downloadButton('distance_density_download',''))
+                                      #column(12,tags$hr())
+                                      #radioButtons('view_summary_stats_rb','View Summary Stats',c(F,T),selected = F,inline = T),
+                                      #textOutput('summary_stat_show')
+                                      #)
+                              
+                              )),
+                              #tabsetPanel(id = 'clust_stat',
+                                  tabPanel('Summary Statistics',
+                              #tabPanel('Stats',
                                       radioButtons("data_select_clust", 'Select Data applied to plots below',
                                                    choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
                                                    choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
@@ -370,13 +472,20 @@ shinyUI(fluidPage(
                                       column(12,tags$h5('ANOVA of continuous variables across clusters')),
                                       column(11,dataTableOutput('continuous_manova_cluster')),
                                       column(1,downloadButton('continuous_manova_cluster_download',''))
-                                      
-                               ))# column(12)
+                               #)   
+                              
+                               # column(12)
                                
-                        ), # Dendogram
+                        #) # Dendogram
                #### _chi-squared ####
-               tabPanel('Chi-squared',
-                        tabsetPanel(
+             ))
+    )), #Clustering
+    tabPanel('Analysis',
+             column(12,
+                    uiOutput("cluster_select_clusters")),
+    tabsetPanel(id = 'Analysis', selected = '',
+               tabPanel('Discrete Variables',
+                        tabsetPanel(id = "Discrete_Variables", selected = 'Cluster',
                           tabPanel('Factor',
                                    tags$h5('Factor proportions across clusters by factor'),
                                    
@@ -409,9 +518,7 @@ shinyUI(fluidPage(
                                    tabsetPanel(
                                      tabPanel('Proportions',
                                               tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
-                                              tags$div(
-                                                HTML(paste(tags$span(style="color:red", 'Not sure the p values here are valid, the proportions are calculated for each factor within a cluster (down). These p values can be see in Stat -> Proportions. Here the p values are calculated across the clusters')))
-                                              ),
+                                              #tags$div(HTML(paste(tags$span(style="color:red", 'Not sure the p values here are valid, the proportions are calculated for each factor within a cluster (down). These p values can be see in Stat -> Proportions. Here the p values are calculated across the clusters')))),
                                               tabsetPanel(
                                                 tabPanel('Selected',dataTableOutput('cluster_analysis_within_table_selected_table')),
                                                 tabPanel('Full',
@@ -420,7 +527,7 @@ shinyUI(fluidPage(
                                                          
                                                          )
                                               )),
-                                     tabPanel("Stat",
+                                     tabPanel("Chi-square Statistic details",
                                               tabsetPanel(
                                               tabPanel('Proportions',
                                                        tabsetPanel(
@@ -446,46 +553,39 @@ shinyUI(fluidPage(
                         )),# chi-squared
                
                # _Continuous Variable #####
-               tabPanel('Continuous Variables', tabsetPanel(
+               tabPanel('Continuous Variables', 
                  # __Mean Table ##############
-                 tabPanel('Mean Table',
-                          
-                          dataTableOutput('pFEV_mean_table')
-                 ),
+                 #tabPanel('Mean Table',
+                       h1("Mean Summary Table"),   
+                          dataTableOutput('pFEV_mean_table'),
+                 #),
                  # __ANOVA ###################
-                 tabPanel('ANOVA',
+                 tabsetPanel(
+                 
+                 tabPanel('ANOVA statistic details',
                           #column(6,selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F)),
                           
                           #column(12,uiOutput("cluster_select_clusters_anova")),
                           tabsetPanel(
-                            tabPanel('Individual',
+                            tabPanel('Individual Plots',
                                      selectInput('continuous_variable','Select Continuous Variable',clustering_continuous_columns,multiple = F),
                                      
                                      plotOutput('anova_cluster_plot'),
                                      dataTableOutput('continuous_manova_single')
                             ),
-                            tabPanel('Full',dataTableOutput('continuous_manova_full'))
+                            tabPanel('Full Statistic Details',dataTableOutput('continuous_manova_full'))
                           )
                  )
                )
 
-             ) 
-    )), #Clustering
+             ), 
+    
     
   ##### POST CLUSTERING ANALSYSI ######
-    tabPanel('Post Clustering Analysis',
+    tabPanel('Spirometry Patterns',
              radioButtons('data_source','Select Data Type',c('pFEV1','pFVC','pRatio'),inline = T),
-             radioButtons("data_select", 'Select Data',
-                          choiceNames = list('original',"imputed", 'imputed to last pFEV value','smoothed','D1', "D1 remove imputed", 'D2'),
-                          choiceValues = list('none',"i",'i_NA', 'sm_i', 'd1','d1_ri','d2'),inline = T,selected = 'i'),
-             radioTooltip(id = "data_select", choice = "none", title = "Original Data", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "i", title = "Imputed from original data to fill in missing values", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "i_NA", title = "NOT WORKING : Imputed data removed after last original value, to remove patients that had died", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "sm_i", title = "Imputed data smoothed", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "d1", title = "First Differential of imputed smoothed data", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "d1_r1", title = "NOT WORKING", placement = "right", trigger = "hover"),
-             radioTooltip(id = "data_select", choice = "d2", title = "Second Differential of imputed smoothed data", placement = "right", trigger = "hover"),
-             
+             uiOutput('data_select_ui'),
+  
              
              #column(3,
             #        radioButtons("radioSelection", label = "So many options!", choices = c("A", "B", "C"))
@@ -528,6 +628,7 @@ shinyUI(fluidPage(
             
                         
                         column(12,tags$hr()),
+                        column(12,h4('Plot does not display if there are too few datapoints.')),
                         column(6,uiOutput('smooth_line_pFEV_title_ui')),
                         column(3,textInput('smooth_line_pFEV_x','x title','months')),
                         column(3,uiOutput('smooth_line_pFEV_y_ui')),
@@ -569,6 +670,19 @@ shinyUI(fluidPage(
                         column(12,tags$hr())
 
 
+               ),
+               tabPanel('Histogram',
+                        column(8,uiOutput('hist3D_cluster_select')),
+                        column(2,radioButtons('hist3D_rb','',c('2D','3D'))),
+                        
+                        column(2,numericInput('hist3D_breaks','Breaks',10,step = 1)),
+                        column(12,plotOutput('hist_3D')),
+                                    
+                        column(6,uiOutput('histogrma_time_ui')),
+                        column(6,radioButtons('hist_all','Add All',c(T,F), inline = T)),
+                        column(12,plotOutput('plot_FEV_histogram'),
+                        plotOutput('plot_FEV_histogram_facets'),
+                        plotOutput('plot_FEV_density'))
                )
                )),
              
@@ -614,11 +728,10 @@ shinyUI(fluidPage(
                     
 
       ############## STAT ################
-                    tabPanel('Statistics',tabsetPanel(
-                             tabPanel('Lung Measurements',
+                    tabPanel('Statistics',
+                             #tabsetPanel(tabPanel('Lung Measurements',
                              column(12,
 
-                                  radioButtons('mtc','Multiple Testing Correction', choices = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr", "none"),selected = 'BH', inline = T),
                                   tabsetPanel(selected = 'Pre Treatment vs Post Treatment',
                                     ### _pre vs post ####
                                     tabPanel('Pre Treatment vs Post Treatment',
@@ -660,7 +773,7 @@ shinyUI(fluidPage(
                                                       ),
                                                       tabPanel('Post / Treatment vs Treatment / Pre',
                                                                tags$h5('T test calculated on ratios or percentages of  (treatment / pre-treatment )  vs (post-treatment timepoint / treatment timepoint)'),
-                                                               radioButtons('vs_zero_prefix', label = 'T test calculated on ratios or percentages of  (treatment timepoint / pre-treatment timepoint)  vs (post-treatment timepoint / treatment timepoint)', choiceNames = c('log2(ratio)','Percentage'), choiceValues = c('log2zero_','per2zero_'),inline = T),
+                                                               #radioButtons('vs_zero_prefix', label = 'T test calculated on ratios or percentages of  (treatment timepoint / pre-treatment timepoint)  vs (post-treatment timepoint / treatment timepoint)', choiceNames = c('log2(ratio)','Percentage'), choiceValues = c('log2zero_','per2zero_'),inline = T),
                                                                tabsetPanel(
                                     
                                                                  tabPanel('Selected',
@@ -718,9 +831,9 @@ shinyUI(fluidPage(
                                                                                 )
                                                                           ),
                                                                           tabPanel('Ratios',
-                                                                                   # radioButtons("col_select", 'Ratio generated by equation described below',
-                                                                                   #              choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
-                                                                                   #              choiceValues = list("sym_ratio_colnames",'sym_log_ratio_colnames','sym_per_colnames', 'sym_rel_per_colnames'), select ='sym_rel_per_colnames', inline = T),
+                                                                                   radioButtons("col_select", 'Ratio generated by equation described below',
+                                                                                                choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
+                                                                                                choiceValues = list("sym_ratio_colnames",'sym_log_ratio_colnames','sym_per_colnames', 'sym_rel_per_colnames'), select ='sym_rel_per_colnames', inline = T),
                                                                                    # 
                                                                                    #radioButtons("col_select_prefix", 'Ratio generated by equation described below',
                                                                                   #              choiceNames = list('Ratio','log2(ratio)', 'Percentage',  'Relative Percentage'),
@@ -739,7 +852,7 @@ shinyUI(fluidPage(
                                                                                          tabPanel('Statistics',
                                       
                                                                                                   #plotOutput('sym_per_boxplot'),
-                                                                                                  tabsetPanel(
+                                                                                                  tabsetPanel(id = 'Ratio_Statistics',
                                                                                                     tabPanel('MANOVA',
                                                                                                              tags$h5('Determines if there is a significant difference between the factors (ie clusters), when log2 ratios are generated between two timepoints across 0. ie(log2(-12/12), MANOVA compares all the ratio together across the time range which can be changed using the post range slider'),
                                                                                                              
@@ -829,7 +942,7 @@ shinyUI(fluidPage(
                                                               )
                                                  ))
                                       ))
-                             ))
+                             #))
                              )
                              
                     )),#Stats
@@ -839,11 +952,27 @@ shinyUI(fluidPage(
 
 
     ####### BOSS #######
-    tabPanel('BOS',
+    tabPanel('BOS', id = 'BOS',
+             radioButtons('ras_new','RAS NEW DEFINITION',c(F,T)),
+             tabsetPanel(id = 'BOS_settings', tabPanel('settings',
+             column(3,numericInput('bos1_limit','BOS1 pFEV',0.8)),
+             column(3,numericInput('bos2_limit','BOS3 pFEV',0.66)),
+             column(3,numericInput('bos3_limit','BOS3 pFEV',0.5)),
+             column(3,numericInput('concurrent','Concurrent Measurements',2)),
+             column(3,numericInput('ras_upper','pRatio Upper Limit',0.85)),
+             column(3,numericInput('ras_lower','pRatio Lower Limit',0.7)),
+             column(3,numericInput('fall','pRatio percentage change',-10)),
+             column(3,numericInput('history','pRatio change duration (months)',6)),
+             
+             radioButtons('re_run_bos','Re run Bos calculation (takes a couple of minute',c(F,T))
+             )),
+             
+             radioButtons('bos_dataset_select','Select Dataset',list('Data used for Clustering' = 'cluster','After post clustring selection' = 'post'),'cluster', inline = T),
+             textOutput('bos_data_length_text'),
              radioButtons('bos_data_select','Select pFEV Data to use for BOS calculation, pRatio uses imputed',list(original = '', imputed = 'i'),selected = 'i',inline = T),
              radioButtons('sequence_correction','Correct BOS assignments so they are always in sequence',c(T,F),selected = F,inline = T),
-             radioButtons('first_and_last','Only do BOS calculation between first and last pFEV1 measurements',c(T,F),selected = T,inline = T),
-             radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = T,inline = T),
+             radioButtons('first_and_last','Only do BOS calculation between first and last pFEV1 measurements',c(T,F),selected = F,inline = T),
+             radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = F,inline = T),
              
              column(12,sliderInput('bos_range','Timecourse Range',min = -48,max=48,step = 1,value = c(-24,24),width = 800)),
              column(4,radioButtons('bos_slider','Select Slider Effect',c('plot_lim','plot_scale','none'),inline = T)),
@@ -949,7 +1078,9 @@ shinyUI(fluidPage(
                         plotOutput('bos3_surv_factor_plot_smooth')
                )
              )
-             ), # BOSS
+             )
+  
+  )), # BOSS
 
           
 

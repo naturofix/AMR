@@ -101,7 +101,7 @@ hideTab_function = function(){
   hideTab(inputId = 'Main', target = "Discrete Variables")
   hideTab(inputId = 'Main', target = "Continuous Variables")
   hideTab(inputId = 'Main', target = "Spirometry Patterns")
-  hideTab(inputId = 'Main', target = "BOS")
+  #hideTab(inputId = 'Main', target = "BOS")
   hideTab(inputId = 'Main', target = "Clustering")
   hideTab(inputId = 'Main', target = "R Info")
   
@@ -132,8 +132,10 @@ hideTab_function_upload = function(){
   hideTab(inputId = 'Main', target = "Discrete Variables")
   hideTab(inputId = 'Main', target = "Continuous Variables")
   hideTab(inputId = 'Main', target = "Spirometry Patterns")
-  hideTab(inputId = 'Main', target = "BOS")
+  #hideTab(inputId = 'Main', target = "BOS")
   #hideTab(inputId = 'Main', target = "Clustering")
+  hideTab(inputId = 'Main', target = "Analysis")
+  
   hideTab(inputId = 'Main', target = "R Info")
   
   #Data_Table
@@ -1304,7 +1306,7 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
-  lev = levels(full_data[,factor])
+  #lev = levels(full_data[,factor])
   factor_levels = unique(full_data[,factor])
   factor_levels = factor_levels[order(factor_levels)]
   entry = factor_levels[1]
@@ -1337,7 +1339,7 @@ boxplot_pp_zero_data_function = function(full_data,factor,t1,t2){
   # #print(sig_list)
   # df_m$significant = factor(sig_list)
   #df_m$significant[df$variable == 'pre'] = factor(df_s$pre_significant[match(df_m$Status[df$variable == 'pre'],df_s$Status)])
-  levels(df_m) = lev
+  #levels(df_m) = lev
   return(df_m)
 }
 
@@ -1490,8 +1492,8 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   
   col1 = factor(c(t1:-1))
   col2 = factor(c(1:t2))
-  lev =levels(full_data[,global_factor])
-  lev
+  #lev =levels(full_data[,global_factor])
+  #lev
   factor_levels = unique(full_data[,global_factor])
   factor_levels = factor_levels[order(factor_levels)]
   factor_levels
@@ -1508,7 +1510,7 @@ boxplot_pp_ratio_data_function = function(full_data,global_factor,t1,t2,df_s){
   
   df_m = melt(df)
   df_m$significant = factor(df_s$significant[match(df_m$Status,df_s$Status)])
-  levels(df$Status) = lev
+  #levels(df$Status) = lev
   df_m
 }
   #df_m$significant = factor(df_s$significant[match(df_m[,factor],df_s$Status)])
@@ -1576,7 +1578,7 @@ full_t_test_function = function(){
       
     }
   }
-  levels(df$Status) = lev
+  #levels(df$Status) = lev
   df = col_rearrange_function(df,3)
   
 }
@@ -1773,16 +1775,30 @@ clust_comparison_within = function(df,clust_col,input){
   #print(dim(df))
   for(i in num_clusters){
     df_clust = df[df[,clust_col] == i,]
-    
+    dim(df_clust)
+    head(df_clust)
     #print(i)
     #print(dim(df_clust))
     total = dim(df_clust)[1]
+    total
     for(factor_name in factor_list[order(factor_list)]){
-      status = paste(unique(df_clust[,factor_name]))
+      factor_name
+      status = df_clust[,factor_name]
+      status
+      if(input$rm_na_1 == T){
+      
+        status = status[!is.na(status)]
+        status
+        total = length(status)
+        total
+      }
       #print(factor_name)
       #print(status)
       #status[is.na(as.numeric(status))] = -2
+      status = paste(unique(status))
+      
       status = status[order(status)]
+      status
       #print(status)
       #print(df_clust[,factor_name])
       for(j in status){
@@ -1934,7 +1950,7 @@ chisq_within = function(data,input){
 
 
 
-dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_patients,input){
+dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_patients,cluster_list,input){
   dendr[["labels"]] <- merge(dendr[["labels"]],x_cluster, by="label")
   dendr
 
@@ -1974,11 +1990,15 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_p
       #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
       
       cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
+      cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(cluster_list[[", i,"]], collapse = ', ')")
+      
       print(cmd)
       eval(parse(text = cmd))
       #cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = 'cluster_", i,"'")
       
       cmd = paste0("dendr$label$cluster[dendr$labels$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
+      cmd = paste0("dendr$label$cluster[dendr$labels$cluster == '",i,"'] = paste(cluster_list[[", i,"]], collapse = ', ')")
+      
       print(cmd)
       eval(parse(text = cmd))
     }
@@ -1992,8 +2012,8 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_p
   dendr$label$cluster
   #levels(data$cluster)
   #cluster_levels = cluster[order(clusters)]
-  levels(data$cluster) = cluster_levels
-  levels(data$cluster)
+  #levels(data$cluster) = cluster_levels
+  #levels(data$cluster)
   #levels(dendr$label$cluster) = cluster_levels
   
   data$cluster
@@ -2016,7 +2036,7 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_p
       p = p + scale_y_continuous(expand = c(.5, 0))
       #print(p)
     }
-    p = p + scale_color_discrete(breaks = levels(data$cluster))
+    #p = p + scale_color_discrete(breaks = levels(data$cluster))
     p = p + theme(axis.line.y = element_blank(),
           #axis.title.y = input$discrete_cluster_y,
           axis.ticks.x = element_blank(),
@@ -2179,7 +2199,7 @@ BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limi
   dim(df)
   t = min(df$time,as.na = T)
   if(test == 'RAS'){
-    v_list = df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit) %>% pull(time)
+    v_list = df %>% filter(pRatio >= RAS_lower_limit & pFEV < BOS_limit) %>% pull(time)
     v_list
     #vmin = min(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
     #vmax = max(df %>% filter(pRatio > RAS_lower_limit & pFEV < BOS_limit & time > t) %>% pull(time),na.rm = T)
@@ -2217,7 +2237,11 @@ BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limi
         }else{
           vmin_6 = max(df$time[df$time <= vmin-history],na.rm = T)
           vmin_6
-          fall = (df$pRatio[df$time == vmin] - df$pRatio[df$time == vmin_6])/df$pRatio[df$time == vmin_6] * 100
+          if(vmin == vmin_6){
+            fall = 0
+          }else{
+            fall = (df$pRatio[df$time == vmin] - df$pRatio[df$time == vmin_6])/df$pRatio[df$time == vmin_6] * 100
+          }
           fall
         }
       }
@@ -2249,8 +2273,15 @@ BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limi
           if(!is.finite(pRatio)){
             return(list(concurrent_time = NA))
           }
+          if(is.finite(vmin_6)){
+            if(vmin == vmin_6){
+              if(pRatio > RAS_lower_limit & pFEV < BOS_limit){
+                return(BOS_values)
+              }
+            }
+          }
           if(is.finite(fall)){
-            if(pRatio > RAS_lower_limit & pFEV < BOS_limit & fall > fall_limit){
+            if(pRatio > RAS_lower_limit & pFEV < BOS_limit & fall >= fall_limit){
               return(BOS_values)
             }
           }
@@ -2262,8 +2293,15 @@ BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limi
             if(pRatio < RAS_lower_limit & pFEV < BOS_limit & elapsed_time >= history){
               return(BOS_values)
             }else{
+              if(is.finite(vmin_6)){
+                if(vmin == vmin_6){
+                  if(pRatio < RAS_upper_limit & pFEV < BOS_limit){
+                    return(BOS_values)
+                  }
+                }
+              }
               if(is.finite(fall)){
-                if(pRatio < RAS_upper_limit & pFEV < BOS_limit & fall < fall_limit){
+                if(pRatio < RAS_upper_limit & pFEV < BOS_limit & fall <= fall_limit){
                   return(BOS_values)
                 }
               }

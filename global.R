@@ -60,8 +60,11 @@ g_sheet = T
 info_tab = 'Session Info'
 
 defaults = 'David'
-save_workspace = F
+#save_workspace = F
 read_workspace = T
+if(read_workspace == F){
+  save_workspace = T
+}
 save_data = F
 
 #display_data_tables = F

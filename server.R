@@ -6,37 +6,32 @@ library(shiny)
 #profvis({
 shinyServer(function(input, output, session) {
   
-  hideTab_function = function(){
-    hideTab(inputId = 'Main', target = "Discrete Variables")
-    hideTab(inputId = 'Main', target = "Continuous Variables")
-    hideTab(inputId = 'Main', target = "Spirometry Patterns")
-    hideTab(inputId = 'Main', target = "BOS")
-    hideTab(inputId = 'Main', target = "Clustering")
-    hideTab(inputId = 'Main', target = "R Info")
-    
-    #Data_Table
-    hideTab(inputId = 'Data_Table', target = "Selected Data")
-    hideTab(inputId = 'Data_Table', target = "Data used for Clustering")
-    hideTab(inputId = 'Data_Table', target = "log 2 ratio vs zero")
-    hideTab(inputId = 'Data_Table', target = "percentage change vs zero")
-    hideTab(inputId = 'Data_Table', target = "Summary Table")
-    
-    
-    #hideTab(inputId = 'Main', target = "Data Tables")
-    hideTab(inputId = 'Patients', target = "Missingness Plot")
-    hideTab(inputId = 'Patients', target = "Post Clustering Selection")
-    #hideTab(inputId = 'Patients', target = 'Select Patients for Clustering')
-    
-    #hideTab(inputId = 'dendo', target = "Dendogram")
-    
-    #hideTab(inputId = 'clust_stat', target = "Summary Statistics")
-    
-    hideTab(inputId = "Discrete_Variables", target =  'Factor')
-    hideTab(inputId = "Ratio_Statistics", target =  'Two Sample t tests')
-    hideTab(inputId = "Ratio_Statistics", target =  'T test vs mean of zero')
-    
-}
   hideTab_function()
+  
+  output$debug_ui = renderUI({
+    if(read_workspace == T){
+      actionButton('debug_button','Debug')
+    }
+  })
+  
+  output$statistice_tab_text = renderText({
+    if(input$calc_select == 'none'){
+      showTab(inputId = 'Statistics', target = 'Pre Treatment vs Post Treatment')
+      
+      showTab(inputId = 'PTP', target = 'Pre vs Treatment vs Post')
+      showTab(inputId = 'PTP', target = 'Post / Treatment vs Treatment / Pre')
+      showTab(inputId = 'PTP', target = 'Pre vs Post')
+    }else{
+      hideTab(inputId = 'Statistics', target = 'Pre Treatment vs Post Treatment')
+      
+      hideTab(inputId = 'PTP', target = 'Pre vs Treatment vs Post')
+      hideTab(inputId = 'PTP', target = 'Post / Treatment vs Treatment / Pre')
+      hideTab(inputId = 'PTP', target = 'Pre vs Post')
+    }
+    
+    
+    print('')
+  })
   
   observeEvent(input$debug_button,{
     print('debug')
@@ -127,8 +122,9 @@ shinyServer(function(input, output, session) {
         #r_values_input
         #file_path = input$file1$name
       }else{
-      file_path = 'www/default_test.rds'
-      r_values_input = readRDS(file_path)
+      
+      file_path = 'current_default.rds'
+      r_values_input = readRDS('www/defaults/current_default.rds')
       
       }
     }
@@ -140,7 +136,7 @@ shinyServer(function(input, output, session) {
     print('input file')
     r_values_input
     #r_values = r_values_input
-    remove_list = c('cluster_patient_mapping')
+    remove_list = c('cluster_patient_mapping', 'discrete_list_1','discrete_list_2','continuous_list_1','continuous_list_2','init','')
     d_list = list(0)
     for(name in names(r_values_input)){
       if(!name %in% remove_list){
@@ -183,38 +179,45 @@ shinyServer(function(input, output, session) {
     }else{
       clust_num = input$clutree_num
     }
-    default_variable_list = c('subset_1','subset_2','subset_3',
+    #default_variable_list = isolate(names(input))
+    
+    top_variable_list =  c("pre_range","post_range")
+    
+    patient_variable_list = c('subset_1','subset_2','subset_3',
                               "select_subset_1","select_subset_2","select_subset_3",
-                              "c_weight_1","c_weight_2",
+                              "remove_list",
+                              "subset_1_re_include_list",
+                              "subset_2_re_include_list",
+                              "subset_1_re_include_list",
+                              "missing_re_include_list",
+                              "dead_re_include_list"
+    )
+  
+    cluster_variable_list = c( "c_weight_1","c_weight_2",
                               "num_weight",'num_weight_2',
                               'data_set',
                               "mix_clust_col_num",'mix_clust_col_num_2',
                               'mix_clust_col_fac','mix_clust_col_fac_2',
                               'fac_weight','fac_weight_2',
-                              "remove_list", #patient_custom_exclude
-                              "pre_range","post_range",
                               "data_select",
                               "clutree_num",
                               "cluster_list_of_names",
+                              'clust_range',
+                              
                               paste0('cluster_name_',seq(1,clust_num)),
                               paste0('cluster_patient_',seq(1,clust_num))
                               )
-    default_variable_list
-    #default_variable_list = seq()
+    default_variable_list = c(top_variable_list,patient_variable_list,cluster_variable_list)
                               
-    for(entry in default_variable_list){
-      if(!is.null(input[[entry]])){
+    for(entry in cluster_variable_list){
+      if(r_values$run_clustering == T){
         d_list[[entry]] = input[[entry]]
       }
     }
-    # print(input[['subset_1']])
-    # #d_list$subset_1 = input$subset_1
-    # #d_list$select_subset_1 = input$select_subset_1
-    # d_list$subset_2 = input$subset_2
-    # d_list$select_subset_2 = input$select_subset_2
-    # d_list$subset_3 = input$subset_3
-    # d_list$select_subset_3 = input$select_subset_3
-    # 
+    for(entry in patient_variable_list){
+      d_list[[entry]] = input[[entry]]
+    }
+
     d_list
     
   })
@@ -229,6 +232,23 @@ shinyServer(function(input, output, session) {
       print(paste(name,':',paste(d_list_new()[[name]],collapse = ', ')))
     }
   })
+  
+  output$d_list_table = renderDataTable({
+    print('d_list_table')
+    d_list = d_list()$values
+    d_list
+    d_list_new = d_list_new()
+    d_list_new
+    names = unique(c(names(d_list),names(d_list_new())))
+    names
+    df = data.frame(names = names)
+    df$default = NA
+    df$current = NA 
+    df$default[df$names %in% names(d_list)] = paste(d_list)
+    df$current[df$names %in% names(d_list_new)] = paste(d_list_new)
+    df %>% arrange(names)
+    })
+  
   output$default_file_name = renderText({
     print('default_file_name')
     showTab(inputId = 'Main', target = "Clustering")
@@ -254,7 +274,7 @@ shinyServer(function(input, output, session) {
   #reactive({
   output$downloadData <- downloadHandler(
  
-    filename = function(){'default_test.rds'},
+    filename = function(){'default_file_name.rds'},
     content = function(file){
       saveRDS(d_list_new(), file)
       }
@@ -672,9 +692,7 @@ shinyServer(function(input, output, session) {
                     )
                     }
               })
-              #output$auto_removed_duplicates = renderText({
-              #  paste(duplicated_list,collapse = ', ')
-              #})
+
               
               output$out_select_factor_1_options_text = renderPrint({
                 #print("select_text_1")
@@ -725,18 +743,8 @@ shinyServer(function(input, output, session) {
               
               pre_removed_list = reactive({ # can potentially be used to re-incorporate sample automatically removed, but not implimented yet
                 print("pre_removed_list")
-                # pre_removed_list = c()
-                # if('completeness' %in% input$select_remove){
-                #   pre_removed_list = c(pre_removed_list,excluded_patients_c)
-                #   }
-                # if('duplicates' %in% input$select_remove){
-                #   pre_removed_list = c(pre_removed_list,duplicated_list)
-                # }
                 excluded_patients_c = paste(processed_data_dup$MRN[processed_data_dup$pFEV_na < input$missing_pFEV])
-                
-                pre_removed_list = c(excluded_patients_c,duplicated_list)
-                #pre_removed_list = c(duplicated_list)
-                
+                pre_removed_list = c(excluded_patients_c)
                 pre_removed_list
               })
               
@@ -752,31 +760,101 @@ shinyServer(function(input, output, session) {
                 retained_list
               })
               
-              output$pre_remove_ui = renderUI({
+              
+              output$subset_1_re_include_ui = renderUI({
+                print('subset_1_re_include')
+                if(input$subset_1 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_1] %in% input$select_subset_1])
+                  selected_list = patient_list[patient_list %in% MRN]
+                  selected_list = selected_list[order(selected_list)]
+                  if(is.null(d_list()$values$subset_1_re_include_list)){
+                    selectInput('subset_1_re_include_list','reinclude *',selected_list,multiple = T, width = 800)
+                    
+                  }else{
+                    selectInput('subset_1_re_include_list','reinclude **',selected_list,multiple = T,selected = d_list()$values$subset_1_re_include_list, width = 800)
+                  }
+                }
+              })
+              output$subset_2_re_include_ui = renderUI({
+                print('subset_2_re_include')
+                if(input$subset_2 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_2] %in% input$select_subset_2])
+                  selected_list = patient_list[patient_list %in% MRN]
+                  selected_list = selected_list[order(selected_list)]
+                  if(is.null(d_list()$values$subset_2_re_include_list)){
+                    selectInput('subset_2_re_include_list','reinclude *',selected_list,multiple = T, width = 800)
+                    
+                  }else{
+                    selectInput('subset_2_re_include_list','reinclude **',selected_list,multiple = T,selected = d_list()$values$subset_2_re_include_list, width = 800)
+                  }
+                }
+              })
+              output$subset_3_re_include_ui = renderUI({
+                print('subset_3_re_include')
+                if(input$subset_3 != 'All'){
+                  MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_3] %in% input$select_subset_3])
+                  selected_list = patient_list[patient_list %in% MRN]
+                  selected_list = selected_list[order(selected_list)]
+                  if(is.null(d_list()$values$subset_3_re_include_list)){
+                    selectInput('subset_3_re_include_list','reinclude *',selected_list,multiple = T, width = 800)
+                    
+                  }else{
+                    selectInput('subset_3_re_include_list','reinclude **',selected_list,multiple = T,selected = d_list()$values$subset_3_re_include_list, width = 800)
+                  }
+                }
+              })
+              
+              output$missing_re_include_ui = renderUI({
                 print('pre_removed_ui')
                 #if(!is.null(pre_removed_list())){
                   print('   running')
-                  #if(file.exists('www/pre_exclude_list.rds')){
-                  #  print('read pre RDS')
-                  #  patient_custom_exclude = readRDS('www/pre_exclude_list.rds')
-                  #}
-                  
-                 # patient_list = patient_list[!patient_list %in% pre_removed_list()]
-                  patient_list
-                  #selected_list = unique(c(patient_custom_exclude,pre_dead_patients()))
-                  selected_list = unique(c(d_list()$values$remove_list,pre_dead_patients(),pre_removed_list()))
-                  selected_list
+                  selected_list = unique(pre_removed_list())
                   selected_list = selected_list[order(selected_list)]
-                  #patient_custom_exclude = patient_custom_exclude[!patient_custom_exclude %in% excluded_patients_c]
-                  #selectInput('remove_list','Select additional patients to removed',patient_list,multiple = T,selected = unique(c(excluded_patients_c,patient_custom_exclude)), width = 800)
-                  selectInput('remove_list','Select additional patients to removed *',patient_list,multiple = T,selected = selected_list, width = 800)
-                #}
+                  if(is.null(d_list()$values$missing_re_include_list)){
+                    selectInput('missing_re_include_list','reinclude *',selected_list,multiple = T, width = 800)
+                    
+                  }else{
+                    selectInput('missing_re_include_list','reinclude **',selected_list,multiple = T,selected = d_list()$values$missing_re_include_list, width = 800)
+                  }
+              })
+              
+              output$dead_re_include_ui = renderUI({
+                print('pre_removed_ui')
+                #if(!is.null(pre_removed_list())){
+                print('   running')
+                selected_list = unique(pre_dead_patients())
+                selected_list = selected_list[order(selected_list)]
+                if(is.null(d_list()$values$dead_re_include_list)){
+                  selectInput('dead_re_include_list','reinclude *',selected_list,multiple = T, width = 800)
+                  
+                }else{
+                  selectInput('dead_re_include_list','reinclude **',selected_list,multiple = T,selected = d_list()$values$dead_re_include_list, width = 800)
+                }
+              })
+
+              output$pre_remove_ui = renderUI({
+                  print('pre_remove_ui')
+                  if(is.null(d_list()$values$remove_list)){
+                    selectInput('remove_list','Select additional patients to removed *',patient_list,multiple = T, width = 800)
+                  }else{
+                    selectInput('remove_list','Select additional patients to removed **',patient_list,multiple = T,selected = d_list()$values$remove_list, width = 800)
+                  }
+                    #}
                })
               
               pre_retained_patients = reactive({
                 print('pre_retained_patients')
+                skip = F
+                patient_list
                 if(!is.null(input$subset_1)){
+                  if(skip == F){
                   print('   running')
+                  
+                
+                  patient_list = patient_list[!patient_list %in% duplicated_list]
+                  
+                  pre_dead_list = pre_dead_patients()[pre_dead_patients()]
+                  
                   patient_list = patient_list[!patient_list %in% pre_removed_list()]
       
                   patient_list = patient_list[!(patient_list %in% input$remove_list)]
@@ -804,6 +882,15 @@ shinyServer(function(input, output, session) {
                     MRN = na.omit(pFEV_wf$MRN[pFEV_wf[,input$subset_3] %in% input$select_subset_3])
                     patient_list = patient_list[patient_list %in% MRN]
                   }
+                  
+                  patient_list = c(patient_list,input$subset_1_re_include_list,
+                                                input$subset_2_re_include_list,
+                                                input$subset_1_re_include_list,
+                                                input$missing_re_include_list,
+                                                input$dead_re_include_list)
+                  }
+                  
+                  
                   output$pre_num_patients = renderText({
                     print('pre_num_patients text')
                     if(!is.null(patient_list)){
@@ -1698,16 +1785,20 @@ shinyServer(function(input, output, session) {
     ccc = colnames(data)[colnames(data) %in% continuous_columns]
     data_list = c('pFEV1','i_pFEV1','i_pFVC','i_pRatio','d1_pFEV1','d1_pFVC','d1_pRatio')
     data_list = input$data_set
+    data_list
     #print(data_list)
     data_entry = data_list[1]
     for(data_entry in data_list){
       cmd = paste0("o_data = data$",data_entry,"_matrix")
       eval(parse(text = cmd))
       head(o_data)
-      o_data = as.data.frame(o_data)
+      o_data = as.data.frame(o_data) 
       o_data
+      c_data <- o_data %>% select(colnames(o_data)[colnames(o_data) %in% as.character(c(input$clust_range[1]:input$clust_range[2]))])
+      head(c_data)
       colnames(o_data) = gsub('-','neg_',paste(data_entry,colnames(o_data),sep='_'))
-      ccc = c(ccc,colnames(o_data))
+      colnames(c_data) = gsub('-','neg_',paste(data_entry,colnames(c_data),sep='_'))
+      ccc = c(ccc,colnames(c_data))
       #print(head(o_data))
       #print(rownames(o_data))
       #o_data$MRN = rownames(o_data)
@@ -1758,7 +1849,18 @@ shinyServer(function(input, output, session) {
     selectInput('data_set','Spirometry datasets used for clustering *',gsub('_matrix','',grep('matrix',colnames(processed_data),value = T)),selected = d_list()$values$data_set,multiple = T)
     
   })
+  output$clust_range_ui = renderUI({
+    print('clust_range_ui')
+    if(!is.null(d_list()$values$clust_range)){
+      sliderInput('clust_range','Spirometry Range **',min = -24,max = 24,value = d_list()$values$clust_range)
+    }else{
+      sliderInput('clust_range','Spirometry Range *',min = -24,max = 24,value = c(-3,3))
+    }
+
+  })
   output$mix_clust_col_fac_ui = renderUI({
+    
+
     selectInput('mix_clust_col_fac','Discrete Factors List 1 *',discrete_columns_4_comparison,multiple = T,selected = d_list()$values$mix_clust_col_fac,width = 1200)
   })
   output$fac_weight_ui = renderUI({
@@ -1789,7 +1891,7 @@ shinyServer(function(input, output, session) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster
     #data = data[data$cluster %in% input$cluster_select_clusters,]
-    levels(data$cluster) = cluster_levels()
+    #levels(data$cluster) = cluster_levels()
     dim(data)
     data_l = data
     data
@@ -1943,7 +2045,7 @@ shinyServer(function(input, output, session) {
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     #levels(data$cluster) = discrete_cluster_D()$levels
     data$cluster
-    levels(data$cluster) = cluster_levels()
+    #levels(data$cluster) = cluster_levels()
     
     data_l = data
     data
@@ -2278,6 +2380,8 @@ shinyServer(function(input, output, session) {
     selection_list = list(All = 'all',`Excluded Pre-clustering` = 'pre',`Retained Patients` = 'retained')
     if(r_values$run_clustering == T){
       selection_list$`Excluded Post-clustering` = 'post'
+    }
+    if(input$re_run_bos == T){
       selection_list$`BOS data` = 'bos'
     }
     radioButtons('retained_radiobutton','Select Patient Lists', selection_list,selected = 'retained',inline = T)
@@ -2341,12 +2445,16 @@ shinyServer(function(input, output, session) {
   output$multi_patient_table_wide = renderDataTable({
     print('multi_patient_table_wide')
     df = patient_data()[patient_data()$MRN %in% input$multi_plot_patients,]
-    saveRDS(df,'temp/df.rds')
+    #saveRDS(df,'temp/df.rds')
     df
   })
   multi_patient_long_data = reactive({
     data = processed_long
+    
     if(r_values$run_clustering == T){
+      data = processed_data_l_r()
+    }
+    if(input$re_run_bos == T){
       data = BOS_processed_data_l_r()
     }
     
@@ -3241,7 +3349,9 @@ shinyServer(function(input, output, session) {
         })
             ### ___for clustering ####
         pp_t_test_ratio_cluster = reactive({
+          print("pp_t_test_ratio_cluster")
           full_data = pFEV_lf_r()
+          full_data = change_data_l_clust()
           dim(full_data)
           plot_data = full_data
           ##View(plot_data)
@@ -3258,7 +3368,7 @@ shinyServer(function(input, output, session) {
         boxplot_pp_ratio_data_cluster = reactive({
           #full_data = pFEV_lf_r()
           full_data = change_data_l_clust()
-          levels(full_data$cluster)
+          #levels(full_data$cluster)
           df_s = pp_t_test_ratio_cluster()
           t1 = input$pre_range[1]
           t2 = input$post_range[2]
@@ -3267,7 +3377,7 @@ shinyServer(function(input, output, session) {
           
           df = boxplot_pp_ratio_data_function(full_data,global_factor,t1,t2,df_s)
           colnames(df)
-          levels(df$Status)
+          #levels(df$Status)
           ##View(df)
           df
           
@@ -4365,7 +4475,7 @@ shinyServer(function(input, output, session) {
         #if(input$run_clustering == T){
         if(!is.null(input$clutree_num)){
         #if(input$run_clustering_button > r_values$re_run_clustering){
-          #if(input$run_clustering == T){
+        if(input$run_clustering_rb == T){
           
             cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
                                                   input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
@@ -4382,47 +4492,54 @@ shinyServer(function(input, output, session) {
         #}
           cluster_data_list
           }
-        #}
+        }
         
       })
   
     
       discrete_cluster_D = reactive({
         print("discrete_cluster_D")
-        cluster_data_list = discrete_cluster()
-        data = cluster_data_list$data
-        #rename_clusters = F
-        #if(input$rename_clusters == T){
-          #print(dim(cluster_data_list))
-          #dim(cluster_data_list)
-          
-          data$cluster = as.character(data$cluster)
-          i = 4
-          for(i in c(1:input$clutree_num)){
-            cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
-            print(cmd)
-            eval(parse(text = cmd))
-            cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_name", i)
-            print(cmd)
-            #eval(parse(text = cmd))
+        if(!is.null(cluster_list())){
+          print('   running')
+          cluster_data_list = discrete_cluster()
+          data = cluster_data_list$data
+          #rename_clusters = F
+          #if(input$rename_clusters == T){
+            #print(dim(cluster_data_list))
+            #dim(cluster_data_list)
             
-          }
-          data$cluster
-          clusters = unique(data$cluster)
-          cluster_levels = clusters[order(clusters)]
-          #levels(data$cluster) = cluster_levels
-          levels(data$cluster) = cluster_levels()
-          #cluster_data_list$levels = cluster_levels
-          cluster_data_list$levels = unique(paste(cluster_mapping_2()$name))
-          cluster_data_list$data = data
-        #}
-        #r_values$change_clustering = T
-        #if(save_data == T){
-        #  saveRDS(cluster_data_list,'www/cluster_data_list.rds')
-        #}
-        cluster_data_list
-        
-        
+            data$cluster = as.character(data$cluster)
+            i = 1
+            for(i in c(1:input$clutree_num)){
+              cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
+              
+              cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(cluster_list()[[", i,"]], collapse = ', ')")
+              
+              print(cmd)
+              eval(parse(text = cmd))
+              cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_name", i)
+              cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_name", i)
+              
+              print(cmd)
+              #eval(parse(text = cmd))
+              
+            }
+            data$cluster
+            clusters = unique(data$cluster)
+            cluster_levels = clusters[order(clusters)]
+            #levels(data$cluster) = cluster_levels
+            #levels(data$cluster) = cluster_levels()
+            #cluster_data_list$levels = cluster_levels
+            cluster_data_list$levels = unique(paste(cluster_mapping_2()$name))
+            cluster_data_list$data = data
+          #}
+          #r_values$change_clustering = T
+          #if(save_data == T){
+          #  saveRDS(cluster_data_list,'www/cluster_data_list.rds')
+          #}
+          cluster_data_list
+          
+        }
       })
   
   
@@ -4447,8 +4564,8 @@ shinyServer(function(input, output, session) {
                 dendr
                 cut = input$clutree_num
                 cut
-                cluster_levels = cluster_levels()
-                cluster_levels
+                #cluster_levels = cluster_levels()
+                #cluster_levels
                 cluster_patients = cluster_patients()
                 #print('cluster_levels')
                 save_test = F
@@ -4468,10 +4585,12 @@ shinyServer(function(input, output, session) {
                   }
                 }
                 
-                
+                cluster_levels = c()
                 print('run_dendrogram_plot_function')
-                p = dendrogram_plot_function(dendr,x_cluster,cut,cluster_levels,cluster_patients,input)
+                p = dendrogram_plot_function(dendr,x_cluster,cut,cluster_levels,cluster_patients,cluster_list(),input)
                 showTab(inputId = 'Main', target = "BOS")
+                showTab(inputId = 'Main', target = "Analysis")
+                
                 #showTab(inputId = 'Main', target = "Post Clustering Analysis")
                 showTab(inputId = 'Main', target = "Discrete Variables")
                 showTab(inputId = 'Main', target = "Continuous Variables")
@@ -4484,6 +4603,9 @@ shinyServer(function(input, output, session) {
                 showTab(inputId = 'Data_Table', target = "Summary Table")
                 
                 r_values$run_clustering = T
+                #if(read_workspace == T){
+                #  saveRDS(d_list_new(), 'www/defaults/current_default.rds')
+                #}
                 print(p)
                 }
               #}
@@ -4600,38 +4722,45 @@ shinyServer(function(input, output, session) {
             
             
             distance_density = reactive({
-              xy = distance_model()
-              #saveRDS(xy, 'temp/xy.rds')
-              #xy = readRDS('temp/xy.rds')
-              data = xy
               
-              #if(input$rename_clusters == T){
-                data$cluster = as.character(data$cluster)
-                i = 4
-                clutree_num = 4
-                clutree_num = input$clutree_num
-                clutree_num
-                for(i in c(1:clutree_num)){
-                  #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
-                  cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
-                  print(cmd)
-                  eval(parse(text = cmd))
-     
-                }
-              #}
-              data$cluster
-              #levels(data$cluster) = discrete_cluster_D()$levels
-              levels(data$cluster) = cluster_levels()
-              data$cluster
-              
-              p = ggplot(data, aes(x, y, colour=cluster)) + 
-                geom_point(size=3) +
-                geom_density2d(alpha=0.5)
-              p = p + scale_color_discrete(breaks = levels(data$cluster))
-              p = p + ggtitle(input$distance_density_title)
-              p = p + xlab(input$distance_density_x)
-              p = p + ylab(input$distance_density_y)
-              p
+              print('distance_density')
+              if(!is.null(cluster_list())){
+                print('  running')
+                xy = distance_model()
+                #saveRDS(xy, 'temp/xy.rds')
+                #xy = readRDS('temp/xy.rds')
+                data = xy
+                
+                #if(input$rename_clusters == T){
+                  data$cluster = as.character(data$cluster)
+                  i = 4
+                  clutree_num = 4
+                  clutree_num = input$clutree_num
+                  clutree_num
+                  for(i in c(1:clutree_num)){
+                    #cmd = paste0("data$cluster[data$cluster == '",i,"'] = 'cluster_", i,"'")
+                    cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
+                    cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(cluster_list()[[", i,"]], collapse = ', ')")
+                    
+                    print(cmd)
+                    eval(parse(text = cmd))
+       
+                  }
+                #}
+                data$cluster
+                #levels(data$cluster) = discrete_cluster_D()$levels
+                #levels(data$cluster) = cluster_levels()
+                data$cluster
+                
+                p = ggplot(data, aes(x, y, colour=cluster)) + 
+                  geom_point(size=3) +
+                  geom_density2d(alpha=0.5)
+                #p = p + scale_color_discrete(breaks = levels(data$cluster))
+                p = p + ggtitle(input$distance_density_title)
+                p = p + xlab(input$distance_density_x)
+                p = p + ylab(input$distance_density_y)
+                p
+              }
             })
             output$distance_density = renderPlot(distance_density())
             output$distance_density_download <- downloadHandler(
@@ -4715,6 +4844,7 @@ shinyServer(function(input, output, session) {
           
           ### __WITHIN ####
           cluster_analysis_within = reactive({
+            print('cluster_analysis_within')
             df = pFEV_wf_r()
             df_tc = clust_comparison_within(df,'cluster',input)
             df_tc
@@ -5017,14 +5147,23 @@ shinyServer(function(input, output, session) {
           })
           
           continuous_manova_cluster = reactive({
-            full_data = change_data_w()
-            cluster_data = full_data
+            #full_data = change_data_w_clust()
+            #dim(full_data)
+            cluster_data = discrete_cluster_D()$data
+            cluster_data
+            #full_data_p = processed_data_long_function(full_data)
+            #full_data = processed_data_w_r()
+            #dim(full_data_p)
+            #colnames(full_data_p)
+            #cluster_data = full_data
             
             selected_columns = c(input$mix_clust_col_num,input$mix_clust_col_num_2)
             print(selected_columns)
             
             x = cluster_data[,selected_columns[1]]
+            x
             y = cluster_data[,'cluster']
+            y
             df = tidy(aov(x ~ y))
             df$term[1] = selected_columns[1]
             df = df[1,]
@@ -5552,7 +5691,7 @@ shinyServer(function(input, output, session) {
       t_df = as.data.frame(t(df))
       table_formatting_function(t_df)
     })
-          
+    ##### ___ BOS_calc_list #######   
      BOS_calc_list_old = reactive({
        print('BOS_calc_list_old')
         #print('BOS_calc_list')
@@ -5659,6 +5798,7 @@ shinyServer(function(input, output, session) {
         i
 
         i = 2
+        dim(data)
         for(i in c(1:dim(data)[1])){
           print(i)
           #BOS1 = NA
@@ -5671,36 +5811,35 @@ shinyServer(function(input, output, session) {
           y_o
           
           
-          # if(measured_columns == T & data_type == 'i'){
-          #   v_o = t(data.frame(v_o[,pFEV_numeric_colnames_f]))
-          #   v_o
-          # }
-          # 
-          # if(first_and_last == T & data_type == 'i'){
-          #   original = (x[,'pFEV1_matrix'])
-          #   original
-          #   entry_colnames = colnames(original)[!is.na(original)]
-          #   entry_colnames
-          #   #min_v = min(c(t1,grep(paste0('^',entry_colnames[1]),colnames(original))))
-          #   #min_v
-          #   #max_v = min(c(t2,grep(paste0('^',entry_colnames[length(entry_colnames)]),colnames(original))))
-          #   #max_v
-          #   min_v = max(c(t1,as.numeric(entry_colnames[1])))
-          #   min_v
-          #   max_v = min(c(t2,as.numeric(entry_colnames[length(entry_colnames)])))
-          #   max_v
-          #   
-          #   col_list = colnames(v_o)[colnames(v_o) %in% as.character(seq(min_v,max_v))]
-          #   col_list
-          #   v_o = v_o[,col_list]
-          #   v_o
-          #   #y_o = y_o[,seq(min_v,max_v)]
-          #   
-          # }else{
-          #   v_o = v_o[,as.character(seq(t1,t2))]
-          # }
-          v_o = v_o[,as.character(seq(t1,t2))]
-          
+          if(measured_columns == T & data_type == 'i'){
+            v_o = t(data.frame(v_o[,pFEV_numeric_colnames_f]))
+            v_o
+          }
+
+          if(first_and_last == T & data_type == 'i'){
+            original = (x[,'pFEV1_matrix'])
+            original
+            entry_colnames = colnames(original)[!is.na(original)]
+            entry_colnames
+            #min_v = min(c(t1,grep(paste0('^',entry_colnames[1]),colnames(original))))
+            #min_v
+            #max_v = min(c(t2,grep(paste0('^',entry_colnames[length(entry_colnames)]),colnames(original))))
+            #max_v
+            min_v = max(c(t1,as.numeric(entry_colnames[1])))
+            min_v
+            max_v = min(c(t2,as.numeric(entry_colnames[length(entry_colnames)])))
+            max_v
+            
+            col_list = colnames(v_o)[colnames(v_o) %in% as.character(seq(min_v,max_v))]
+            col_list
+            v_o = v_o[,col_list]
+            v_o
+            #y_o = y_o[,seq(min_v,max_v)]
+            
+          }else{
+            v_o = v_o[,as.character(seq(t1,t2))]
+          }
+
           
           
           v_o
@@ -5827,7 +5966,6 @@ shinyServer(function(input, output, session) {
         list(data = data, BOS_colnames = BOS_colnames)
         
       })
-      ##### ___ BOS_calc_list #######
      BOS_calc_list_loop = reactive({
        print('BOS_calc_list_loop')
        if(input$re_run_bos == T){
@@ -5849,9 +5987,7 @@ shinyServer(function(input, output, session) {
     
            measured_columns = input$measured_columns
     
-           m_data = discrete_cluster_D()$data %>% 
-             mutate('MRN' = rownames(.))
-           m_data
+  
            if(input$bos_dataset_select == 'full'){
              data = processed_data
              data$cluster = 'All'
@@ -5859,6 +5995,9 @@ shinyServer(function(input, output, session) {
              dim(data)
            }
            if(input$bos_dataset_select == 'cluster'){
+             m_data = discrete_cluster_D()$data %>% 
+               mutate('MRN' = rownames(.))
+             m_data
              o_data = processed_data
              data = o_data[o_data$MRN %in% m_data$MRN,]
              data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
@@ -5866,12 +6005,20 @@ shinyServer(function(input, output, session) {
              colnames(data)
            }
            if(input$bos_dataset_select == 'post'){
+             m_data = discrete_cluster_D()$data %>% 
+               mutate('MRN' = rownames(.))
+             m_data
              o_data = processed_data
              
              data = o_data[o_data$MRN %in% retained_patients(),]
              data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
              dim(data)
            }
+           
+           pFEV1_name = input$bos_pFEV1
+           pFEV1_name
+           pRatio_name = input$bos_pRatio
+           pRatio_name
   
            if(input$bos_slider_data == T){
              t1 = input$bos_range[1]
@@ -5920,6 +6067,7 @@ shinyServer(function(input, output, session) {
          MRN_select = '4855328d'
          MRN_select = '289266'
          MRN_select = '742758'
+         MRN_select = unique(data$MRN)[1]
          dim(data)
          for(MRN_select in unique(data$MRN)){
             print(MRN_select)
@@ -5930,6 +6078,23 @@ shinyServer(function(input, output, session) {
               pFEV = as.numeric(x[,pFEV1_name]),
               pRatio = as.numeric(x[,pRatio_name])
             )
+            df
+            if(measured_columns == T){
+              df = df[df$time %in% as.numeric(pFEV_numeric_colnames_f),]
+              df
+            }
+            
+            if(first_and_last == T){
+              original = (x[,'pFEV1_matrix'])
+              original
+              entry_colnames = as.numeric(colnames(original)[!is.na(original)])
+              entry_colnames
+              selected_colnames = seq(min(entry_colnames),max(entry_colnames))
+              selected_colnames
+              df = df[df$time %in% as.numeric(selected_colnames),]
+              df
+            }
+
             df
             BOS_limit = BOS2_limit
             t = t1
@@ -5975,6 +6140,48 @@ shinyServer(function(input, output, session) {
             BOS2 = ifelse(length(BOS2) == 0,NA,BOS2)
             BOS3 = ifelse(length(BOS3) == 0,NA,BOS3)
             
+            if(sequence_correction == T){
+              if(is.finite(RAS) & is.finite(BOS1)){
+                if(RAS > BOS1){
+                  BOS1 = NA
+                }
+              }
+              if(is.finite(RAS) & is.finite(BOS2)){
+                if(RAS > BOS2){
+                  BOS2 = NA
+                }
+              }
+              if(is.finite(RAS) & is.finite(BOS3)){
+                if(RAS > BOS3){
+                  BOS3 = NA
+                }
+              }
+              if(is.finite(BOS1) & is.finite(BOS2)){
+                if(BOS1 > BOS2){
+                  BOS2 = NA
+                }
+                if(BOS1 == BOS2){
+                  BOS1 = NA
+                }
+              }
+              if(is.finite(BOS1) & is.finite(BOS3)){
+                if(BOS1 > BOS3){
+                  BOS3 = NA
+                }
+                if(BOS1 == BOS3){
+                  BOS1 = NA
+                }
+              }
+              if(is.finite(BOS2) & is.finite(BOS3)){
+                if(BOS2 > BOS3){
+                  BOS3 = NA
+                }
+                if(BOS2 == BOS3){
+                  BOS2 = NA
+                }
+              }
+            }
+            
             if(is.finite(RAS) & is.finite(BOS1)){
               RAS_recovery = ifelse(RAS > BOS1,RAS,NA)
             }else{
@@ -6018,9 +6225,11 @@ shinyServer(function(input, output, session) {
            saveRDS(data,'temp/BOS_data_w.rds')
          }
          #data = data[data$cluster %in% input$cluster_select_clusters,]
-         cmd = paste0("data = data[data$",input$global_factor," %in% input$cluster_select_clusters,]")
-         eval(parse(text = cmd))
-         dim(data)
+         if(input$bos_dataset_select != 'full'){
+           cmd = paste0("data = data[data$",input$global_factor," %in% input$cluster_select_clusters,]")
+           eval(parse(text = cmd))
+         }
+        dim(data)
          list(data = data, BOS_colnames = BOS_colnames)
        }
      })
@@ -6226,25 +6435,52 @@ shinyServer(function(input, output, session) {
           
      BOS_calc_list = reactive({
        print('BOS_calc_list')
+       hideTab(inputId = 'bos_scale', target = 'Set plot scale')
+       hideTab(inputId = 'bos_plots', target = 'Line Plots')
+       hideTab(inputId = 'bos_plots', target = 'Kaplan-Meier Survival Curves and the Log - Rank Test')
+       hideTab(inputId = 'bos_plots', target = 'Tables')
+       hideTab(inputId = 'bos_plots', target = 'Smooth')
+       
+       
        if(input$ras_new == F){
-         hideTab(inputId = 'BOS_settings', target = 'settings')
-         BOS_list = BOS_calc_list_old()
-         dim(BOS_list$data)
-       }else{
-         showTab(inputId = 'BOS_settings', target = 'settings')
+         hideTab(inputId = 'BOS_settings', target = 'Parameters')
+         hideTab(inputId = 'BOS_settings', target = 'Description')
          
-         BOS_list = BOS_calc_list_loop()
-         dim(BOS_list$data)
+         showTab(inputId = 'BOS_settings', target = 'Old parameters')
+         if(input$re_run_bos == T){
+           showTab(inputId = 'bos_scale', target = 'Set plot scale')
+           showTab(inputId = 'bos_plots', target = 'Line Plots')
+           showTab(inputId = 'bos_plots', target = 'Kaplan-Meier Survival Curves and the Log - Rank Test')
+           showTab(inputId = 'bos_plots', target = 'Tables')
+           showTab(inputId = 'bos_plots', target = 'Smooth')
+           BOS_list = BOS_calc_list_old()
+           #dim(BOS_list$data)
+         }
+       }else{
+         showTab(inputId = 'BOS_settings', target = 'Parameters')
+         showTab(inputId = 'BOS_settings', target = 'Description')
+
+         hideTab(inputId = 'BOS_settings', target = 'Old parameters')
+         
+         if(input$re_run_bos == T){
+           showTab(inputId = 'bos_scale', target = 'Set plot scale')
+           showTab(inputId = 'bos_plots', target = 'Line Plots')
+           showTab(inputId = 'bos_plots', target = 'Kaplan-Meier Survival Curves and the Log - Rank Test')
+           showTab(inputId = 'bos_plots', target = 'Tables')
+           showTab(inputId = 'bos_plots', target = 'Smooth')
+           BOS_list = BOS_calc_list_loop()
+         }
+         #dim(BOS_list$data)
          #dim(BOS_list)
          #B = BOS_list
          #dim(B)
          #View(B$data)
        }
-       BOS_list
+       #BOS_list
      })
      
     output$bos_data_length_text = renderText({
-      print(dim(BOS_calc_list()$data)[1])
+      print(paste0('Number of Patients = ',dim(BOS_calc_list()$data)[1]))
     })
      
     BOS_processed_data_w_r = reactive({BOS_calc_list()$data})
@@ -6349,19 +6585,20 @@ shinyServer(function(input, output, session) {
   cluster_name_list_default = reactive({
     print('cluster_name_list_default')
     if(!is.null(input$clutree_num)){
-      cluster_name_list_default = paste(cluster_mapping()$name)
+      #cluster_name_list_default = paste(cluster_mapping_2()$name)
       #if(!is.null(r_values$cluster_name_list)){
         print('running')
         if(r_values$add_cluster_fresh == 0){
           cluster_name_list_default = unique(c(paste(d_list()$values$cluster_list_of_names)))
-          cluster_name_list_default = unique(c(paste(cluster_mapping()$name),paste(d_list()$values$cluster_list_of_names)))
+          cluster_name_list_default
+          #cluster_name_list_default = unique(c(paste(cluster_mapping_2()$name),paste(d_list()$values$cluster_list_of_names)))
           
           r_values$add_cluster_fresh = 1
           r_values$cluster_name_list_default = cluster_name_list_default
         }
-        cluster_name_list_default = unique(c(r_values$cluster_name_list_default,paste(cluster_mapping()$name)))
-        cluster_name_list_default
-        #cluster_name_list = r_values$cluster_name_list
+        #cluster_name_list_default = unique(c(r_values$cluster_name_list_default,paste(cluster_mapping_2()$name)))
+        #cluster_name_list_default
+        cluster_name_list_default = r_values$cluster_name_list_default
         print(cluster_name_list_default)
         if(input$add_cluster_button > r_values$add_cluster){
           cluster_name_list_default = unique(c(paste(cluster_name_list_default),paste(input$cluster_add)))
@@ -6414,7 +6651,16 @@ shinyServer(function(input, output, session) {
     
     
   })
-  
+  output$run_cluster_text_ui = renderText({
+    if(input$run_clustering_rb == F){
+      hideTab(inputId = 'dendo',target = "Dendogram")
+      hideTab(inputId = 'dendo',target = "Summary Statistics")
+    }else{
+      showTab(inputId = 'dendo',target = "Dendogram")
+      showTab(inputId = 'dendo',target = "Summary Statistics")
+    }
+    print('')
+  })
   cluster_mapping_2 = reactive({
     if(!is.null(input$cluster_name_1)){
       print('cluster_mapping_2')
@@ -6423,14 +6669,14 @@ shinyServer(function(input, output, session) {
  
         name = paste(sapply(grep('cluster_name',names(entry_list),value = T), function(x) paste(entry_list[[x]],collapse = ', ')))
         name
-        if(length(name) < input$clutree_num){
-          name = c(name,paste0('Cluster_',seq(input$clutree_num - length(name))))
-        }
+        #if(length(name) < input$clutree_num){
+        #  name = c(name,paste0('Cluster_',seq(input$clutree_num - length(name))))
+        #}
         name
         label = paste(sapply(grep('cluster_patient',names(entry_list),value = T), function(x) entry_list[[x]]))
-        if(length(label) < input$clutree_num){
-          label = c(label,rep('',input$clutree_num - length(label)))
-        }
+        #if(length(label) < input$clutree_num){
+        #  label = c(label,rep('',input$clutree_num - length(label)))
+        #}
         label
         
         cluster_mapping = data.frame(
@@ -6442,10 +6688,10 @@ shinyServer(function(input, output, session) {
     }
   })
   output$cluster_mapping_2 = renderDataTable(cluster_mapping_2())
-  cluster_levels = reactive({
-    cluster_levels =  paste(unique(cluster_mapping_2()$name))
-    cluster_levels
-  })
+  # cluster_levels = reactive({
+  #   cluster_levels =  unique(paste(cluster_levels()))
+  #   cluster_levels
+  # })
   cluster_patients = reactive({
     paste(unique(cluster_mapping_2()$label))
     })
@@ -6453,69 +6699,68 @@ shinyServer(function(input, output, session) {
   output$cluster_levels_text = renderText(paste(cluster_levels(),collapse = ', '))
   
   
+  output$cluster_naming_list = renderUI({
+    cluster_name_list = cluster_name_list_default()[order(cluster_name_list_default())]
+    cluster_name_list
+    lapply(1:input$clutree_num, function(i) {
+        column(12,
+        column(6,selectInput(paste0('cluster_name_', i), paste('Cluster Name *'),
+                             
+                             choices = cluster_name_list,
+                             selected = d_list()$values[[paste0('cluster_name_', i)]],
+                             multiple = T)),
+        
+        column(6,selectInput(paste0('cluster_patient_', i), 'Patient MRN *',
+                             choices = c('',retained_patients()), 
+                             selected = d_list()$values[[paste0('cluster_patient_', i)]]
+        ))
+        )
+        
+      #}else{
+        
+      #}
+    })
+      
+  })
+  
+  cluster_list = reactive({
+    if(length(cluster_mapping_2()) > 0 & !is.null(discrete_cluster()$x_cluster)){
+      print('cluster_list')
+      cluster_mapping = cluster_mapping_2()
+      cluster_mapping
+      cluster_mapping = cluster_mapping %>% left_join(., discrete_cluster()$x_cluster, by = "label") %>% filter(!is.na(cluster))
+      cluster_mapping
+      cluster_list = list()
+      
+      cluster_list = lapply(c(1:input$clutree_num), function(x) cluster_list[[x]] = cluster_mapping$name[cluster_mapping$cluster == x])
+      cluster_list
+    }
+    })
+  
   output$name_clusters_ui = renderUI({
 
     if((!is.null(input$clutree_num)) & length(discrete_cluster()) > 0){
-      #cluster_patient_mapping
+  
       print('name_cluster_ui')
-      #if(is.null(cluster_mapping_2())){
-        cluster_mapping = cluster_mapping()
-      #}else{
-      #  cluster_mapping = cluster_mapping_2()
-      #}
-      #cluster_mapping
-      
-      
-    
-      # cluster_mapping = data.frame(name = c(d_list()$values$cluster_name_1,
-      #                                           d_list()$values$cluster_name_2,
-      #                                           d_list()$values$cluster_name_3,
-      #                                           d_list()$values$cluster_name_4),
-      #                              label = c(d_list()$values$cluster_patient_1,
-      #                              d_list()$values$cluster_patient_2,
-      #                              d_list()$values$cluster_patient_3,
-      #                              d_list()$values$cluster_patient_4))
-      # 
-      # cluster_mapping
-      #cluster_mapping = data.frame(name = cluster_name_list,label = cluster_patient_list)
-      #cluster_mapping
+  
+      cluster_mapping = cluster_mapping()
+      cluster_mapping
       cluster_mapping = cluster_mapping %>% left_join(., discrete_cluster()$x_cluster, by = "label")
       cluster_mapping
-      # D = discrete_cluster()$x_cluster %>% 
-      #   filter(label %in% cluster_mapping$label) %>% 
-      #   #filter(!duplicated(cluster)) %>% 
-      #   inner_join(.,cluster_mapping, by = 'label') %>% 
-      #   arrange(name) %>% 
-      #   group_by(cluster) %>% 
-      #     mutate('cluster_name' = paste(unique(name),collapse = ', ')) %>% 
-      #   ungroup()
-      # D
-      # D$name
-      # print("cluster_test")
-      # 
+
       cluster_name_list = cluster_name_list_default()[order(cluster_name_list_default())]
       cluster_name_list
-      # cluster_name_list
-      #levels(D$name) = cluster_name_list
+    
       cluster_mapping
       new_clusters = cluster_mapping$name[is.na(cluster_mapping$cluster)]
       new_clusters
       j = 0
-      # if(input$rename_clusters == T){
-      #   cluster_name_list_full = cluster_name_list
-      #   #levels(cluster_name_list_full) = cluster_name_list
-      #   if(length(cluster_name_list) < input$clutree_num){
-      #     cluster_name_list_full = c(cluster_name_list, sapply(length(cluster_name_list):input$clutree_num, function(i) paste('Cluster', i)))
-      #   }
-      #   cluster_name_list_full
+
         lapply(1:input$clutree_num, function(i) { 
           
-          #if(input$rename_menu_test == 'menu'){
-            #column(4,selectInput(paste0('cluster_', i), paste('Cluster', i),
-            #          choices = cluster_name_list_full,selected = cluster_name_list_full[i]))
-                                 
+                   
             if(i %in% cluster_mapping$cluster){
-              #tabsetPanel(tabPanel('',
+       
               column(12,                    
               column(6,selectInput(paste0('cluster_name_', i), paste('Cluster', i, '*'),
                                    
@@ -6548,19 +6793,8 @@ shinyServer(function(input, output, session) {
                      )
               )
             }
-          # }else{
-          #   r_values$change_clustering = T
-          #   hideTab(inputId = 'dendo', target = "Dendogram")
-          #   
-          #   column(3,textInput(paste0('cluster_name_', i), paste('Cluster', i, '*'),
-          #                      value = input[[paste0('cluster_name_',i)]]),
-          #          selectInput(paste0('cluster_patient_', i), paste('Patient Cluster', i, '*'),
-          #                      choices = c('',retained_patients()), selected = input[[paste0('cluster_patient_', i)]])
-          #          )
-          # }
+
         })
-      #}
-      #r_values$cluster_mapping_fresh = 1  
     }
     
   })

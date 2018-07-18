@@ -1594,60 +1594,53 @@ full_t_test_function = function(){
 clustering_function = function(full_data,r_list,d_num,
                                fac_w_1,fac_col_list_1,fac_w_2,fac_col_list_2,
                               num_w_1,num_col_list_1,num_w_2,num_col_list_2){
-  #View(full_data)
+
   print('clustering_function')
-  save_test = F
-  if(save_test == T){
-    variable_list = c('full_data','r_list','d_num',
-                      'fac_w_1','fac_col_list_1','fac_w_2','fac_col_list_2',
-                      'num_w_1','num_col_list_1','num_w_2','num_col_list_2')
-    cmd_list = save_variable_function(variable_list)
-    lapply(cmd_list, function(x) eval(parse(text = x)))
-    try(save_input_function(input))
-    read_test = F
-    if(read_test == T){
-      variable_list = c(variable_list)
-      cmd_list = read_variable_function(variable_list)
-      for(cmd in cmd_list){
-        print(cmd)
-        try(eval(parse(text = cmd)))
+  (clust_fac_col_list = c(fac_col_list_1,fac_col_list_2))
+  (clust_num_col_list = c(num_col_list_1,num_col_list_2))
+  (clust_num_col_list = clust_num_col_list[order((clust_num_col_list))])
+  
+  (clust_col_list = c(clust_num_col_list,clust_fac_col_list))
+  (clust_col_list = clust_col_list[clust_col_list %in% colnames(full_data)])
+  
+  r_data = full_data[,clust_col_list]
+  dim(r_data)
+
+  #### THERE IS AN ISSUE WITH THE WAY THE CLUSTERING ALGORITHM DEALS WITH BINARY VARIABLES
+  ## it seem it might want them to be in the order of 0,1 and numeric.
+  # going to have to find a way to sort this out. 
+  data_dist = tryCatch(dist.subjects(r_data), error = function(e) F)
+  data_dist
+  removed_cols = c()
+  cols = c(2:dim(r_data)[2])
+  if(data_dist == F){
+    cols = c(1)
+    for(column in c(2:dim(r_data)[2])){
+      print(column)
+      new_cols = c(cols,column)
+      new_cols
+      data_dist_i = tryCatch(dist.subjects(r_data[,new_cols]), error = function(e) F)
+      data_dist_i
+      if(data_dist_i == F){
+        print('error')
+        print(r_data[,column])
+        removed_cols = c(removed_cols,column)
+      }else{
+        cols = c(cols,column)
       }
     }
   }
-  testing = 'F'
-  if(testing == T){
-    colnames(full_data)
-    rownames(full_data)
-    data = i_pFEV_wf[r_list,c(30:50)]
-    data = full_data[,paste(unlist(factor(c(-6:6))))]
-    colnames(data)
-    rownames(data)
-    #View(data)
-    data = data[complete.cases(data),]
-    weights = rep(10,dim(data)[2])
-    weights
-  }
-  #d_num = 3
-  clust_fac_col_list = c(fac_col_list_1,fac_col_list_2)
-  clust_num_col_list = c(num_col_list_1,num_col_list_2)
-  clust_num_col_list = clust_num_col_list[order(as.numeric(clust_num_col_list))]
-  clust_col_list = c(clust_num_col_list,clust_fac_col_list)
-  clust_col_list = clust_col_list[clust_col_list %in% colnames(full_data)]
- #print(colnames(full_data))
- #print(clust_col_list)
-  
-  
-  #t_data = full_data[r_list,clust_col_list]
-  #View(t_data)
-  r_data = full_data[,clust_col_list]
-  rownames(r_data)
-  #rownames(r_data) = full_data$MRN
-  #View(r_data)
-  data = r_data
-  #View(data)
-  o_data = r_data
-  
-  
+  print(removed_cols)
+  print(cols)
+  data = r_data[,cols]
+  o_data = data
+  dim(data)
+  removed_columns = colnames(r_data)[removed_cols]
+  removed_columns                       
+  paste(removed_columns,collapse = ', ')
+  #data = data[,!(removed_columns)]
+  dim(data)
+
   weights_2 = c()
   for(entry in colnames(data)){
     weight_v = 0
@@ -1666,25 +1659,28 @@ clustering_function = function(full_data,r_list,d_num,
     #print(weight_v)
     weights_2 = c(weights_2,weight_v)
   }
-  weights = weights_2
+  (weights = weights_2)
+  weights
+
+
+  dim(data)
+  length(weights)
   data_dist = dist.subjects(data,weights = weights)
   #d_scale = cmdscale(data_dist)
   D = dendro.subjects(data_dist,weights = weights)
   dendr <- dendro_data(D, type = "rectangle") 
   x <- cutree(D, k = d_num)               # find 'cut' clusters
   x_cluster <- data.frame(label = names(x), cluster = x)
-  
-  #x = cutree(D, k = d_num)
-  #x_cluster = data.frame(MRN = numeric(0))
-  #for(entry in unique(x)){
-  #  x_cluster[entry,'MRN'] = paste(list(names(x)[x == entry]),colapse=(", "))
-  #}
+
   
   data$cluster = factor(x_cluster$cluster[match(rownames(data),x_cluster$label)])
-  #data$cluster = factor(x) 
-  result = list(data_dist = data_dist,D = D, o_data = o_data, data = data, x = x, x_cluster = x_cluster, weights = weights)
+
+  result = list(data_dist = data_dist,D = D, 
+                o_data = o_data, data = data, 
+                x = x, x_cluster = x_cluster, weights = weights,
+                removed_columns = removed_columns)
   return(result)
-  #return(result)
+
 }
 
 clust_comparison_total = function(df,clust_col){

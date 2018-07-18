@@ -439,7 +439,7 @@ shinyUI(fluidPage(
                               tabPanel('Dendogram',
                                                                  
                                column(12,
-                                      
+                                      tags$h4(textOutput('clustering_removed_column_text')),
                                       column(6,textInput('discrete_cluster_title','Title','Patient Dendogram')),
                                       column(3,textInput('discrete_cluster_x','x title','Patients')),
                                       column(3,textInput('discrete_cluster_y','y title','Distance')),

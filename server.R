@@ -9,7 +9,7 @@ shinyServer(function(input, output, session) {
   hideTab_function()
   
   output$debug_ui = renderUI({
-    if(read_workspace == T){
+    if(show_debug == T){
       actionButton('debug_button','Debug')
     }
   })
@@ -123,8 +123,8 @@ shinyServer(function(input, output, session) {
         #file_path = input$file1$name
       }else{
       
-      file_path = 'current_default.rds'
-      r_values_input = readRDS('www/defaults/current_default.rds')
+      file_path = default_file_name
+      r_values_input = readRDS(paste0('www/defaults/',default_file_name))
       
       }
     }
@@ -591,14 +591,18 @@ shinyServer(function(input, output, session) {
               output$subset_2_ui = renderUI({
                 #file_name <- d_list()$file_name 
                 #div(id = paste0('subset_2',file_name),
+                if(input$subset_1 != 'All'){
                     selectInput('subset_2','Subset by 2 *',c('All',all_discrete_columns),multiple = F,selected = d_list()$values$subset_2)
+                }
                 #)
                 
               })
               output$subset_3_ui = renderUI({
                 #file_name <- d_list()$file_name 
                 #div(id = paste0('subset_1',file_name),
+                if(input$subset_2 != 'All'){
                     selectInput('subset_3','Subset by 3 *',c('All',all_discrete_columns),multiple = F,selected = d_list()$values$subset_3)
+                }
                 #)
                 
               })
@@ -3759,14 +3763,16 @@ shinyServer(function(input, output, session) {
         p_value = NA
         print(p_value)
         #long_data = full_data
+        test_list
         for(test_entry in test_list){
           p_value = NA
           if(test_entry %in% colnames(full_data)){
+            test_entry
             #x = cluster_data[,test_entry]
             #x
             x = full_data[,test_entry]
             x
-            if(length(x[!is.na(x)]) > 0){
+            if(length(x[!is.na(x)]) > 1){
               y = full_data[,'cluster']
               #p_value = try(anova(lm(long_data[,test_entry] ~ long_data[,'time'] + long_data[,'cluster']))$"Pr(>F)"[2])
               #p_value = try(anova(lm(long_data[,test_entry] ~ long_data[,'cluster']))$"Pr(>F)")
@@ -3783,7 +3789,7 @@ shinyServer(function(input, output, session) {
               p_value = df_n$p.value[1]
               p_value
               
-              }
+            }
           }
           p_value_list = c(p_value_list,p_value)
         }
@@ -4476,7 +4482,19 @@ shinyServer(function(input, output, session) {
         if(!is.null(input$clutree_num)){
         #if(input$run_clustering_button > r_values$re_run_clustering){
         if(input$run_clustering_rb == T){
-          
+            test = T
+            if(test == T){
+              (r_list = pre_retained_patients())
+              (d_num = input$clutree_num)
+              (fac_w_1 = input$fac_weight)
+              (fac_col_list_1 = input$mix_clust_col_fac)
+              (fac_w_2 = input$fac_weight_2)
+              (fac_col_list_2 = input$mix_clust_col_fac_2)
+              (num_w_1 = input$num_weight)
+              (num_col_list_1 = input$mix_clust_col_num)
+              (num_w_2 = input$num_weight_2)
+              (num_col_list_2 = input$mix_clust_col_num_2)
+            }
             cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
                                                   input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                   input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
@@ -4494,6 +4512,16 @@ shinyServer(function(input, output, session) {
           }
         }
         
+      })
+      
+      output$clustering_removed_column_text = renderText({
+        paste('')
+        if(!is.null(input$clutree_num)){
+          if(length(discrete_cluster()$removed_columns) > 0){
+            paste('Columns Removed from clustering :',paste(discrete_cluster()$removed_columns,collapse = ', '))
+          }
+        }  
+      
       })
   
     

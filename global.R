@@ -53,6 +53,8 @@ original_theme = theme_get()
 
 source('functions.R')
 source('defaults.R')
+default_file_name = 'current_default.rds'
+default_file_name = 'Defaults Spirometry Clusters by Ratio Alone.rds'
 library(devtools)
 #source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
 g_sheet = T
@@ -60,10 +62,13 @@ g_sheet = T
 info_tab = 'Session Info'
 
 defaults = 'David'
-#save_workspace = F
-read_workspace = T
+save_workspace = T
+show_debug = T
+
+read_workspace = F
 if(read_workspace == F){
-  save_workspace = T
+  show_debug = F
+  save_workspace = F
 }
 save_data = F
 
@@ -173,7 +178,7 @@ if(read_workspace == T){
   }
   cluster_name_list = paste(cluster_patient_mapping)
   #display_data_tables = T
-  
+  default_df = c()
   edit_colname_function = function(col_names){
     edit_list = c(' ','%')
     for(e in edit_list){
@@ -396,8 +401,14 @@ if(read_workspace == T){
     
     
     ############ FACTOR COLUMNS ###################
-    cluster_factor = clustering[,discrete_numeric_columns]
+    (cluster_factor = clustering[,discrete_numeric_columns])
+    (cluster_factor = as.data.frame(apply(cluster_factor,2, function(x) as.factor(as.numeric(x))))) #had issues with clustering, conversion to numeric and then factor will hopefully help
+    rownames(cluster_factor) = clustering$MRN
+    colnames(cluster_factor)
+    #View(cluster_factor)
+    
     clust_fac_con = clustering[,discrete_term_columns]
+    
     #View(clust_fac_con)
     
     term_mapping_df = data.frame(Factor = numeric(0),Number = numeric(0),Name = numeric(0))
@@ -432,9 +443,10 @@ if(read_workspace == T){
     
     
     full_fac = cbind(cluster_factor,cluster_factor_con)
+    dim(full_fac)
     full_fac$MRN = clustering$MRN
     full_fac$MRN_original = clustering$MRN_original
-    
+    #View(full_fac)
     full_fac = apply(full_fac,2, function(x) trimws(factor(x)))
     
     

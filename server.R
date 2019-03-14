@@ -1888,6 +1888,10 @@ shinyServer(function(input, output, session) {
   output$fac_weight_2_ui = renderUI({
     numericInput('fac_weight_2', "Weight *", d_list()$values$fac_weight_2, min = 0, max = 100, step = 1)
   })
+  output$kmeans_discrete_variable_ui = renderUI({
+    selectInput('kmeans_discrete_variables','Discrete Variables',discrete_columns_4_comparison,c(d_list()$values$mix_clust_col_fac,d_list()$values$mix_clust_col_fac_2),multiple = T,width = 1200)
+  })
+  
   
   select_matrix = reactive({
     matrix_name_list = c(input$data_select,input$data_source,input$calc_select,'matrix')
@@ -4651,7 +4655,7 @@ shinyServer(function(input, output, session) {
       continuous_cluster_data = reactive({ 
         full_data = change_data()
         
-        colnames(full_data)
+        colnames(full_data) 
 
          
         data = full_data[,input$cluster_spirometry_variable]
@@ -4712,15 +4716,60 @@ shinyServer(function(input, output, session) {
         
         })
       
- 
-      output$kmeans_plot = renderPlot({
-        data = continuous_cluster_data()
-        library(VIM)
-        clusters = kmeans((data),3)
+    ## _kmeans #####
+      kmeans_list = reactive({
+        data = continuous_cluster_data() 
+        clusters = kmeans((data),
+                          centers = input$kmeans_centers,
+                          iter.max = input$kmeans_iter.max,
+                          nstart = input$kmeans_nstart,
+                          algorithm = input$kmeans_algorithm,
+                          trace = as.logical(input$kmeans_trance))
         
-        library("factoextra")
+        data$kmeans_cluster = clusters$cluster
+     
+        output$kmeans_cluster_df = renderDataTable({
+          data
+        })
+    
+      list(data = data,clusters = clusters)
+      })
+        #ggbiplot(clusters)
+      output$kmeans_plot = renderPlot({
+        clusters = kmeans_list()$clusters
+        data = kmeans_list()$data
         fviz_cluster(clusters,data)
         })
+      
+      output$kmeans_tile = renderPlot({
+        full_data = change_data() 
+        
+        cluster_data = full_data[,input$kmeans_discrete_variables]
+        
+        cluster_data$kmeans_cluster = kmeans_list()$clusters$cluster
+
+        cluster_data$MRN = rownames(cluster_data)
+        cluster_data$order = cluster_data$kmeans_cluster
+      
+        tile_data = tidyr::gather(cluster_data,variable, value, 1:(dim(cluster_data)[2]-2))
+        as.tbl(tile_data)
+        tile_data$v_order = tile_data$variable
+        
+        levels(tile_data$order) = factor(unique(tile_data$order))
+        y_order = unique((c('kmeans_cluster',tile_data$v_order)))
+        y_order
+          tile_data$v_order = factor(tile_data$v_order, levels = rev(y_order))
+        
+        ggplot(tile_data) +
+          geom_tile(aes(x = reorder(MRN,order),y = v_order,fill = value),col = 'black') +
+          facet_grid(. ~ order, scales = 'free',space = 'free_x') + 
+          theme(axis.text.x = element_text(angle = 90)) +
+          scale_x_discrete(position = 'top')
+        
+             
+          
+        
+      })
         # plot clusters ==================================================
             output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
 

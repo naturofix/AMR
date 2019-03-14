@@ -24,6 +24,7 @@ shinyUI(fluidPage(
     #### DATA TABLES ####
       #uiOutput('data_table_ui'),
       ####_Defaults ###
+
       tabPanel('Defaults',
                column(6,
                       #shinyFilesButton('file_2', 'Load Default', 'Please select a dataset', FALSE),
@@ -285,38 +286,54 @@ shinyUI(fluidPage(
             )
           )
         ),
-      tabPanel('PCA',
-               ### _PCA ####
-               #column(12,
-              column(12,uiOutput('ccc_3')),
-    
+      tabPanel('Continuous Variable Clustering',
+        column(12,uiOutput('ccc_3')),       
+        tabsetPanel(
+          tabPanel('PCA',
+                 ### _PCA ####
+                 #column(12,
                
-               column(12,
-                 column(3,radioButtons('prcomp_invert_rb','Invert',c(F,T))),
-                 column(3,radioButtons('prcomp_center_rb','Center',c(F,T))),
-                 column(3,radioButtons('prcomp_scale_rb','Scale',c(F,T))),
-                 column(3,radioButtons('prcomp_complete_rb','Complete Cases',c(F,T)))
-               ),
-    column(12,
-           column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
-           column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
-           column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
-           column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
-           
-           ),
-    column(12,
+      
+                 
+                 column(12,
+                   column(3,radioButtons('prcomp_invert_rb','Invert',c(F,T))),
+                   column(3,radioButtons('prcomp_center_rb','Center',c(F,T))),
+                   column(3,radioButtons('prcomp_scale_rb','Scale',c(F,T))),
+                   column(3,radioButtons('prcomp_complete_rb','Complete Cases',c(F,T)))
+                 ),
+                column(12,
+                       column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
+                       column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
+                       column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
+                       column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
+                       
+                       ),
+                column(12,
+                        
+                       plotOutput('prcomp_pca_plot',height = 600, width = 800),
+                       dataTableOutput('prcomp_pca_data'),
+                           
             
-           plotOutput('prcomp_pca_plot',height = 600, width = 800),
-           dataTableOutput('prcomp_pca_data'),
-               
-
-             verbatimTextOutput('prcomp_pca_summary'),
-               verbatimTextOutput('prcomp_pca_str')
-               )
-      ),
-    tabPanel('kmeans',
-             plotOutput('kmeans_plot')
-             )
+                         verbatimTextOutput('prcomp_pca_summary'),
+                           verbatimTextOutput('prcomp_pca_str')
+                   )
+          ),
+          ### _kmeans ####
+          tabPanel('kmeans',
+                  column(4,selectInput('kmeans_algorithm','Algorithm',c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"))),
+                               
+                  column(2,numericInput('kmeans_centers','centers',value = 3)),
+                  column(2,numericInput('kmeans_iter.max','Max iterations',value = 10)),
+                  column(2,numericInput('kmeans_nstart','nstart',value = 1)),
+                  column(2,radioButtons('kmeans_trance','trace',c(F,T))),
+                  column(12,
+                         plotOutput('kmeans_plot'),
+                         
+                         uiOutput('kmeans_discrete_variable_ui'),
+                         plotOutput('kmeans_tile')),
+                          dataTableOutput('kmeans_cluster_df')
+                )
+        ))
             
             
     ))), #Clustering

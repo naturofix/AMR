@@ -50,8 +50,8 @@ library(shinyBS)
 #library(survival)
 library(ggbiplot) # for plotting PCA's
 
-
-
+library(VIM)
+library("factoextra")
 
 
 original_theme = theme_get()

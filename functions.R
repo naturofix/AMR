@@ -104,6 +104,7 @@ hideTab_function = function(){
   #hideTab(inputId = 'Main', target = "BOS")
   hideTab(inputId = 'Main', target = "Clustering")
   hideTab(inputId = 'Main', target = "R Info")
+  hideTab(inputId = 'Main', target = "Data_Table")
   
   #Data_Table
   hideTab(inputId = 'Data_Table', target = "Selected Data")
@@ -137,6 +138,7 @@ hideTab_function_upload = function(){
   hideTab(inputId = 'Main', target = "Analysis")
   
   hideTab(inputId = 'Main', target = "R Info")
+  hideTab(inputId = 'Main', target = "Data_Table")
   
   #Data_Table
   hideTab(inputId = 'Data_Table', target = "Selected Data")
@@ -599,10 +601,12 @@ lm_function = function(function_data,factor,cols){
   df = data.frame(Factor = numeric(), Status = numeric(0))
   df_b = data.frame(term = numeric(0),df = numeric(0), sumsq = numeric(0),
                     meansq = numeric(0), statistic = numeric(0), p.value = numeric(0),
-                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0))
+                    Factor = numeric(0), Status = numeric(0), comparison = numeric(0),
+                    r.squared = numeric(0), adj.r.squared = numeric(0))
   df = df_b
   full_data=function_data[function_data$variable %in% cols,]
   factor_levels = unique(full_data[,factor])
+  entry = factor_levels[1]
   for(entry in factor_levels){
     data = full_data[full_data[,factor] == entry,]
     y = as.numeric(data$value)
@@ -610,13 +614,22 @@ lm_function = function(function_data,factor,cols){
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
       df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      as.tbl(df_n)
+      l = lm(y ~ x, data=data)
       #print(df_n)
       if(dim(df_n)[1] > 0){
+        df_n$r.squared = NA
+        df_n$r.squared[df_n$term == 'x'] = summary(l)$r.squared
+        df_n$adj.r.squared = NA
+        df_n$adj.r.squared[df_n$term == 'x'] = summary(l)$adj.r.squared
         df_n$Factor = factor
         df_n$Status = entry
         df_n$comparison = 'All'
+ 
+        
         df = rbind(df,df_n)
       }
+
     }
   }
   
@@ -629,11 +642,18 @@ lm_function = function(function_data,factor,cols){
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
       df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      l = lm(y ~ x, data=data)
+      
       #print(df_n)
       if(dim(df_n)[1] > 0){
+        df_n$r.squared = NA
+        df_n$r.squared[df_n$term == 'x'] = summary(l)$r.squared
+        df_n$adj.r.squared = NA
+        df_n$adj.r.squared[df_n$term == 'x'] = summary(l)$adj.r.squared
         df_n$Factor = factor
         df_n$Status = entry
         df_n$comparison = 'Pre Treatment'
+
         df = rbind(df,df_n)
       }
       #print(df)
@@ -659,11 +679,18 @@ lm_function = function(function_data,factor,cols){
     if(!all(is.na(y))){
       fit <- aov(y ~ x, data=data)
       df_n = tryCatch(tidy(anova(fit)), error = function(e) e = df_b)
+      l = lm(y ~ x, data=data)
+      
       #print(df_n)
       if(dim(df_n)[1] > 0){
+        df_n$r.squared = NA
+        df_n$r.squared[df_n$term == 'x'] = summary(l)$r.squared
+        df_n$adj.r.squared = NA
+        df_n$adj.r.squared[df_n$term == 'x'] = summary(l)$adj.r.squared
         df_n$Factor = factor
         df_n$Status = entry
         df_n$comparison = 'Post Treatment'
+ 
         df = rbind(df,df_n)
       }
       # print(df)
@@ -700,6 +727,8 @@ lm_sample_function = function(function_data,factor,cols,df){
       m = coef(l)['x']
       df[entry,'Int_ALL'] = i
       df[entry,'slope_ALL'] = m
+      df[entry,'r.squared_ALL'] = summary(l)$r.squared
+      df[entry,'adj.r.squared_ALL'] = summary(l)$adj.r.squared
     }
   }
   
@@ -719,6 +748,8 @@ lm_sample_function = function(function_data,factor,cols,df){
       m = coef(l)['x']
       df[entry,'Int_Pre'] = i
       df[entry,'slope_Pre'] = m
+      df[entry,'r.squared_Pre'] = summary(l)$r.squared
+      df[entry,'adj.r.squared_Pre'] = summary(l)$adj.r.squared
     }
   }
   
@@ -739,6 +770,8 @@ lm_sample_function = function(function_data,factor,cols,df){
       m = coef(l)['x']
       df[entry,'Int_Post'] = i
       df[entry,'slope_Post'] = m
+      df[entry,'r.squared_Post'] = summary(l)$r.squared
+      df[entry,'adj.r.squared_Post'] = summary(l)$adj.r.squared
     }
   }
   df = df[order(df$Status),]
@@ -4012,3 +4045,46 @@ KM_function_cluster = function(df_w,column_name){
   return(data_list)
 }
 
+
+## enterotype clustering ####
+ 
+JSD<- function(x,y) sqrt(0.5 * KLD(x, (x+y)/2) + 0.5 * KLD(y, (x+y)/2))
+KLD <- function(x,y) sum(x * log(x/y))
+dist.JSD <- function(inMatrix, pseudocount=0.000001, ...) {
+  KLD <- function(x,y) sum(x *log(x/y))
+  JSD<- function(x,y) sqrt(0.5 * KLD(x, (x+y)/2) + 0.5 * KLD(y, (x+y)/2))
+  matrixColSize <- length(colnames(inMatrix))
+  matrixRowSize <- length(rownames(inMatrix))
+  colnames <- colnames(inMatrix)
+  resultsMatrix <- matrix(0, matrixColSize, matrixColSize)
+  
+  inMatrix = apply(inMatrix,1:2,function(x) ifelse (x==0,pseudocount,x))
+  
+  for(i in 1:matrixColSize) {
+    #print(i)
+    for(j in 1:matrixColSize) { 
+      #print(j)
+      resultsMatrix[i,j]=JSD(as.vector(inMatrix[,i]),
+                             as.vector(inMatrix[,j]))
+    }
+  }
+  colnames -> colnames(resultsMatrix) -> rownames(resultsMatrix)
+  as.dist(resultsMatrix)->resultsMatrix
+  attr(resultsMatrix, "method") <- "dist"
+  return(resultsMatrix) 
+}
+
+
+pam.clustering=function(x,k) { # x is a distance matrix and k the number of clusters
+  require(cluster)
+  cluster = as.vector(pam(as.dist(x), k, diss=TRUE)$clustering)
+  return(cluster)
+}
+
+noise.removal <- function(dataframe, percent=0.01, top=NULL){
+  dataframe->Matrix
+  bigones <- rowSums(Matrix)*100/(sum(rowSums(Matrix))) > percent 
+  Matrix_1 <- Matrix[bigones,]
+  print(percent)
+  return(Matrix_1)
+}

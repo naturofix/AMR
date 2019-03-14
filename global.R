@@ -1,18 +1,22 @@
 
 ## CRAN packages : install.packages('package_name')
-options(repos = BiocInstaller::biocinstallRepos())
+#source("https://bioconductor.org/biocLite.R")
+library(BiocManager)
+options(repos = BiocManager::repositories())
 getOption("repos")
 install_packages = F
 if(install_packages == T){
   source("https://bioconductor.org/biocLite.R")
   
-    biocLite(c("marray",'Biobase','RTCGA.clinical')) # required for CluMix
+  BiocManager::install(c("marray",'Biobase','RTCGA.clinical')) # required for CluMix
 
   install.packages(c("shiny","shinythemes", "googlesheets","gplots", "ggplot2","CluMix",
     "Amelia","reshape","imputeTS","pspline","dendextend","plyr","dplyr","survival",
     "ggfortify","survminer","ggdendro","zoo","broom","ggsignif",'devtools'))
   library(devtools)
   install_version("DT", version = "0.2", repos = "http://cran.us.r-project.org")
+  install_github("vqv/ggbiplot")
+
 }
 
 library(shiny)
@@ -44,6 +48,7 @@ library(ggsignif)
 library(shinyBS)
 
 #library(survival)
+library(ggbiplot) # for plotting PCA's
 
 
 
@@ -55,7 +60,7 @@ source('functions.R')
 source('defaults.R')
 default_file_name = 'current_default.rds'
 default_file_name = 'Defaults Spirometry Clusters by Ratio Alone.rds'
-library(devtools)
+#library(devtools)
 #source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
 g_sheet = T
 
@@ -65,7 +70,7 @@ defaults = 'David'
 save_workspace = T
 show_debug = T
 
-read_workspace = F
+read_workspace = T
 if(read_workspace == F){
   show_debug = F
   save_workspace = F
@@ -74,7 +79,7 @@ save_data = F
 
 #display_data_tables = F
 #use_gs_defaults = T
-#defaults = 'Shaun'
+#defaults = 'Shaun' 
 
 if(read_workspace == T){
   load('workspace.RData')
@@ -939,7 +944,7 @@ if(read_workspace == T){
         print(cmd)
         eval(parse(text = cmd))
         entry_name = gsub('_matrix','',matrix_entry)
-        
+        entry_name
         # ZERO DATA #########
         pre_times = pFEV_numeric_colnames_f[pFEV_numeric_colnames_n < 0]
         pre_times
@@ -961,6 +966,29 @@ if(read_workspace == T){
         cmd = paste0('processed_data$',entry_name,'_log2zero_matrix = as.matrix(ratio_data)')
         print(cmd)
         eval(parse(text = cmd))
+        
+        colnames(pre_ratio_data)
+        colnames(post_ratio_data)
+        
+        #pre_ratio_data_temp = pre_ratio_data[,order(abs(as.numeric(colnames(pre_ratio_data))))]
+        pre_ratio_data_temp = pre_ratio_data
+        colnames(pre_ratio_data_temp) = as.character(abs(as.numeric(colnames(pre_ratio_data_temp))))
+        #pre_ratio_data_temp = pre_ratio_data_temp[,order(as.numeric(colnames(pre_ratio_data_temp)))]
+        #colnames(pre_ratio_data_temp)
+        log_diff_cols = intersect(colnames(post_ratio_data),colnames(pre_ratio_data_temp))
+        log_diff_cols
+        log_diff = post_ratio_data[,log_diff_cols] - pre_ratio_data_temp[,log_diff_cols]
+        cmd = paste0('processed_data$',entry_name,'_log2zero_diff_matrix = as.matrix(log_diff)')
+        print(cmd)
+        eval(parse(text = cmd))
+          test_i = 15
+          test_j = '3'
+          pre_ratio_data_temp[test_i,test_j]
+          post_ratio_data[test_i,test_j]
+
+          post_ratio_data[test_i,test_j] - pre_ratio_data_temp[test_i,test_j]
+          log_diff[test_i,test_j]
+        
         
         pre_per_data =  (zero_data-pre_data)/pre_data*100
         #colnames(pre_per_data) = paste0('per2zero_',pre_times)

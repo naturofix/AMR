@@ -6,6 +6,12 @@ library(shiny)
 #profvis({
 shinyServer(function(input, output, session) {
   
+  observeEvent(input$debug_button,{
+    print('debug start')
+    browser()
+    print('debug end')
+  })
+  
   hideTab_function()
   
   output$debug_ui = renderUI({
@@ -57,6 +63,8 @@ shinyServer(function(input, output, session) {
       showTab(inputId = "Discrete_Variables", target =  'Factor')
       showTab(inputId = "Ratio_Statistics", target =  'Two Sample t tests')
       showTab(inputId = "Ratio_Statistics", target =  'T test vs mean of zero')
+      
+      
       showTab(inputId = 'Data_Table', target = "Selected Data")
       showTab(inputId = 'Data_Table', target = "Data used for Clustering")
       showTab(inputId = 'Data_Table', target = "log 2 ratio vs zero")
@@ -1798,7 +1806,7 @@ shinyServer(function(input, output, session) {
       head(o_data)
       o_data = as.data.frame(o_data) 
       o_data
-      c_data <- o_data %>% select(colnames(o_data)[colnames(o_data) %in% as.character(c(input$clust_range[1]:input$clust_range[2]))])
+      c_data <- o_data %>% dplyr::select(colnames(o_data)[colnames(o_data) %in% as.character(c(input$clust_range[1]:input$clust_range[2]))])
       head(c_data)
       colnames(o_data) = gsub('-','neg_',paste(data_entry,colnames(o_data),sep='_'))
       colnames(c_data) = gsub('-','neg_',paste(data_entry,colnames(c_data),sep='_'))
@@ -1841,6 +1849,10 @@ shinyServer(function(input, output, session) {
   
   output$ccc_2 = renderUI({
     selectInput('mix_clust_col_num_2','Continuous Variable List 2 *', change_data_list()$ccc, multiple = T,selected = d_list()$values$mix_clust_col_num_2,width = 1200)
+  })
+  
+  output$ccc_3 = renderUI({
+    selectInput('cluster_spirometry_variable','Spirometry Variable', change_data_list()$ccc, multiple = T,selected = d_list()$values$mix_clust_col_num_2,width = 1200)
   })
   output$num_weight_ui = renderUI({
     numericInput('num_weight', "Weight *", d_list()$values$num_weight, min = 0, max = 100, step = 1)
@@ -2814,6 +2826,7 @@ shinyServer(function(input, output, session) {
                 #full_data=pFEV_lf[pFEV_lf$variable %in% cols,]
                 function_data = pFEV_lf_r()
                 df = lm_function(function_data,factor,cols)
+                as.tbl(df)
                 #df = df[order(df$Status),]
                 col_rearrange_function(df,3)
                 
@@ -2837,6 +2850,7 @@ shinyServer(function(input, output, session) {
                   #print(df_n)
                   df = rbind(df,df_n)
                 }
+                as.tbl(df)
                 #Veiw(df)
                 #df
                 df = col_rearrange_function(df,3)
@@ -2857,13 +2871,26 @@ shinyServer(function(input, output, session) {
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
               #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% cols,]
-              ggplot(full_data, aes(x = variable, y = value)) + 
-                geom_boxplot(aes_string(col = factor)) +
-                stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) +
-                theme(axis.text.x = element_text(size=14, angle=90)) + 
+              p = ggplot(full_data, aes(x = variable, y = value))
+              if('point' %in% input$boxplot_time){
+               p = p + geom_point(aes_string(col = factor,group = factor))
+              }
+           
+              if('boxplot' %in% input$boxplot_time){
+                p = p +   geom_boxplot(aes_string(col = factor)) 
+              }
+              if('linear regression' %in% input$boxplot_time){
+                p = p + geom_smooth(method = "lm", aes_string(col = factor,group = factor))
+              }
+              if('smooth mean' %in% input$boxplot_time){
+                p = p +   stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) 
+              }
+            
+              p = p +   theme(axis.text.x = element_text(size=14, angle=90)) + 
                 scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
                 
                 ggtitle("Original Data")
+              p
             })
             output$boxplot_anova_before_factor = renderPlot({
               factor = input$global_factor
@@ -2871,13 +2898,29 @@ shinyServer(function(input, output, session) {
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
               #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% before & pFEV_lf_r()$variable %in% cols,] 
-              ggplot(full_data, aes(x = variable, y = value)) + 
-                geom_boxplot(aes_string(col = factor)) +
-                stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) +
-                theme(axis.text.x = element_text(size=14, angle=90)) + 
+              #ggplot(full_data, aes(x = variable, y = value)) + 
+              #  geom_boxplot(aes_string(col = factor)) +
+              #  stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) +
+                
+              p = ggplot(full_data, aes(x = variable, y = value))
+              if('point' %in% input$boxplot_time){
+                p = p + geom_point(aes_string(col = factor,group = factor))
+              }
+              
+              if('boxplot' %in% input$boxplot_time){
+                p = p +   geom_boxplot(aes_string(col = factor)) 
+              }
+              if('linear regression' %in% input$boxplot_time){
+                p = p + geom_smooth(method = "lm", aes_string(col = factor,group = factor))
+              }
+              if('smooth mean' %in% input$boxplot_time){
+                p = p +   stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) 
+              }
+              p = p +  theme(axis.text.x = element_text(size=14, angle=90)) + 
                 scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
                 
                 ggtitle("Pre Treatment")
+              p
             })
             output$boxplot_anova_after_factor = renderPlot({
               factor = input$global_factor
@@ -2885,13 +2928,30 @@ shinyServer(function(input, output, session) {
               cols = factor(c(input$pre_range[1]:input$post_range[2]))
               #cols
               full_data=pFEV_lf_r()[pFEV_lf_r()$variable %in% after & pFEV_lf_r()$variable %in% cols,] 
-              ggplot(full_data, aes(x = variable, y = value)) + 
-                geom_boxplot(aes_string(col = factor)) +
-                stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) +
-                theme(axis.text.x = element_text(size=14, angle=90)) + 
+              #ggplot(full_data, aes(x = variable, y = value)) + 
+              #  geom_boxplot(aes_string(col = factor)) +
+              #  stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) +
+              
+              p = ggplot(full_data, aes(x = variable, y = value))
+              if('point' %in% input$boxplot_time){
+                p = p + geom_point(aes_string(col = factor,group = factor))
+              }
+              
+              if('boxplot' %in% input$boxplot_time){
+                p = p +   geom_boxplot(aes_string(col = factor)) 
+              }
+              if('linear regression' %in% input$boxplot_time){
+                p = p + geom_smooth(method = "lm", aes_string(col = factor,group = factor))
+              }
+              if('smooth mean' %in% input$boxplot_time){
+                p = p +   stat_summary(fun.y=mean,geom="line",lwd=2,aes_string(group=factor,col = factor)) 
+              }
+                
+              p = p +  theme(axis.text.x = element_text(size=14, angle=90)) + 
                 scale_x_discrete(breaks = pFEV_numeric_colnames_f) +
                 
                 ggtitle("Post Treatment")
+              p
             })
 
         ######## __LM SAMPLE ######
@@ -2904,8 +2964,9 @@ shinyServer(function(input, output, session) {
             cols = c(-6:6)
             cols = factor(c(input$pre_range[1]:input$post_range[2]))
             cols
-            df = lm_sample_function(function_data,factor,cols,df)
-            
+            df_l = lm_sample_function(function_data,factor,cols,df)
+            df_l
+              
           })
           output$df_lm_table = renderDataTable({
             df = df_lm_sample()
@@ -2916,7 +2977,8 @@ shinyServer(function(input, output, session) {
 
           df_slope= reactive({
             factor = 'Status'
-            factor = input$global_factor
+            (factor = input$global_factor)
+            
             full_data = df_lm_sample()
             df = slope_function_tidy(full_data,factor,input)
             #df = df[order(df$Status),]
@@ -4467,9 +4529,11 @@ shinyServer(function(input, output, session) {
       
   
   # CLUSTERING ---------------------------------
+      
+    ## _MIXCLU #####
       output$run_clustering_rb_ui = renderUI({
         radioButtons('run_clustering','View Dendogram',c(F,T),selected = r_values$run_clustering,inline = T)
-      })
+      }) 
       
       discrete_cluster = reactive({
         
@@ -4570,7 +4634,93 @@ shinyServer(function(input, output, session) {
         }
       })
   
-  
+  ##_PCA #####
+       
+      output$prcomp_spirometry_col_select = renderUI({
+        full_data = change_data()
+        sp_data = full_data[,input$prcomp_data_select]
+        colnames(sp_data)
+        columns = as.character(c(input$pre_range[1]:input$post_range[2]))
+        columns
+        selected_columns = colnames(sp_data)[colnames(sp_data) %in% columns]
+        selected_columns
+        #data = as.data.frame(sp_data[,as.character(c(input$pre_range[1]:input$post_range[2]))])
+        selectInput('prcomp_spirometry_col','Select Col',c('_',colnames(sp_data)),selected = selected_columns,multiple = T)
+      })
+      
+      continuous_cluster_data = reactive({ 
+        full_data = change_data()
+        
+        colnames(full_data)
+
+         
+        data = full_data[,input$cluster_spirometry_variable]
+        colnames(data)
+
+        if(input$prcomp_complete_rb == T){
+          data = data[complete.cases(data),]
+        }
+        if(input$prcomp_invert_rb == T){
+          data = t(data)
+        }
+        output$prcomp_pca_data = renderDataTable({data})
+        data
+      })
+
+      prcomp_pca = reactive({
+        data = continuous_cluster_data()
+        data.pca = prcomp(data,center = as.logical(input$prcomp_center_rb), scale = as.logical(input$prcomp_scale_rb))
+        output$prcomp_patient_numbers = renderText(dim(data)[1])
+        output$prcomp_pca_summary = renderPrint({
+          summary(data.pca) 
+        })
+        output$prcomp_pca_str = renderPrint({
+          str(data.pca)
+        })
+        list(data = data, data.pca = data.pca)  
+      })
+      
+      output$prcomp_pca_plot = renderPlot({ 
+        full_data = change_data()
+        data = prcomp_pca()$data 
+        data.pca = prcomp_pca()$data.pca
+        clusters = discrete_cluster_D()
+        names(clusters)
+        #mtcars.country <- c(rep("Japan", 3), rep("US",4), rep("Europe", 7),rep("US",3), "Europe", rep("Japan", 3), rep("US",4), rep("Europe", 3), "US", rep("Europe", 3))
+        #mtcars.country
+        #cluster_names = clusters$x_cluster$cluster[clusters$x_cluster$label == rownames(data)]
+        if(input$prcomp_cluster_col == 'none'){
+          ggbiplot(data.pca, labels = rownames(data),choices = c(input$prcomp_x_component,input$prcomp_y_component),scale = input$prcomp_plot_scale)
+        }else{
+          if(input$prcomp_cluster_col == 'MixClu'){
+            cluster_names = clusters$x_cluster$cluster[clusters$x_cluster$label %in% rownames(data)]
+            ggbiplot(data.pca, labels = rownames(data),ellipse = TRUE,choices = c(input$prcomp_x_component,input$prcomp_y_component),scale = input$prcomp_plot_scale,groups = as.character(cluster_names))
+          }else{
+          cluster_names = full_data[,input$prcomp_cluster_col][full_data$MRN %in% rownames(data)]
+          ggbiplot(data.pca, 
+                   labels = rownames(data),
+                   ellipse = TRUE,
+                   choices = c(input$prcomp_x_component,input$prcomp_y_component),
+                   scale = input$prcomp_plot_scale,
+                   groups = as.character(cluster_names)) +
+            scale_colour_manual(name=input$prcomp_cluster_col,values = rainbow(length(unique(cluster_names))))
+          }
+      }
+        
+        
+        
+        
+        })
+      
+ 
+      output$kmeans_plot = renderPlot({
+        data = continuous_cluster_data()
+        library(VIM)
+        clusters = kmeans((data),3)
+        
+        library("factoextra")
+        fviz_cluster(clusters,data)
+        })
         # plot clusters ==================================================
             output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
 

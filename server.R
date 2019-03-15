@@ -307,7 +307,9 @@ shinyServer(function(input, output, session) {
                             map_hit = 0,
                             add_cluster = 0,
                             add_cluster_fresh = 0,
-                            cluster_mapping_fresh = 0)
+                            cluster_mapping_fresh = 0,
+                            kmeans_run = 0,
+                            pam_run = 0)
   
   output$r_values_text = renderPrint({
     print(r_values$subset_1)
@@ -1901,7 +1903,7 @@ shinyServer(function(input, output, session) {
     matrix_name
   })
   
-  change_data_full_w = reactive({
+  change_data_full_w = reactive({ 
     o_data = change_data()
     c_o_data = o_data
     m_data = discrete_cluster_D()$data
@@ -1910,6 +1912,13 @@ shinyServer(function(input, output, session) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
     data$cluster
+    if(r_values$pam_run == 1){
+      data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
+    }
+    
     #data = data[data$cluster %in% input$cluster_select_clusters,]
     #levels(data$cluster) = cluster_levels()
     dim(data)
@@ -1928,14 +1937,14 @@ shinyServer(function(input, output, session) {
     
   })
   change_data_l = reactive({
-    w_data = change_data_w()
+    w_data = change_data_w() 
     dim(w_data)
     #print('')
     #print(dim(w_data))
     entry = "pFEV1_matrix"
     entry = select_matrix()
     entry
-    melt_columns = c(colnames(w_data)[colnames(w_data) %in% factor_columns],'cluster')
+    melt_columns = c(colnames(w_data)[colnames(w_data) %in% factor_columns],grep('cluster',colnames(w_data),value = T))
     #melt_columns
     #data = melt_processed_data(processed_data,c(melt_columns),entry)$long_df
     #rownames(processed_data)
@@ -3563,7 +3572,7 @@ shinyServer(function(input, output, session) {
         textInput('boxplot_pp_zero_y','y title',gsub('_matrix','',select_matrix()))
       })
       
-      boxplot_pp_zero_data = reactive({
+      boxplot_pp_zero_data = reactive({ 
         print('boxplot_pp_zero_data')
         full_data = pFEV_lf_r()
         #df_s = pp_t_test_zero()
@@ -4863,15 +4872,38 @@ shinyServer(function(input, output, session) {
       
       output$prcomp_pca_biplot_edit = renderPlot({
         full_data = change_data()
-        data = prcomp_pca()$data
+        data = prcomp_pca()$data 
         data.pca = prcomp_pca()$data.pca 
 
-      
+        if(input$prcomp_cluster_col == 'none'){
+          fviz_pca_biplot(data.pca,
+                          #col.ind = cluster_names, # color by groups
+                          #palette = c("#00AFBB",  "#FC4E07"),
+                          addEllipses = TRUE, # Concentration ellipses
+                          ellipse.type = "confidence",
+                          legend.title = input$prcomp_cluster_col,
+                          repel = TRUE,
+                          axes = c(input$prcomp_x_component,input$prcomp_y_component)
+                          
+          )
+        }else{
           if(input$prcomp_cluster_col == 'MixClu'){
             clusters = discrete_cluster_D()
+            clusters
             cluster_names = clusters$x_cluster$cluster[clusters$x_cluster$label %in% rownames(data)]
-            ggbiplot(data.pca, labels = rownames(data),ellipse = TRUE,choices = c(input$prcomp_x_component,input$prcomp_y_component),scale = input$prcomp_plot_scale,groups = as.character(cluster_names))
-          }else{
+            cluster_names
+            fviz_pca_biplot(data.pca,
+                            col.ind = as.character(cluster_names), # color by groups
+                            #palette = c("#00AFBB",  "#FC4E07"),
+                            addEllipses = TRUE, # Concentration ellipses
+                            ellipse.type = "confidence",
+                            legend.title = input$prcomp_cluster_col,
+                            repel = TRUE,
+                            axes = c(input$prcomp_x_component,input$prcomp_y_component)
+                            
+            )
+            
+            }else{
             cluster_names = full_data[,input$prcomp_cluster_col][full_data$MRN %in% rownames(data)]
             
             fviz_pca_biplot(data.pca,
@@ -4884,7 +4916,8 @@ shinyServer(function(input, output, session) {
                          axes = c(input$prcomp_x_component,input$prcomp_y_component)
                          
             )
-          }
+            }
+        }
       })
       
       output$prcomp_pca_plot = renderPlot({ 
@@ -4943,7 +4976,7 @@ shinyServer(function(input, output, session) {
                           trace = as.logical(input$kmeans_trance))
 
         data$kmeans_cluster = clusters$cluster
-     
+        r_values$kmeans_run = 1
         output$kmeans_cluster_df = renderDataTable({
           data
         })
@@ -4962,13 +4995,13 @@ shinyServer(function(input, output, session) {
         })
       
       cluster_tile_data = reactive({
-        full_data = change_data() 
+        full_data = change_data()  
         
         cluster_data = full_data[,input$cluster_tile_discrete_variables]
-        if(!is.null(continuous_cluster_pam())){
+        if(r_values$pam_run == 1){
           cluster_data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
         }
-        if(!is.null(kmeans_list())){
+        if(r_values$kmeans_run == 1){
           cluster_data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
         }
         cluster_data
@@ -5008,7 +5041,7 @@ shinyServer(function(input, output, session) {
       
       continuous_cluster_pam = reactive({
         data.pam = pam(continuous_cluster_data(),input$kmeans_centers,metric = input$continuous_pam_metric)
-        
+        r_values$pam_run = 1
         data.pam$clustering
         
         data.pam
@@ -5472,7 +5505,11 @@ shinyServer(function(input, output, session) {
           
           output$global_factor_ui = renderUI({
             print('global_factor_ui')
-            factor_list = c(all_discrete_columns,'cluster')
+            #if(!is.null(change_data_l())){
+            #  factor_list = c(all_discrete_columns,grep('cluster',change_data_l(),value = T))
+            #}else{
+              factor_list = c(all_discrete_columns,'cluster','kmeans_cluster','pam_cluster')
+            #}
             factor_list = factor_list[order(factor_list)]
             selectInput('global_factor','Select Factor',factor_list,multiple = F,selected = 'cluster')
             

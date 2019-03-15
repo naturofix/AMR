@@ -362,8 +362,8 @@ shinyUI(fluidPage(
                         
                  ),
                 column(12,
-                       plotOutput('prcomp_pca_biplot_edit'),
-                       plotOutput('prcomp_pca_plot',height = 600, width = 800)
+                       plotOutput('prcomp_pca_biplot_edit')
+                       #plotOutput('prcomp_pca_plot',height = 600, width = 800)
                        #dataTableOutput('prcomp_pca_data')
                 )),
                 tabPanel('Tables',

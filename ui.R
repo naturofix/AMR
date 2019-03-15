@@ -195,145 +195,253 @@ shinyUI(fluidPage(
        column(6,uiOutput('data_set_ui')),
        column(6,uiOutput('clust_range_ui')),
        column(12,
-      tabsetPanel(selected = 'MixClu',
+      tabsetPanel(
+        ### Mixed Variables ####
+        tabPanel('Mixed Variables',
+          #tabsetPanel(selected = 'MixClu',
+          #  tabPanel('Distance Matrix'),
           #### _MIX CLU ####$
-          tabPanel('MixClu',         
-            column(12,textOutput('clustered_patients_text')),
-            column(10,uiOutput('mix_clust_col_fac_ui')),
-            column(2,uiOutput("fac_weight_ui")),
-            column(10,uiOutput('mix_clust_col_fac_2_ui')),
-            column(2,uiOutput("fac_weight_2_ui")),
- 
-            column(10,uiOutput('ccc_1')),
-            column(2,uiOutput('num_weight_ui')),
-            column(10,uiOutput('ccc_2')),
-            column(2,uiOutput('num_weight_2_ui')),
-            
-
-           
-
-            column(12,
-    
-              column(12,tags$hr()),
-              column(3,
-                     uiOutput('clutree_num_ui'),
-                     uiOutput('cluster_names_list_ui'),
-                     uiOutput('add_cluster_name'),
-                     actionButton('add_cluster_button','Click to Add')),
+            #tabPanel('MixClu',         
+              column(12,textOutput('clustered_patients_text')),
+              column(10,uiOutput('mix_clust_col_fac_ui')),
+              column(2,uiOutput("fac_weight_ui")),
+              column(10,uiOutput('mix_clust_col_fac_2_ui')),
+              column(2,uiOutput("fac_weight_2_ui")),
+   
+              column(10,uiOutput('ccc_1')),
+              column(2,uiOutput('num_weight_ui')),
+              column(10,uiOutput('ccc_2')),
+              column(2,uiOutput('num_weight_2_ui')),
               
-               
-              column(9,uiOutput('cluster_naming_list')),
-                                
-                        
-              column(12,tags$hr()),
-                  column(12,
-                      radioButtons('run_clustering_rb','Run Clustering',c(F,T),selected = T,inline = T),
-                      textOutput('run_cluster_text_ui')
-                      ),
-              tabsetPanel(id = 'dendo', 
+  
+             
+  
+              column(12,
+      
+                column(12,tags$hr()),
+                column(3,
+                       uiOutput('clutree_num_ui'),
+                       uiOutput('cluster_names_list_ui'),
+                       uiOutput('add_cluster_name'),
+                       actionButton('add_cluster_button','Click to Add')),
+                
+                 
+                column(9,uiOutput('cluster_naming_list')),
+                                  
                           
-                tabPanel('Dendogram',
-                                                 
-                  column(12,
-                      tags$h4(textOutput('clustering_removed_column_text')),
-                      column(6,textInput('discrete_cluster_title','Title','Patient Dendogram')),
-                      column(3,textInput('discrete_cluster_x','x title','Patients')),
-                      column(3,textInput('discrete_cluster_y','y title','Distance')),
-                      column(9),
-                      column(3,selectInput('patient_labels','Patient_label',c('mapped','simple','none'),selected = 'mapped')),
+                column(12,tags$hr()),
+                    column(12,
+                        radioButtons('run_clustering_rb','Run Clustering',c(F,T),selected = T,inline = T),
+                        textOutput('run_cluster_text_ui')
+                        ),
+                tabsetPanel(id = 'dendo', 
+                            
+                  tabPanel('CluMix',
+                                                   
+                    column(12,
+                        tags$h4(textOutput('clustering_removed_column_text')),
+                        column(6,textInput('discrete_cluster_title','Title','Patient Dendogram')),
+                        column(3,textInput('discrete_cluster_x','x title','Patients')),
+                        column(3,textInput('discrete_cluster_y','y title','Distance')),
+                        column(9),
+                        column(3,selectInput('patient_labels','Patient_label',c('mapped','simple','none'),selected = 'mapped')),
+                      
+                        column(11,plotOutput('discrete_cluster_plot')),
+                        column(1,downloadButton('discrete_cluster_plot_download','')),
+                        
+                        
+                        
+                        column(12,tags$hr()),
+                        column(11,plotOutput('mix_clu')),
+                        column(1,downloadButton('mix_clu_download','')),
+                        column(12,tags$hr()),
+                        
+                        column(6,textInput('distance_density_title','Title','Distance Density Plot')),
+                        column(3,textInput('distance_density_x','x title','x')),
+                        column(3,textInput('distance_density_y','y title','y')),
                     
-                      column(11,plotOutput('discrete_cluster_plot')),
-                      column(1,downloadButton('discrete_cluster_plot_download','')),
-                      
-                      
-                      
-                      column(12,tags$hr()),
-                      column(11,plotOutput('mix_clu')),
-                      column(1,downloadButton('mix_clu_download','')),
-                      column(12,tags$hr()),
-                      
-                      column(6,textInput('distance_density_title','Title','Distance Density Plot')),
-                      column(3,textInput('distance_density_x','x title','x')),
-                      column(3,textInput('distance_density_y','y title','y')),
+                        column(11,plotOutput('distance_density')),
+                        column(1,downloadButton('distance_density_download',''))
+                    )
+                  ),
+                  tabPanel('Data', dataTableOutput('discrete_cluster_data_df')),
                   
-                      column(11,plotOutput('distance_density')),
-                      column(1,downloadButton('distance_density_download',''))
-                  )
-                ),
-                                        
-                tabPanel('Summary Statistics',
-               
-                      radioButtons("data_select_clust", 'Select Data applied to plots below',
-                                   choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
-                                   choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
-                      
-                      tags$h5('log2 ratio t test'),
-                      plotOutput('boxplot_pp_ratio_cluster'),
-                      
-                      tags$h5('Full Range'),
-                      plotOutput('boxplot_pFEV_cluster_full'),
-                      column(12,tags$hr()),
-                      column(12,tags$h5(textOutput('manova_clustering_text'))),
-                      column(11,dataTableOutput('selected_manova_table_cluster')),
-                      column(1,downloadButton('selected_manova_table_cluster_download','')),
-                      
-                      column(12,tags$hr()),
-                      column(12,tags$h5('ANOVA of continuous variables across clusters')),
-                      column(11,dataTableOutput('continuous_manova_cluster')),
-                      column(1,downloadButton('continuous_manova_cluster_download',''))
-                           #### _chi-squared ####
+                  tabPanel('Distance Matrix',
+                            tags$h4('Distance Matrix does not currently us weighting of variables, can be added later'),
+                            selectInput('mixed_cluster_daisy_method','Method',c("euclidean", "manhattan", "gower")),
+                            plotOutput("mixed_cluster_data_dist_plot"),
+                            dataTableOutput("mixed_cluster_data_dist_daisy_df")
+                            ),
+                  tabPanel('Summary Statistics',
+                 
+                        radioButtons("data_select_clust", 'Select Data applied to plots below',
+                                     choiceNames = list('pFEV',"imputed", 'imputed to last pFEV value', 'smoothed','D1', "D1 remove imputed", 'D2'),
+                                     choiceValues = list("pFEV", "imputed",'imputed_NA', 'smoothed', 'd1','d1_ri','d2'),inline = T,selected = 'd1'),
+                        
+                        tags$h5('log2 ratio t test'),
+                        plotOutput('boxplot_pp_ratio_cluster'),
+                        
+                        tags$h5('Full Range'),
+                        plotOutput('boxplot_pFEV_cluster_full'),
+                        column(12,tags$hr()),
+                        column(12,tags$h5(textOutput('manova_clustering_text'))),
+                        column(11,dataTableOutput('selected_manova_table_cluster')),
+                        column(1,downloadButton('selected_manova_table_cluster_download','')),
+                        
+                        column(12,tags$hr()),
+                        column(12,tags$h5('ANOVA of continuous variables across clusters')),
+                        column(11,dataTableOutput('continuous_manova_cluster')),
+                        column(1,downloadButton('continuous_manova_cluster_download',''))
+                             #### _chi-squared ####
+                )
               )
             )
-          )
+          ),
+          
+      ### Continuous Variable Clustering ######
+      tabPanel('Continuous Variables',
+        column(12,uiOutput('ccc_3')),
+        column(12,
+               column(2,numericInput('kmeans_centers','Number of clusters',value = 3)),
+               
+               column(2,radioButtons('prcomp_invert_rb','Invert',c(F,T))),
+               column(2,radioButtons('prcomp_center_rb','Center',c(F,T))),
+               column(2,radioButtons('prcomp_scale_rb','Scale',c(F,T))),
+               column(2,radioButtons('prcomp_complete_rb','Complete Cases',c(F,T)))
+               
         ),
-      tabPanel('Continuous Variable Clustering',
-        column(12,uiOutput('ccc_3')),       
         tabsetPanel(
+          ### _Data ####
+          tabPanel('Data',
+                   column(6,plotOutput('continuous_cluster_density_plot')),
+                   column(6,plotOutput('continuous_cluster_metric_boxplot')),
+                   column(12,dataTableOutput('continuous_cluster_df'))
+                   ),
+          #### _Distance Matix ####
+          tabPanel('Distance Matix',
+              tabsetPanel(
+                   tabPanel('Dist',
+                            
+                            
+                            selectInput('continuous_dist_method','Method',c("euclidean", "maximum", "manhattan", "canberra", "binary","minkowski")),
+                            plotOutput('continuous_cluster_data_dist_plot'),
+                            selectInput('continuous_dist_hclust_method','Method',c("ward.D", "ward.D2", "single", "complete", "average","mcquitty","median","centroid")),
+                            plotOutput('continuous_cluster_dist_hc_plot'),
+                            dataTableOutput('continuous_cluster_data_dist_df')
+                            ),
+                   tabPanel('Distance Correlation',
+                            selectInput('continuous_dist_cor_method','Method',c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski", "pearson", "spearman","kendall")),
+                            plotOutput('continuous_cluster_data_dist_cor_plot'),
+                            selectInput('continuous_dist_cor_hclust_method','Method',c("ward.D", "ward.D2", "single", "complete", "average","mcquitty","median","centroid")),
+                            plotOutput('continuous_cluster_dist_cor_hc_plot'),
+                            dataTableOutput('continuous_cluster_data_dist_cor_df'))
+                   )),
           tabPanel('PCA',
+           
                  ### _PCA ####
                  #column(12,
                
       
                  
+                
+                 column(12,textOutput('prcomp_patient_numbers')),
+                 tabsetPanel(
+                   tabPanel('Plots',
+                
+                    column(12,plotOutput('prcomp_pca_scree_plot')),
+                    column(6,plotOutput('prcomp_pca_ind_plot')),
+                    column(6,plotOutput('prcomp_pca_var_plot')),
+                    column(12,plotOutput('prcomp_pca_biplot')),
+                 
+                 
                  column(12,
-                   column(3,radioButtons('prcomp_invert_rb','Invert',c(F,T))),
-                   column(3,radioButtons('prcomp_center_rb','Center',c(F,T))),
-                   column(3,radioButtons('prcomp_scale_rb','Scale',c(F,T))),
-                   column(3,radioButtons('prcomp_complete_rb','Complete Cases',c(F,T)))
+                        column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
+                        column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
+                        column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
+                        column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
+                        
                  ),
                 column(12,
-                       column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
-                       column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
-                       column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
-                       column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
-                       
-                       ),
-                column(12,
-                        
-                       plotOutput('prcomp_pca_plot',height = 600, width = 800),
-                       dataTableOutput('prcomp_pca_data'),
-                           
-            
-                         verbatimTextOutput('prcomp_pca_summary'),
+                       plotOutput('prcomp_pca_biplot_edit'),
+                       plotOutput('prcomp_pca_plot',height = 600, width = 800)
+                       #dataTableOutput('prcomp_pca_data')
+                )),
+                tabPanel('Tables',
+                  tabsetPanel(
+                    tabPanel('Data', dataTableOutput('prcomp_pca_data')),
+                    tabPanel('Eigenvalues',
+                             dataTableOutput('prcomp_eig_val_df'),
+                             
+                          verbatimTextOutput('prcomp_pca_summary'),
                            verbatimTextOutput('prcomp_pca_str')
+                             ),
+                    tabPanel('Variables',
+                             tags$h4('Coordinates'),
+                             dataTableOutput('promp_var_coord'),
+                             tags$h4('Contributions to the PCs'),
+                             dataTableOutput('promp_var_contrib'),
+                             tags$h4('Quality of representation'),
+                             dataTableOutput('promp_var_cos')
+                             ),
+                    tabPanel('Individuals',
+                             tags$h4('Coordinates'),
+                             dataTableOutput('promp_ind_coord'),
+                             tags$h4('Contributions to the PCs'),
+                             dataTableOutput('promp_ind_contrib'),
+                             tags$h4('Quality of representation'),
+                             dataTableOutput('promp_ind_cos')
+                             )
+                  )
+            
+                         
                    )
+                 )
           ),
-          ### _kmeans ####
-          tabPanel('kmeans',
+          ### _Partitional Clustering ####
+          tabPanel('Partitional Clustering',
+            ### __number of clusters ###
+            tabsetPanel(
+              tabPanel('Number of Clusters',
+                       column(2,selectInput('continuous_cluster_num_type','Clustering',c('kmeans','pam'))),
+                       column(2,selectInput('nbclust_method','Method',c("silhouette", "wss","gap_stat"))),
+                       column(12,plotOutput('nbclust_plot'))
+              ),
+              #### __heirarchical clustering ####
+              tabPanel('Hierarchical Clustering',tabsetPanel(
+                tabPanel('pheatmap',
+                         plotOutput('continuous_cluster_pheatmap'))
+                
+              )),
+              
+              #### __kmeans ####
+              tabPanel('kmeans',
                   column(4,selectInput('kmeans_algorithm','Algorithm',c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"))),
                                
-                  column(2,numericInput('kmeans_centers','centers',value = 3)),
                   column(2,numericInput('kmeans_iter.max','Max iterations',value = 10)),
                   column(2,numericInput('kmeans_nstart','nstart',value = 1)),
                   column(2,radioButtons('kmeans_trance','trace',c(F,T))),
                   column(12,
                          plotOutput('kmeans_plot'),
                          
-                         uiOutput('kmeans_discrete_variable_ui'),
-                         plotOutput('kmeans_tile')),
+                     
                           dataTableOutput('kmeans_cluster_df')
-                )
-        ))
+                )),
+              #### ___PAM #####
+              
+              tabPanel('PAM',
+                       selectInput('continuous_pam_metric','Metric',c("euclidean", "manhattan")),
+                       plotOutput('pam_plot')
+                       )
+              
+            )
+        ),
+        tabPanel('Cluster Tile',
+                 uiOutput('cluster_tile_discrete_variable_ui'),
+                 uiOutput('cluster_tile_order_ui'),
+                 plotOutput('cluster_tile_plot'))
+                 )
+        
+        )
             
             
     ))), #Clustering

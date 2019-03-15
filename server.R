@@ -1852,7 +1852,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$ccc_3 = renderUI({
-    selectInput('cluster_spirometry_variable','Spirometry Variable', change_data_list()$ccc, multiple = T,selected = d_list()$values$mix_clust_col_num_2,width = 1200)
+    selectInput('cluster_spirometry_variable','Spirometry Variable', change_data_list()$ccc, multiple = T,selected = c(d_list()$values$mix_clust_col_num,d_list()$values$mix_clust_col_num_2),width = 1200)
   })
   output$num_weight_ui = renderUI({
     numericInput('num_weight', "Weight *", d_list()$values$num_weight, min = 0, max = 100, step = 1)
@@ -1888,8 +1888,8 @@ shinyServer(function(input, output, session) {
   output$fac_weight_2_ui = renderUI({
     numericInput('fac_weight_2', "Weight *", d_list()$values$fac_weight_2, min = 0, max = 100, step = 1)
   })
-  output$kmeans_discrete_variable_ui = renderUI({
-    selectInput('kmeans_discrete_variables','Discrete Variables',discrete_columns_4_comparison,c(d_list()$values$mix_clust_col_fac,d_list()$values$mix_clust_col_fac_2),multiple = T,width = 1200)
+  output$cluster_tile_discrete_variable_ui = renderUI({
+    selectInput('cluster_tile_discrete_variables','Discrete Variables',discrete_columns_4_comparison,c(d_list()$values$mix_clust_col_fac,d_list()$values$mix_clust_col_fac_2),multiple = T,width = 1200)
   })
   
   
@@ -4637,9 +4637,140 @@ shinyServer(function(input, output, session) {
           
         }
       })
-  
+      
+      
+  ### Discrete Variable Clustering ####
+      discrete_cluster_data = reactive(discrete_cluster_D()$o_data)
+      
+      output$discrete_cluster_data_df = renderDataTable(discrete_cluster_data())
+      
+  ### Continuous Variable Clustering ####
+      
+      continuous_cluster_data = reactive({  
+        full_data = change_data()
+        
+        colnames(full_data) 
+
+         
+        data = full_data[,input$cluster_spirometry_variable]
+        rownames(data)
+        as.tbl(data)
+        colnames(data)
+        dim(data)
+        
+        if(input$prcomp_complete_rb == T){
+        #  data = data[complete.cases(data),]
+          data = na.omit(data)
+        }
+        if(input$prcomp_invert_rb == T){
+          data = t(data)
+        }
+        if(input$prcomp_scale_rb == T){
+          data = as.data.frame(scale(data))
+        }
+        as.tbl(data)
+        data_df = data
+        data$MRN = rownames(data)
+        as.tbl(data)
+        data_l = tidyr::gather(data,variable,value,1:(dim(data)[2]-1))
+
+        
+        data_metrics = data_l %>% 
+          group_by(variable) %>% 
+            summarise(mean = mean(value,na.rm = T),
+                      sd = stats::sd(value,na.rm = T)) %>% 
+          ungroup()
+        as.tbl(data_metrics)
+        data_metrics_l = data_metrics %>% 
+          gather(metric,value,2:3)
+        
+        as.tbl(data_metrics_l)
+          output$continuous_cluster_metric_boxplot = renderPlot({
+            ggplot(data_metrics_l) +
+              geom_boxplot(aes(x = metric,y=value)) +
+              geom_point(aes(x = metric,y=value,col = variable),size = 3) +
+              facet_grid(. ~ metric,scale = 'free')
+          })
+          output$continuous_cluster_density_plot = renderPlot({
+            as.tbl(data_l)
+            ggplot(data_l, aes(x = value,col = variable)) + 
+              geom_density() 
+              
+          })
+        as.tbl(data_metrics)
+        output$prcomp_pca_data = renderDataTable({data})
+        data_df
+      })
+      output$continuous_cluster_df = renderDataTable(continuous_cluster_data())
+      
+      
+  ### Distance Matrix ####
+      ### ___ dist ####
+      continuous_cluster_data_dist = reactive({
+        data = continuous_cluster_data()
+        data_dist = dist(data,method = input$continuous_dist_method)
+      })
+      
+      output$continuous_cluster_data_dist_df = renderDataTable({
+        as.data.frame(round(as.matrix(continuous_cluster_data_dist())))
+      })
+      
+      output$continuous_cluster_data_dist_plot = renderPlot({
+        fviz_dist(continuous_cluster_data_dist())
+      })
+      
+     
+      continuous_cluster_dist_hc = reactive({
+        hclust(continuous_cluster_data_dist(),method = input$continuous_dist_hclust_method) 
+      })
+      output$continuous_cluster_dist_hc_plot = renderPlot({
+        fviz_dend(continuous_cluster_dist_hc(),k = input$kmeans_centers)
+      })
+      
+   
+      
+      
+      #### ___get_dist ####
+      
+      continuous_cluster_data_dist_cor = reactive({
+        data = continuous_cluster_data()
+        data_dist_cor = get_dist(data,method = input$continuous_dist_cor_method)
+      })
+      
+      output$continuous_cluster_data_dist_cor_df = renderDataTable({
+        as.data.frame(round(as.matrix(continuous_cluster_data_dist_cor())))
+      })
+      
+      output$continuous_cluster_data_dist_cor_plot = renderPlot({
+        fviz_dist(continuous_cluster_data_dist_cor())
+      })
+      
+      continuous_cluster_dist_cor_hc = reactive({
+        hclust(continuous_cluster_data_dist_cor(),method = input$continuous_dist_cor_hclust_method)
+      })
+      output$continuous_cluster_dist_cor_hc_plot = renderPlot({
+        fviz_dend(continuous_cluster_dist_cor_hc(),k = input$kmeans_centers)
+      })
+      #### ___daisy #####
+      mixed_cluster_data_dist_daisy = reactive({
+        data = discrete_cluster_data()
+        names(data)
+        data_dist = daisy(data, metric = input$mixed_cluster_daisy_method)
+      })
+      
+      output$mixed_cluster_data_dist_daisy_df = renderDataTable({
+        as.data.frame(round(as.matrix(mixed_cluster_data_dist_daisy())))
+      })
+      
+      output$mixed_cluster_data_dist_plot = renderPlot({
+        fviz_dist(mixed_cluster_data_dist_daisy())
+      })
+      
+      
+      
+      
   ##_PCA #####
-       
+        
       output$prcomp_spirometry_col_select = renderUI({
         full_data = change_data()
         sp_data = full_data[,input$prcomp_data_select]
@@ -4652,36 +4783,108 @@ shinyServer(function(input, output, session) {
         selectInput('prcomp_spirometry_col','Select Col',c('_',colnames(sp_data)),selected = selected_columns,multiple = T)
       })
       
-      continuous_cluster_data = reactive({ 
-        full_data = change_data()
-        
-        colnames(full_data) 
-
-         
-        data = full_data[,input$cluster_spirometry_variable]
-        colnames(data)
-
-        if(input$prcomp_complete_rb == T){
-          data = data[complete.cases(data),]
-        }
-        if(input$prcomp_invert_rb == T){
-          data = t(data)
-        }
-        output$prcomp_pca_data = renderDataTable({data})
-        data
-      })
-
-      prcomp_pca = reactive({
+     
+      
+ 
+      prcomp_pca = reactive({ 
         data = continuous_cluster_data()
-        data.pca = prcomp(data,center = as.logical(input$prcomp_center_rb), scale = as.logical(input$prcomp_scale_rb))
-        output$prcomp_patient_numbers = renderText(dim(data)[1])
+        data.pca = prcomp(data,center = as.logical(input$prcomp_center_rb))
+        
+        output$prcomp_patient_numbers = renderText(paste('Number of Individuals = ',dim(data)[1]))
+        
         output$prcomp_pca_summary = renderPrint({
           summary(data.pca) 
         })
         output$prcomp_pca_str = renderPrint({
           str(data.pca)
         })
+        
+        output$prcomp_pca_scree_plot = renderPlot({
+          fviz_eig(data.pca)
+        })
+        
+        output$prcomp_pca_ind_plot = renderPlot({
+            fviz_pca_ind(data.pca,
+                         col.ind = 'cos2',
+                         gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                         #gradient.cols = c('blue','violet','red'),
+                         repel = TRUE     # Avoid text overlapping
+                      )
+        })
+        output$prcomp_pca_var_plot = renderPlot({
+          
+            fviz_pca_var(data.pca,
+                         col.var = "contrib", # Color by contributions to the PC
+                         gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                         #gradient.cols = c('red','orange','green'),
+                         repel = TRUE     # Avoid text overlapping
+            )
+        })
+        output$prcomp_pca_biplot = renderPlot({
+          fviz_pca_biplot(data.pca, repel = TRUE,
+                          col.var = "#2E9FDF", # Variables color
+                          col.ind = "#696969"  # Individuals color
+          )
+        })
+        
+        
+        
+        eig.val = get_eigenvalue(data.pca)
+        
+        output$prcomp_eig_val_df = renderDataTable({
+          as.tbl(eig.val)
+          eig.val
+        })
+        
+        data.var = get_pca_var(data.pca)
+        data.var
+        output$promp_var_coord = renderDataTable({
+          data.var$coord
+        })
+        output$promp_var_contrib = renderDataTable({
+          data.var$contrib
+        })
+        output$promp_var_cos2 = renderDataTable({
+          data.var$cos2
+        })
+        
+        data.ind = get_pca_ind(data.pca)
+        output$promp_ind_coord = renderDataTable({
+          data.ind$coord
+        })
+        output$promp_ind_contrib = renderDataTable({
+          data.ind$contrib
+        })
+        output$promp_ind_cos2 = renderDataTable({
+          data.ind$cos2
+        })
         list(data = data, data.pca = data.pca)  
+      })
+      
+      output$prcomp_pca_biplot_edit = renderPlot({
+        full_data = change_data()
+        data = prcomp_pca()$data
+        data.pca = prcomp_pca()$data.pca 
+
+      
+          if(input$prcomp_cluster_col == 'MixClu'){
+            clusters = discrete_cluster_D()
+            cluster_names = clusters$x_cluster$cluster[clusters$x_cluster$label %in% rownames(data)]
+            ggbiplot(data.pca, labels = rownames(data),ellipse = TRUE,choices = c(input$prcomp_x_component,input$prcomp_y_component),scale = input$prcomp_plot_scale,groups = as.character(cluster_names))
+          }else{
+            cluster_names = full_data[,input$prcomp_cluster_col][full_data$MRN %in% rownames(data)]
+            
+            fviz_pca_biplot(data.pca,
+                         col.ind = cluster_names, # color by groups
+                         #palette = c("#00AFBB",  "#FC4E07"),
+                         addEllipses = TRUE, # Concentration ellipses
+                         ellipse.type = "confidence",
+                         legend.title = input$prcomp_cluster_col,
+                         repel = TRUE,
+                         axes = c(input$prcomp_x_component,input$prcomp_y_component)
+                         
+            )
+          }
       })
       
       output$prcomp_pca_plot = renderPlot({ 
@@ -4715,7 +4918,20 @@ shinyServer(function(input, output, session) {
         
         
         })
-      
+    
+    ### Partitional clustering #####
+      output$nbclust_plot = renderPlot({
+        fviz_nbclust(continuous_cluster_data(),eval(parse(text = input$continuous_cluster_num_type)),method = input$nbclust_method) +
+          geom_vline(xintercept = input$kmeans_centers, linetype = 2)
+      })
+    
+    ### _heirarchical clustering ####
+      ###__pheatmap ####
+      output$continuous_cluster_pheatmap = renderPlot({  
+        pheatmap(t(continuous_cluster_data()))
+        #print(pheatmap(t(continuous_cluster_data()),clutree_cols = input$kmeans_centers))
+      })
+       
     ## _kmeans #####
       kmeans_list = reactive({
         data = continuous_cluster_data() 
@@ -4725,7 +4941,7 @@ shinyServer(function(input, output, session) {
                           nstart = input$kmeans_nstart,
                           algorithm = input$kmeans_algorithm,
                           trace = as.logical(input$kmeans_trance))
-        
+
         data$kmeans_cluster = clusters$cluster
      
         output$kmeans_cluster_df = renderDataTable({
@@ -4738,38 +4954,73 @@ shinyServer(function(input, output, session) {
       output$kmeans_plot = renderPlot({
         clusters = kmeans_list()$clusters
         data = kmeans_list()$data
-        fviz_cluster(clusters,data)
+        fviz_cluster(clusters,data,
+                     star.plot = T, 
+                     repel = T, 
+                     ggtheme = theme_minimal()
+                     )
         })
       
-      output$kmeans_tile = renderPlot({
+      cluster_tile_data = reactive({
         full_data = change_data() 
         
-        cluster_data = full_data[,input$kmeans_discrete_variables]
-        
-        cluster_data$kmeans_cluster = kmeans_list()$clusters$cluster
-
-        cluster_data$MRN = rownames(cluster_data)
-        cluster_data$order = cluster_data$kmeans_cluster
+        cluster_data = full_data[,input$cluster_tile_discrete_variables]
+        if(!is.null(continuous_cluster_pam())){
+          cluster_data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
+        }
+        if(!is.null(kmeans_list())){
+          cluster_data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
+        }
+        cluster_data
+      })
       
+      output$cluster_tile_order_ui = renderUI({
+        selectInput('cluster_tile_order','Order',colnames(cluster_tile_data()),selected = 'kmeans_cluster')
+      })
+        
+      output$cluster_tile_plot = renderPlot({
+        cluster_data = cluster_tile_data()
+        cluster_data$MRN = rownames(cluster_data)
+        #cluster_data$order = cluster_data[,'kmeans_cluster']
+        cluster_data$order = cluster_data[,input$cluster_tile_order]
+        
+        as.tbl(cluster_data)
         tile_data = tidyr::gather(cluster_data,variable, value, 1:(dim(cluster_data)[2]-2))
         as.tbl(tile_data)
         tile_data$v_order = tile_data$variable
         
         levels(tile_data$order) = factor(unique(tile_data$order))
-        y_order = unique((c('kmeans_cluster',tile_data$v_order)))
+        y_order = unique((c(input$cluster_tile_order,grep('cluster',colnames(cluster_data),value = T),grep('cluster',colnames(cluster_data),value = T,invert = T))))
         y_order
-          tile_data$v_order = factor(tile_data$v_order, levels = rev(y_order))
+        tile_data$v_order = factor(tile_data$v_order, levels = rev(y_order))
         
         ggplot(tile_data) +
           geom_tile(aes(x = reorder(MRN,order),y = v_order,fill = value),col = 'black') +
           facet_grid(. ~ order, scales = 'free',space = 'free_x') + 
           theme(axis.text.x = element_text(angle = 90)) +
           scale_x_discrete(position = 'top')
-        
-             
-          
-        
+
       })
+      
+    ### _PAM ####
+      
+
+      
+      continuous_cluster_pam = reactive({
+        data.pam = pam(continuous_cluster_data(),input$kmeans_centers,metric = input$continuous_pam_metric)
+        
+        data.pam$clustering
+        
+        data.pam
+      })
+      output$pam_plot = renderPlot({
+        fviz_cluster(continuous_cluster_pam())
+      })
+      
+
+      
+      
+      
         # plot clusters ==================================================
             output$D_text = renderPrint(str(discrete_cluster_D()$D,indent.str = '<br />'))
 

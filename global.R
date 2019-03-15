@@ -51,8 +51,9 @@ library(shinyBS)
 library(ggbiplot) # for plotting PCA's
 
 library(VIM)
-library("factoextra")
-
+library(factoextra)
+library(cluster)
+library(pheatmap)
 
 original_theme = theme_get()
 

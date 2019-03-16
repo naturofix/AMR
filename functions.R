@@ -1857,7 +1857,7 @@ clust_comparison_within = function(df,clust_col,input){
   data = data[order(data$Factor,data$Status),]
   #data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
 
-  data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
+  data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1 & sum(x) > 0,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
   #p.value
   return(data)
 }

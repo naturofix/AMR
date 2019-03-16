@@ -1,9 +1,9 @@
 
 ## CRAN packages : install.packages('package_name')
 #source("https://bioconductor.org/biocLite.R")
-library(BiocManager)
-options(repos = BiocManager::repositories())
-getOption("repos")
+#library(BiocManager)
+#options(repos = BiocManager::repositories())
+#getOption("repos")
 install_packages = F
 if(install_packages == T){
   source("https://bioconductor.org/biocLite.R")
@@ -61,6 +61,7 @@ source('functions.R')
 source('defaults.R')
 default_file_name = 'current_default.rds'
 default_file_name = 'Defaults Spirometry Clusters by Ratio Alone.rds'
+default_file_name = 'default_190316.rds'
 #library(devtools)
 #source_url("https://raw.githubusercontent.com/naturofix/AMR/Phase_1/Lung/defaults.R")
 g_sheet = T
@@ -85,6 +86,8 @@ save_data = F
 if(read_workspace == T){
   load('workspace.RData')
   source('functions.R')
+  default_file_name = 'default_190316.rds'
+  
   default_df = default_gs[!is.na(default_gs$value),]
   last_updated = paste(' ### SAVED WORKSPACE from ###',last_updated)
   #View(default_df)

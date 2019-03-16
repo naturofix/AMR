@@ -43,7 +43,7 @@ shinyServer(function(input, output, session) {
     print('debug')
     browser()
     print('debug')
-    print('debug')
+    print('debug') 
     print('debug')
     a = ''
   })
@@ -1428,11 +1428,18 @@ shinyServer(function(input, output, session) {
   pFEV_wf_r_post_clustering = reactive({
 
     o_data = pFEV_wf_c()
-    m_data = discrete_cluster_D()$data
-    m_data$MRN = rownames(m_data)
+    #m_data = discrete_cluster_D()$data
+    m_data = change_data_w()
+    #m_data$MRN = rownames(m_data)
 
     data = o_data[o_data$MRN %in% pre_retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
 
     data = change_data_w()
     
@@ -1482,10 +1489,18 @@ shinyServer(function(input, output, session) {
     data = o_data[o_data$MRN %in% retained_patients(),]
     
     #if(r_values$run_clustering == T){
-      m_data = discrete_cluster_D()$data
+      #m_data = discrete_cluster_D()$data
+      m_data = change_data_w()
       m_data$MRN = rownames(m_data)
       #data = o_data[o_data$MRN %in% retained_patients(),]
       data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+      
+      if(r_values$pam_run == 1){
+        data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+      }
+      if(r_values$kmeans_run == 1){
+        data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+      }
     #}
     
     data
@@ -1493,10 +1508,17 @@ shinyServer(function(input, output, session) {
   
   processed_data_l_r = reactive({
     o_data = processed_long
-    m_data = discrete_cluster_D()$data
-    m_data$MRN = rownames(m_data)
+    #m_data = discrete_cluster_D()$data
+    m_data = change_data_w()
+    #m_data$MRN = rownames(m_data)
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     data
   }) 
   
@@ -1508,7 +1530,7 @@ shinyServer(function(input, output, session) {
     #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
 
     data = change_data_w()
-    data
+    data 
     
     }) #### USED THROUGHT APP, actually change_data_w()
 
@@ -1528,6 +1550,13 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
 
     data
   })
@@ -1599,6 +1628,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
@@ -1611,6 +1646,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     
@@ -1621,6 +1662,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
@@ -1641,6 +1688,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     data
@@ -1650,6 +1703,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
@@ -1672,11 +1731,18 @@ shinyServer(function(input, output, session) {
   })
   i_pFEV_sm_d1_f_c_ir_r = reactive({
     o_data = i_pFEV_sm_d1_f_c_ir()
-    m_data = discrete_cluster_D()$data
-    m_data$MRN = rownames(m_data)
+    #m_data = discrete_cluster_D()$data
+    m_data = change_data_w()
+    #m_data$MRN = rownames(m_data)
 
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     
     data
     
@@ -1696,6 +1762,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_wf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data = data[data$Status %in% status_r(),]
     
@@ -1706,6 +1778,12 @@ shinyServer(function(input, output, session) {
     m_data = pFEV_lf_r()
     data = o_data[o_data$MRN %in% retained_patients(),]
     data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    if(r_values$pam_run == 1){
+      data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+    }
+    if(r_values$kmeans_run == 1){
+      data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+    }
     #data$cluster_d1 = m_data$cluster_d1[match(data$MRN,m_data$MRN)]
     #data$time = as.numeric(as.character(data$variable))
     #data = data[data$Status %in% status_r(),]
@@ -1904,7 +1982,7 @@ shinyServer(function(input, output, session) {
   })
   
   change_data_full_w = reactive({ 
-    o_data = change_data()
+    o_data = change_data() 
     c_o_data = o_data
     m_data = discrete_cluster_D()$data
     m_data$MRN = rownames(m_data)
@@ -1927,12 +2005,14 @@ shinyServer(function(input, output, session) {
     
   })
   
-  change_data_w = reactive({
+  change_data_w = reactive({ 
     full_data = change_data_full_w()
     dim(full_data)
     cmd = paste0("data = full_data[full_data$",input$global_factor," %in% input$cluster_select_clusters,]")
     cmd
     eval(parse(text = cmd))
+    dim(data)
+    colnames(data)
     data
     
   })
@@ -1945,7 +2025,7 @@ shinyServer(function(input, output, session) {
     entry = select_matrix()
     entry
     melt_columns = c(colnames(w_data)[colnames(w_data) %in% factor_columns],grep('cluster',colnames(w_data),value = T))
-    #melt_columns
+    melt_columns
     #data = melt_processed_data(processed_data,c(melt_columns),entry)$long_df
     #rownames(processed_data)
     data <- as.data.frame(processed_data[,entry]) %>% 
@@ -1956,6 +2036,7 @@ shinyServer(function(input, output, session) {
       mutate('time' = as.numeric(as.character(variable))) %>% 
       mutate('variable' = as.factor(variable)) #%>% 
       #as_tibble()
+    colnames(data)
     #temp_data
     #View(temp_data)
     #rownames(temp_data) = processed_data$MRN
@@ -5316,7 +5397,7 @@ shinyServer(function(input, output, session) {
           #### __TOTAL ####
           cluster_analysis_total = reactive({
             df = pFEV_wf_r()
-            df_tc = clust_comparison_total(df,'cluster')
+            df_tc = clust_comparison_total(df,input$global_factor)
             df_tc
           })
             
@@ -5355,9 +5436,12 @@ shinyServer(function(input, output, session) {
           
           ### __WITHIN ####
           cluster_analysis_within = reactive({
-            print('cluster_analysis_within')
+            print('cluster_analysis_within') 
             df = pFEV_wf_r()
-            df_tc = clust_comparison_within(df,'cluster',input)
+            dim(df)
+            #df_tc = clust_comparison_within(df,'cluster',input)
+
+            df_tc = clust_comparison_within(df,input$global_factor,input)
             df_tc
           })
         
@@ -5380,7 +5464,7 @@ shinyServer(function(input, output, session) {
           )
           
           cluster_analysis_within_table_selected_df = reactive({
-            df = cluster_analysis_within()
+            df = cluster_analysis_within() 
             df_selected = df[df$Factor %in% c(input$mix_clust_col_fac,input$mix_clust_col_fac_2),]
             df_selected
           })
@@ -5400,7 +5484,7 @@ shinyServer(function(input, output, session) {
           
           
           chisq_within_p = reactive({
-            print('chisq_within')
+            print('chisq_within') 
             data = cluster_analysis_within()
             dim(data)
             factors = unique(data$Factor)
@@ -5424,7 +5508,8 @@ shinyServer(function(input, output, session) {
                 values
                 values = values[!is.na(values)]
                 values
-                if(length(values) > 1){
+                #print(values)
+                if(length(values) > 1 & sum(values) >0){
                   result = tidy(chisq.test(values))
                   result_cols = colnames(result)
                   result_cols
@@ -5805,10 +5890,10 @@ shinyServer(function(input, output, session) {
             m_bos
           })
           
-          bos_factor = reactive({
+          bos_factor = reactive({ 
             #full_data = i_pFEV_wf_r()
             BOS_colnames = BOS_calc_list()$BOS_colnames
-            full_data = BOS_processed_data_w_r()
+            full_data = BOS_processed_data_w_r() 
             print(dim(full_data))
             global_factor = 'Status'
             global_factor = input$global_factor
@@ -6240,9 +6325,14 @@ shinyServer(function(input, output, session) {
         first_and_last
         measured_columns = input$measured_columns
         measured_columns
-        m_data = discrete_cluster_D()$data %>% 
-          mutate('MRN' = rownames(.))
-        m_data
+        #m_data = discrete_cluster_D()$data %>% 
+        #  mutate('MRN' = rownames(.))
+        #m_data
+        #dim(m_data)
+        m_data = change_data_w()
+        dim(m_data)
+        colnames(m_data)
+        as.tbl(m_data)
         if(input$bos_dataset_select == 'full'){
           data = processed_data
           data$cluster = 'All'
@@ -6253,6 +6343,12 @@ shinyServer(function(input, output, session) {
           o_data = processed_data
           data = o_data[o_data$MRN %in% m_data$MRN,]
           data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+          if(r_values$pam_run == 1){
+            data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+          }
+          if(r_values$kmeans_run == 1){
+            data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+          }
           dim(data)
           colnames(data)
         }
@@ -6261,6 +6357,12 @@ shinyServer(function(input, output, session) {
 
           data = o_data[o_data$MRN %in% retained_patients(),]
           data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+          if(r_values$pam_run == 1){
+            data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+          }
+          if(r_values$kmeans_run == 1){
+            data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+          }
           dim(data)
         }
   
@@ -6510,23 +6612,37 @@ shinyServer(function(input, output, session) {
              dim(data)
            }
            if(input$bos_dataset_select == 'cluster'){
-             m_data = discrete_cluster_D()$data %>% 
-               mutate('MRN' = rownames(.))
+             #m_data = discrete_cluster_D()$data %>% 
+            #   mutate('MRN' = rownames(.))
+             m_data = change_data_w()
              m_data
              o_data = processed_data
              data = o_data[o_data$MRN %in% m_data$MRN,]
              data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+             if(r_values$pam_run == 1){
+               data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+             }
+             if(r_values$kmeans_run == 1){
+               data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+             }
              dim(data)
              colnames(data)
            }
            if(input$bos_dataset_select == 'post'){
-             m_data = discrete_cluster_D()$data %>% 
-               mutate('MRN' = rownames(.))
+             #m_data = discrete_cluster_D()$data %>% 
+            #   mutate('MRN' = rownames(.))
+             m_data = change_data_w()
              m_data
              o_data = processed_data
              
              data = o_data[o_data$MRN %in% retained_patients(),]
              data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+             if(r_values$pam_run == 1){
+               data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+             }
+             if(r_values$kmeans_run == 1){
+               data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+             }
              dim(data)
            }
            
@@ -6772,8 +6888,9 @@ shinyServer(function(input, output, session) {
          
          measured_columns = input$measured_columns
          
-         m_data = discrete_cluster_D()$data %>% 
-           mutate('MRN' = rownames(.))
+         #m_data = discrete_cluster_D()$data %>% 
+        #   mutate('MRN' = rownames(.))
+         m_data = change_data_w()
          m_data
          if(input$bos_dataset_select == 'full'){
            data = processed_data
@@ -6785,6 +6902,12 @@ shinyServer(function(input, output, session) {
            o_data = processed_data
            data = o_data[o_data$MRN %in% m_data$MRN,]
            data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+           if(r_values$pam_run == 1){
+             data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+           }
+           if(r_values$kmeans_run == 1){
+             data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+           }
            dim(data)
            colnames(data)
          }
@@ -6793,6 +6916,12 @@ shinyServer(function(input, output, session) {
            
            data = o_data[o_data$MRN %in% retained_patients(),]
            data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+           if(r_values$pam_run == 1){
+             data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+           }
+           if(r_values$kmeans_run == 1){
+             data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
+           }
            dim(data)
          }
          

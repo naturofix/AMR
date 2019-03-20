@@ -1,0 +1,13 @@
+name: Lung_Transplant
+title: Lung_Transplant
+username:
+account: naturofix
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 406125
+bundleId: 1550270
+url: https://naturofix.shinyapps.io/Lung_Transplant/
+when: 1535016240.83838
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: temp

@@ -1,0 +1,13 @@
+name: lung
+title: Lung
+username:
+account: abelsondamr1
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 277916
+bundleId: 1433893
+url: https://abelsondamr1.shinyapps.io/lung/
+when: 1529250942.8661
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rapp.history|clustering_6_new.rds|clustering_7_new.rds|clustering_8_new.rds|clustering.rds|default_gs.rds|full_cohort.rds|global_update.R|pre_retained_patient_list.rds|www/post_exclude_list.rds|www/pre_exclude_list.rds

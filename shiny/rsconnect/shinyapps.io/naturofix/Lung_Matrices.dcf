@@ -1,0 +1,13 @@
+name: Lung_Matrices
+title: Lung_Matrices
+username:
+account: naturofix
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 312259
+bundleId: 1433855
+url: https://naturofix.shinyapps.io/Lung_Matrices/
+when: 1529247071.46758
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .httr-oauth|.Rapp.history|cacert.pem|clustering_6_new.rds|clustering_7_new.rds|clustering_8_new.rds|clustering.rds|default_gs.rds|full_cohort.rds|global_update.R|pre_retained_patient_list.rds|examples/kaplan_meyer_example.R|www/post_exclude_list.rds|www/pre_exclude_list.rds

@@ -3754,7 +3754,7 @@ shinyServer(function(input, output, session) {
       #output$test_text_1 = renderPrint({
       horizontal_stats_full = reactive({
         #print('test')
-        #global_factor = 'HLAType'
+        #global_factor = 'HLAType' 
         pre_cols = factor(c(-6:0))
         post_cols = factor(c(0:6))
         full_data = pFEV_lf_r()
@@ -5436,19 +5436,20 @@ shinyServer(function(input, output, session) {
           
           ### __WITHIN ####
           cluster_analysis_within = reactive({
-            print('cluster_analysis_within') 
+            print('cluster_analysis_within')    
             df = pFEV_wf_r()
             dim(df)
+            clust_col = input$global_factor
             #df_tc = clust_comparison_within(df,'cluster',input)
 
-            df_tc = clust_comparison_within(df,input$global_factor,input)
+            df_tc = clust_comparison_within(df,input$global_factor,input) 
             df_tc
-          })
+          }) 
         
 
           
           output$cluster_analysis_within_table = DT::renderDataTable({
-            df = cluster_analysis_within()
+            df = cluster_analysis_within()  
             colour = 'lightblue'
             col_range = c(3:(2+input$clutree_num)) # find a better way to do this
             col_range = input$cluster_select_clusters

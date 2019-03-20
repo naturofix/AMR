@@ -1773,22 +1773,7 @@ clust_comparison_within = function(df,clust_col,input){
   
   print('clust_comparison_within')
   variable_list = c('df','clust_col')
-  save_test = F
-  if(save_test == T){
-    cmd_list = save_variable_function(variable_list)
-    lapply(cmd_list, function(x) eval(parse(text = x)))
-    save_input_function(input)
-  }
-  read_test = F
-  if(read_test == T){
-    variable_list = c(variable_list,'input')
-    cmd_list = read_variable_function(variable_list)
-    for(cmd in cmd_list){
-      print(cmd)
-      eval(parse(text = cmd))
-    }
-    #input = readRDS('temp/save_input.rds')
-  }
+
   
   num_clusters = unique(df[,clust_col])
   num_clusters = num_clusters[(order(num_clusters))]
@@ -1801,7 +1786,10 @@ clust_comparison_within = function(df,clust_col,input){
   #print(num_clusters)
   df_c = data.frame(cluster = num_clusters)
   rownames(df_c) = df_c$num_clusters
+  dim(df_c)
+  
   #print(dim(df))
+  num_clusters
   for(i in num_clusters){
     df_clust = df[df[,clust_col] == i,]
     dim(df_clust)
@@ -1848,16 +1836,22 @@ clust_comparison_within = function(df,clust_col,input){
       }
     }
   }
-  
+  as.tbl(df_c)
   df_tc = as.data.frame(t(df_c))
   print(colnames(df_tc))
   data = df_tc[,c('Factor','Status',num_clusters)] # DBC --- colnames used in chisq functions
   data = data[c(2:dim(data)[1]),]
-  data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
+  if(length(num_clusters) >1){
+    data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
+  }
+  as.tbl(data)
   data = data[order(data$Factor,data$Status),]
   #data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
-
-  data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1 & sum(x) > 0,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
+  if(length(num_clusters) > 1){
+    data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1 & sum(x) > 0,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
+  }else{
+    data$p.value = NA
+  }
   #p.value
   return(data)
 }
@@ -3790,9 +3784,11 @@ proportion_table_formating_factor = function(df,col_range,colour,mtc = 'none'){
 
 
 proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
-  df[,col_range] = apply(df[,col_range],2,function(x) as.numeric(x))
-  df[is.na(df)] = 0
+  if(length(col_range) > 1){
+    df[,col_range] = apply(df[,col_range],2,function(x) as.numeric(x))
+    df[is.na(df)] = 1
 
+  as.tbl(df)
   #df$p.value.original = df$p.value
   df[,mtc] = p.adjust(df$p.value, method = mtc, n = length(df$p.value))
   df$significant = ifelse(df[,mtc] < 0.05,1,0)
@@ -3816,6 +3812,9 @@ proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
       backgroundColor = styleEqual(c(0, 1), c('white', 'yellow'))) %>%
     
     formatSignif(colnames(select_if(df, is.numeric)),3)
+  }else{
+    df
+  }
   
 }
 

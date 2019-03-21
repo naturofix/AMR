@@ -55,6 +55,8 @@ library(factoextra)
 library(cluster)
 library(pheatmap)
 
+library(mice)
+
 original_theme = theme_get()
 
 source('functions.R')

@@ -188,7 +188,23 @@ shinyUI(fluidPage(
              )),
     
 
-    
+    ### Imputing #####
+    tabPanel('Imputing Data',tabsetPanel(
+      tabPanel('Mice',
+               uiOutput('mice_select_col_ui'),
+               textOutput('mice_test_text'),
+               dataTableOutput('mice_original_data'),
+               tags$h3('md.pattern'),
+               #plotOutput('mice_pattern_plot'),
+               dataTableOutput('mice_pattern_df'),
+               tags$h3('md.pairs'),
+               dataTableOutput('mice_pairs_df'),
+               tags$h3('imp'),
+               verbatimTextOutput('print_imp'),
+               tags$h3('Complete'),
+               dataTableOutput('mice_tot_imp')
+               )
+             )),
     
     #### CLUSTERING #####         
     tabPanel('Clustering',

@@ -7461,8 +7461,48 @@ shinyServer(function(input, output, session) {
   
   output$custom_theme = renderPrint(custom_theme())
   
+  ###### Imputing ####
+  ###_mice####
   
-
+  output$mice_select_col_ui = renderUI({
+    full_data = change_data()
+    selectInput('mice_col','Select Column',
+                colnames(full_data),
+                discrete_columns_4_comparison[c(10:15)],
+                multiple = T)
+  })
+  
+  mice_reactive = reactive({
+    full_data = change_data() 
+    discrete_data = full_data[,input$mice_col] 
+    output$mice_original_data = renderDataTable({
+      discrete_data
+    })
+    mice_pattern = md.pattern(discrete_data)
+    output$mice_pattern_plot = renderPlot({
+      print(mice_pattern)
+    })
+    output$mice_pattern_df = renderDataTable({
+      as.data.frame(mice_pattern)
+    })
+    mice_pairs = md.pairs(discrete_data)
+    output$mice_pairs_df = renderDataTable({
+      as.data.frame(mice_pairs)
+    })
+    
+    imp = mice(discrete_data)
+    
+    output$print_imp = renderPrint({
+      print(imp)
+    })
+    tot_imp = mice::complete(imp)
+    output$mice_tot_imp = renderDataTable({
+      tot_imp
+    })
+    #tot_imp
+    print('testing mice package') 
+    })
+  output$mice_test_text = renderText(mice_reactive())
   #})
 })
 #})

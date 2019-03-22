@@ -4,6 +4,11 @@
 #library(BiocManager)
 #options(repos = BiocManager::repositories())
 #getOption("repos")
+
+library_location = '/usr/lib/R/site-library'
+library_location
+.libPaths(library_location)
+.libPaths()
 install_packages = F
 if(install_packages == T){
   source("https://bioconductor.org/biocLite.R")
@@ -12,7 +17,7 @@ if(install_packages == T){
 
   install.packages(c("shiny","shinythemes", "googlesheets","gplots", "ggplot2","CluMix",
     "Amelia","reshape","imputeTS","pspline","dendextend","plyr","dplyr","survival",
-    "ggfortify","survminer","ggdendro","zoo","broom","ggsignif",'devtools'))
+    "ggfortify","survminer","ggdendro","zoo","broom","ggsignif",'devtools','mice'))
   library(devtools)
   install_version("DT", version = "0.2", repos = "http://cran.us.r-project.org")
   install_github("vqv/ggbiplot")

@@ -192,18 +192,51 @@ shinyUI(fluidPage(
     tabPanel('Imputing Data',tabsetPanel(
       tabPanel('Mice',
                uiOutput('mice_select_col_ui'),
-               textOutput('mice_test_text'),
+               
+        tabsetPanel(
+        tabPanel('Original',                  
+               #uiOutput('mice_select_col_ui'),
                dataTableOutput('mice_original_data'),
+               
+               #textOutput('mice_test_text'),
                tags$h3('md.pattern'),
-               #plotOutput('mice_pattern_plot'),
+               plotOutput('mice_pattern_plot'),
                dataTableOutput('mice_pattern_df'),
                tags$h3('md.pairs'),
-               dataTableOutput('mice_pairs_df'),
-               tags$h3('imp'),
-               verbatimTextOutput('print_imp'),
-               tags$h3('Complete'),
+               dataTableOutput('mice_pairs_df')
+               
+        ),
+        tabPanel('Impute',
+               #tags$h3('mice'),
+               column(3,radioButtons('mice_run','Run Mice',c(F,T),inline = T)),
+               column(3,numericInput('mice_imp_num','Number of Multiple imputations',value = 5)),
+               column(3,selectInput('mice_imp_method','Method',c('NULL','pmm','norm','norm.nob',
+                                                                 'norm.boot','norm.predict',
+                                                                 'mean','2l.norm','2l.pan',
+                                                                 '2lonly.mean','2lonly.norm','2lonly.pmm',
+                                                                 'quadratic','logreg','logreg.boot',
+                                                                 'polyreg','polr','lda','cart',
+                                                                 'rf','ri','sample','fastpmm',''),selected = 'NULL',multiple = T)),
+               column(12,
+                      #verbatimTextOutput('print_imp'),
+                      
+             
+               column(6,
+                      tags$h4('Original Data'),
+                      #dataTableOutput('mice_original_data'),
+                      plotOutput('mice_tile_plot_original')
+                      ),
+               column(6,
+                      tags$h4('Imputed Data'),
+                      #dataTableOutput('mice_tot_imp'),
+                      plotOutput('mice_tile_plot_complete')
+               ),
                dataTableOutput('mice_tot_imp')
+               
                )
+               
+               )
+      ))
              )),
     
     #### CLUSTERING #####         

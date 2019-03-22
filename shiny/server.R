@@ -7469,18 +7469,19 @@ shinyServer(function(input, output, session) {
     selectInput('mice_col','Select Column',
                 colnames(full_data),
                 discrete_columns_4_comparison[c(10:15)],
-                multiple = T)
+                multiple = T,width = 1200)
   })
   
-  mice_reactive = reactive({
+  mice_reactive = reactive({ 
     full_data = change_data() 
-    discrete_data = full_data[,input$mice_col] 
-    output$mice_original_data = renderDataTable({
-      discrete_data
-    })
+    discrete_data = full_data[,c('MRN',input$mice_col)] 
+
     mice_pattern = md.pattern(discrete_data)
+    mice_pattern
+   
+    
     output$mice_pattern_plot = renderPlot({
-      print(mice_pattern)
+      md.pattern(discrete_data)
     })
     output$mice_pattern_df = renderDataTable({
       as.data.frame(mice_pattern)
@@ -7489,19 +7490,79 @@ shinyServer(function(input, output, session) {
     output$mice_pairs_df = renderDataTable({
       as.data.frame(mice_pairs)
     })
+    discrete_data
+  })
+  
+  output$mice_original_data = renderDataTable({
+    mice_reactive()
+  })
+  
+  mice_imp_reactive = reactive({
+    discrete_data = mice_reactive()
+    imp = NULL
+    tot_imp = NULL
+    if(input$mice_run == T){
+      if(input$mice_imp_method == 'NULL'){
+        withProgress(message = 'running mice',{
+          imp = mice(discrete_data, m = input$mice_imp_num)
+        })
+      }else{
+        withProgress(message = 'running mice',{
+          
+          imp = mice(discrete_data, m = input$mice_imp_num, method = input$mice_imp_method)
+        })
+      }
+      tot_imp = mice::complete(imp)
+    }
+    result_list = list(imp = imp,tot_imp = tot_imp)
+    result_list
     
-    imp = mice(discrete_data)
     
-    output$print_imp = renderPrint({
-      print(imp)
-    })
-    tot_imp = mice::complete(imp)
-    output$mice_tot_imp = renderDataTable({
-      tot_imp
-    })
-    #tot_imp
-    print('testing mice package') 
-    })
+  })
+  #mice_reactive = reactive({
+
+      output$print_imp = renderPrint({
+        imp = mice_imp_reactive()$imp
+        if(!is.null(imp)){
+          print(imp)
+        }
+      })
+    
+      output$mice_tot_imp = renderDataTable({
+        imp = mice_imp_reactive()$imp
+        if(!is.null(imp)){
+          tot_imp = mice_imp_reactive()$tot_imp
+          tot_imp
+        }
+      })
+      
+      output$mice_tile_plot_complete= renderPlot({
+        imp = mice_imp_reactive()$imp
+        if(!is.null(imp)){
+          cluster_data = mice_imp_reactive()$tot_imp
+          #cluster_data$MRN = rownames(cluster_data)
+          tile_data = tidyr::gather(cluster_data,variable, value, 2:(dim(cluster_data)[2]))
+          as.tbl(tile_data)
+          
+          ggplot(tile_data) + 
+            geom_tile(aes(x = variable,y = MRN,fill = value))
+        }
+      })
+      
+      output$mice_tile_plot_original = renderPlot({
+        cluster_data = mice_reactive()
+        #cluster_data$MRN = rownames(cluster_data)
+        tile_data = tidyr::gather(cluster_data,variable, value, 2:(dim(cluster_data)[2]))
+        as.tbl(tile_data)
+        
+        ggplot(tile_data) + 
+          geom_tile(aes(x = variable,y = MRN,fill = value))
+      })
+       
+      #tot_imp
+    # }
+    # print('testing mice package') 
+    # })
   output$mice_test_text = renderText(mice_reactive())
   #})
 })

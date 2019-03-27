@@ -1648,6 +1648,7 @@ clustering_function = function(full_data,r_list,d_num,
   cols = c(2:dim(r_data)[2])
   if(data_dist == F){
     cols = c(1)
+    column = 2
     for(column in c(2:dim(r_data)[2])){
       print(column)
       new_cols = c(cols,column)
@@ -1694,13 +1695,25 @@ clustering_function = function(full_data,r_list,d_num,
   }
   (weights = weights_2)
   weights
-
+  length(weights)
 
   dim(data)
   length(weights)
-  data_dist = dist.subjects(data,weights = weights)
+  
+  ### REMOVE continuous NA rows #####
+  #df = data[,c(num_col_list_1,num_col_list_2)]
+  #dim(df)
+  #df_continuous = df[apply(df,1,function(x)any(!is.na(x))),]
+  #dim(df_continuous)
+  
+  
+  #test_data = data[any(is.na(data[,c(num_col_list_1,num_col_list_2)])),]
+  #dim(test_data)
+  (data_dist = dist.subjects(data,weights = weights))
   #d_scale = cmdscale(data_dist)
-  D = dendro.subjects(data_dist,weights = weights)
+  D = CluMix::dendro.subjects(data_dist,weights = weights)
+  #D = dendro.subjects(r_data,weights = weights)
+  
   dendr <- dendro_data(D, type = "rectangle") 
   x <- cutree(D, k = d_num)               # find 'cut' clusters
   x_cluster <- data.frame(label = names(x), cluster = x)
@@ -1752,7 +1765,12 @@ clust_comparison_total = function(df,clust_col){
         df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
         df_c["Status",paste(factor_name,j,sep='_')] = j
         df_c["Data",paste(factor_name,j,sep='_')] = clust_col
-        df_c[i,paste(factor_name,j,sep='_')] = as.numeric(per)
+        #df_c[i,paste(factor_name,j,sep='_')] = as.numeric(per)
+        if(input$discrete_num_per == 'Proportions'){
+          df_c[i,paste(factor_name,j,sep='_')] = as.numeric(per)
+        }else{
+          df_c[i,paste(factor_name,j,sep='_')] = as.numeric(num)
+        }
       }
     }
   }
@@ -1776,17 +1794,19 @@ clust_comparison_within = function(df,clust_col,input){
 
   
   num_clusters = unique(df[,clust_col])
-  num_clusters = num_clusters[(order(num_clusters))]
-  print(num_clusters)
-  num_clusters = input$cluster_select_clusters
-  print(num_clusters)
+  (num_clusters = num_clusters[(order(num_clusters))])
+  #print(num_clusters)
+  (num_clusters = input$cluster_select_clusters)
+  #print(num_clusters)
   #print(num_clusters_s)
   
   
   #print(num_clusters)
   df_c = data.frame(cluster = num_clusters)
   rownames(df_c) = df_c$num_clusters
+  as.tbl(df_c)
   dim(df_c)
+  #df_n = df_c
   
   #print(dim(df))
   num_clusters
@@ -1828,18 +1848,29 @@ clust_comparison_within = function(df,clust_col,input){
         }
         #print(num)
         #print(total)
-        per = round((num/total)*100,2)
+        per = signif((num/total)*100,2)
         df_c["Factor",paste(factor_name,j,sep='_')] = factor_name
         df_c["Status",paste(factor_name,j,sep='_')] = j
         df_c["Data",paste(factor_name,j,sep='_')] = clust_col
-        df_c[i,paste(factor_name,j,sep='_')] = per
+        #df_c["n",paste(factor_name,j,sep='_')] = total
+        
+        if(input$discrete_num_per == 'Proportions'){
+          df_c[i,paste(factor_name,j,sep='_')] = per
+        }else{
+          df_c[i,paste(factor_name,j,sep='_')] = num
+        }
+        #df_n["Factor",paste(factor_name,j,sep='_')] = factor_name
+        #df_n["Status",paste(factor_name,j,sep='_')] = j
+        #df_n["Data",paste(factor_name,j,sep='_')] = clust_col
+        #df_n[i,paste(factor_name,j,sep='_')] = num
       }
     }
   }
   as.tbl(df_c)
+  #as.tbl(df_n)
   df_tc = as.data.frame(t(df_c))
   print(colnames(df_tc))
-  data = df_tc[,c('Factor','Status',num_clusters)] # DBC --- colnames used in chisq functions
+  data = df_tc[,c('Factor','Status', num_clusters)] # DBC --- colnames used in chisq functions
   data = data[c(2:dim(data)[1]),]
   if(length(num_clusters) >1){
     data[,c(3:dim(data)[2])] = apply(data[,c(3:dim(data)[2])], 2, function (x) as.numeric(as.character(x)))
@@ -1849,10 +1880,13 @@ clust_comparison_within = function(df,clust_col,input){
   #data$sum_of_squares = apply(data[, input$cluster_select_clusters], 1, function(x) (sqrt(sum(((x)^2),na.rm =T))))
   if(length(num_clusters) > 1){
     data$p.value = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1 & sum(x) > 0,tidy(chisq.test(x[!is.na(x)]))$p.value,NA))
-  }else{
+    data$method = apply(data[,input$cluster_select_clusters], 1, function(x) ifelse(length(x[!is.na(x)]) > 1 & sum(x) > 0,tidy(chisq.test(x[!is.na(x)]))$method,NA))
+    
+    }else{
     data$p.value = NA
   }
   #p.value
+  as.tbl(data)
   return(data)
 }
 
@@ -3786,7 +3820,9 @@ proportion_table_formating_factor = function(df,col_range,colour,mtc = 'none'){
 proportion_table_formating_within = function(df,col_range,colour,mtc = 'none'){
   if(length(col_range) > 1){
     df[,col_range] = apply(df[,col_range],2,function(x) as.numeric(x))
-    df[is.na(df)] = 1
+    df[,col_range][is.na(df[,col_range])] = 0
+    #df[is.na(df)] = ''
+  
 
   as.tbl(df)
   #df$p.value.original = df$p.value

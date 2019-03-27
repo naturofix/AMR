@@ -89,11 +89,11 @@ shinyUI(fluidPage(
                   
                   column(9,numericInput('missing_pFEV','Minimum percentage of pFEV values',2)),
                   column(3,uiOutput('missing_re_include_ui')),
-                  uiOutput('pre_remove_ui'),
-
+                  column(12,uiOutput('pre_remove_ui')),
+                  column(12,
                   plotOutput('pre_hist',height = 200),
                   
-                  tags$h5(textOutput('status_text')),
+                  tags$h5(textOutput('status_text'))),
                   column(12,radioButtons("status_radio", 'Status',choiceNames = list('Alive',"Dead",'All'),
                                          choiceValues = list("1", "2","0"
                                          ),inline = T,selected = '0')),
@@ -406,12 +406,15 @@ shinyUI(fluidPage(
                  column(12,
                         column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
                         column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
+                        column(3,numericInput('prcomp_z_component','z axis component',min = 0,max = 12,value = 2)),
+                        
                         column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
                         column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
                         
                  ),
                 column(12,
-                       plotOutput('prcomp_pca_biplot_edit')
+                       plotOutput('prcomp_pca_biplot_edit'),
+                       rglwidgetOutput('prcomp_pca_3d_plot')
                        #plotOutput('prcomp_pca_plot',height = 600, width = 800)
                        #dataTableOutput('prcomp_pca_data')
                 )),
@@ -497,14 +500,15 @@ shinyUI(fluidPage(
     
     ##### ANALYSIS ######
     tabPanel('Analysis',
-             column(12,
-                    uiOutput("cluster_select_clusters")),
+             column(10,uiOutput("cluster_select_clusters")),
+             column(2,radioButtons('post_clustering_selection_rb','Reduce by post clustering selection',c(T,F),inline = T),
+                      textOutput('number_of_patients')),
     tabsetPanel(id = 'Analysis', selected = '',
                tabPanel('Discrete Variables',
                         tabsetPanel(id = "Discrete_Variables", selected = 'Cluster',
                           tabPanel('Factor',
-                                   tags$h5('Factor proportions across clusters by factor'),
-                                
+                                   column(6,tags$h5('Factor proportions across clusters by factor')),
+                                  #column(12
                                    tabsetPanel(
                                      tabPanel('Proportions',
                                               
@@ -529,9 +533,11 @@ shinyUI(fluidPage(
                                                 )))
                                    )),
                           tabPanel('Cluster',
-                                   column(9,tags$h5('Factor proportions within clusters')),
-                                   column(3,radioButtons('rm_na_1',"Remove NA's",c(T,F),inline = T)),
+                                   column(6,tags$h5('Factor proportions within clusters')),
+                                   column(3,radioButtons('discrete_num_per','Value Type (Numeric breaks stats)',c('Proportions','Numeric'))),
                                    
+                                   column(3,radioButtons('rm_na_1',"Remove NA's",c(T,F),inline = T)),
+                                   column(12,
                                    tabsetPanel(
                                      tabPanel('Proportions',
                                               tags$h6('Illustrates the proportions of factor criteria within a cluster, Proportions within a cluster column for each factor sum to 100.'),
@@ -567,7 +573,7 @@ shinyUI(fluidPage(
                                                            )
                                                 ))
                                               ))
-                                   ))
+                                   )))
                         )),# chi-squared
                
                # _Continuous Variable #####
@@ -960,6 +966,7 @@ shinyUI(fluidPage(
     
                                                               )
                                                  ))
+                                     
                                       ))
                              #))
                              )
@@ -1120,7 +1127,13 @@ shinyUI(fluidPage(
                         plotOutput('bos3_surv_factor_plot_smooth')
                )
              )
-             )
+             ),
+  tabPanel('Regression',tabsetPanel(
+    tabPanel('Linear Regression',
+             column(6,uiOutput('linear_regression_dependent_ui')),
+             column(6,uiOutput('linear_regression_independent_ui')),
+             column(12,plotOutput('linear_regression_plot')))
+  ))
   
   )), # BOSS
 

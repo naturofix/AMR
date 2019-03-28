@@ -4949,6 +4949,48 @@ shinyServer(function(input, output, session) {
         rglwidget()
       })
       
+      
+      output$pca_3D_ploty = renderPlotly({
+        #data_scores = scores 
+        data.pca = prcomp_pca()$data.pca
+        comp <- data.frame(data.pca$x)
+        scores = comp
+        axis_colour = rgb(135, 135, 135, maxColorValue=255)
+        p3 =  plot_ly(type = "scatter3d", x = scores[,input$prcomp_x_component], y = scores[,input$prcomp_y_component],z = scores[,input$prcomp_z_component],
+                      mode = "markers",
+                      marker = list(symbol = 'circle', color = 'blue', size = 2),
+                      hoverinfo = "text",
+                      text = rownames(scores))
+        
+        
+        p3 
+        # p3 %>% add_markers(x = data_scores[num,1],y= data_scores[num,2], z= data_scores[num,3],
+        #                    mode = 'markers',
+        #                    marker = list(symbol = 'circle', color = 'red', size = 10),
+        #                    #hoverinfo = "text",
+        #                    #text = rownames(data_scores),
+        #                    hoverinfo = "none") %>%
+          
+          
+         #  p3
+         # p3 %>%  layout(
+         #    hovermode = "closest",
+         #    showlegend = F,
+         #    paper_bgcolor = 'transparent',
+         #    plot_bgcolor='transparent',
+         #    scene = list(
+         #      xaxis = list(showspikes = F, showticklabels = F,title = input$prcomp_x_component, spikesides = F, showgrid = T,
+         #                   gridcolor = axis_colour,zeroline = F,showline = F),
+         #      yaxis = list(showspikes = F, showticklabels = F,title = "<br>", spikesides = F, showgrid = T,
+         #                   gridcolor = axis_colour,zeroline = F,showline = F),
+         #      zaxis = list(showspikes = F, showticklabels = F,title = "<br>", spikesides = F, showgrid = T,
+         #                   gridcolor = axis_colour,zeroline = F,showline = F)
+         #    )
+         #  )
+         config(p3, displaylogo = FALSE, collaborate = FALSE,displayModeBar = F,showLink = F)
+      })
+      
+      
       output$prcomp_pca_plot = renderPlot({ 
         full_data = change_data()
         data = prcomp_pca()$data 
@@ -4980,6 +5022,57 @@ shinyServer(function(input, output, session) {
         
         
         })
+      
+      output$prcomp_pca_component_range_ui = renderUI({
+        data.pca = prcomp_pca()$data.pca
+        data <- data.frame(data.pca$x)    
+        dim(data)[2]
+        sliderInput('prcomp_pca_range','Component Range',min = 1,max = dim(data)[2],value = c(1,2),width = 1200,step = 1)
+      })
+      prcomp_pca_kmeans_list = reactive({
+        #data = continuous_cluster_data() 
+        data.pca = prcomp_pca()$data.pca
+        data <- data.frame(data.pca$x[,c(input$prcomp_pca_range[1]:input$prcomp_pca_range[2])])
+        clusters = kmeans((data),
+                          centers = input$kmeans_centers,
+                          iter.max = input$kmeans_iter.max,
+                          nstart = input$kmeans_nstart,
+                          algorithm = input$kmeans_algorithm,
+                          trace = as.logical(input$kmeans_trance))
+        
+        data$cluster_kmeans_pca = clusters$cluster
+        r_values$promp_pca_kmeans_run = 1
+        output$prcomp_pca_kmeans_cluster_df = renderDataTable({
+          data
+        })
+        
+        list(data = data,clusters = clusters)
+      })
+      #ggbiplot(clusters)
+      output$prcomp_pca_kmeans_plot = renderPlot({
+        clusters = prcomp_pca_kmeans_list()$clusters
+        data = prcomp_pca_kmeans_list()$data
+        fviz_cluster(clusters,data,
+                     star.plot = T, 
+                     repel = T, 
+                     ggtheme = theme_minimal()
+        )
+      })
+      
+      prcomp_pca_continuous_cluster_pam = reactive({
+        data.pca = prcomp_pca()$data.pca
+        data <- data.frame(data.pca$x[,c(input$prcomp_pca_range[1]:input$prcomp_pca_range[2])])
+        data.pam = pam(data,input$kmeans_centers,metric = input$prcomp_pca_continuous_pam_metric)
+        r_values$prcomp_pca_pam_run = 1
+        data.pam$clustering
+        
+        data.pam
+      })
+      output$prcomp_pca_pam_plot = renderPlot({
+        fviz_cluster(prcomp_pca_continuous_cluster_pam())
+      })
+      
+      
     
     ### Partitional clustering #####
       output$nbclust_plot = renderPlot({

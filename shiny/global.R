@@ -64,6 +64,7 @@ library(pheatmap)
 
 library(mice)
 library(rgl)
+library(plotly)
 
 original_theme = theme_get()
 
@@ -145,7 +146,7 @@ if(read_workspace == T){
 
   }else{
     clustering = readRDS('www/full_cohort.rds')
-    default_gs = readRDS('www/default_gs.rds')
+    #default_gs = readRDS('www/default_gs.rds')
   }
   
   colnames(clustering)

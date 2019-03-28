@@ -406,7 +406,7 @@ shinyUI(fluidPage(
                  column(12,
                         column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
                         column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
-                        column(3,numericInput('prcomp_z_component','z axis component',min = 0,max = 12,value = 2)),
+                        column(3,numericInput('prcomp_z_component','z axis component',min = 0,max = 12,value = 3)),
                         
                         column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
                         column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
@@ -414,10 +414,32 @@ shinyUI(fluidPage(
                  ),
                 column(12,
                        plotOutput('prcomp_pca_biplot_edit'),
-                       rglwidgetOutput('prcomp_pca_3d_plot')
+                       #rglwidgetOutput('prcomp_pca_3d_plot'),
+                       plotlyOutput('pca_3D_ploty')
                        #plotOutput('prcomp_pca_plot',height = 600, width = 800)
                        #dataTableOutput('prcomp_pca_data')
                 )),
+                #column(12,
+                       tabPanel('Clustering',
+                          uiOutput('prcomp_pca_component_range_ui'),        
+                          tabsetPanel(
+                         
+                         tabPanel('kmeans',
+                                  column(4,selectInput('prcomp_pca_kmeans_algorithm','Algorithm',c("Hartigan-Wong", "Lloyd", "Forgy","MacQueen"))),
+                                  
+                                  column(2,numericInput('prcomp_pca_kmeans_iter.max','Max iterations',value = 10)),
+                                  column(2,numericInput('prcomp_pca_kmeans_nstart','nstart',value = 1)),
+                                  column(2,radioButtons('prcomp_pca_kmeans_trance','trace',c(F,T))),
+                                  column(12,
+                                         plotOutput('prcomp_pca_kmeans_plot'),
+                                         dataTableOutput('prcomp_pca_kmeans_cluster_df'))
+                                  ),
+                         tabPanel('PAM',
+                                  selectInput('prcomp_pca_continuous_pam_metric','Metric',c("euclidean", "manhattan")),
+                                  plotOutput('prcomp_pca_pam_plot'))
+                       )),
+                       
+                       
                 tabPanel('Tables',
                   tabsetPanel(
                     tabPanel('Data', dataTableOutput('prcomp_pca_data')),

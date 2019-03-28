@@ -66,6 +66,10 @@ library(mice)
 #library(rgl)
 library(plotly)
 
+#linear regression
+library(car)
+library(robustbase)
+
 original_theme = theme_get()
 
 source('functions.R')

@@ -3907,8 +3907,8 @@ shinyServer(function(input, output, session) {
         }
         as.tbl(mean_df)
   
-        numbers = as.data.frame(t(c('Number_of_Patients',dim(full_data)[1],as.numeric(table(full_data$cluster)))))
-        (numbers = numbers[,c(1:dim(mean_df)[2])])
+        (numbers = as.data.frame(t(c('Number_of_Patients',dim(full_data)[1],as.numeric(table(full_data[,global_factor]))))))
+        (numbers = numbers[,c(1:dim(mean_df)[2])]) 
       
         colnames(numbers) = colnames(mean_df)
         rownames(numbers) = 'Number_of_Patients'
@@ -7694,24 +7694,100 @@ shinyServer(function(input, output, session) {
   #### linear regression #####
   
   linear_regression_data = reactive({
-    data = discrete_cluster_data()
+    data = change_data_w()
     data
   })
   
-  output$linear_regression_dependent_ui = renderUI({
+  output$linear_regression_y_ui = renderUI({
     data = linear_regression_data()
-    selectInput('linear_regression_dependent','Dependent Variable',colnames(data))
+    selectInput('linear_regression_y','y axis variable',change_data_list()$ccc)
   })
-  output$linear_regression_independent_ui = renderUI({
+  output$linear_regression_x_ui = renderUI({
     data = linear_regression_data()
-    selectInput('linear_regression_independent','Independent Variable',colnames(data))
+    selectInput('linear_regression_x','x axis variable',change_data_list()$ccc,change_data_list()$ccc[2])
   })
   
   output$linear_regression_plot = renderPlot({
     data = linear_regression_data() 
-     plot(data[,input$linear_regression_independent] ~ data[,input$linear_regression_dependent]) 
+    (eq = paste0('`',input$linear_regression_x,"` ~ `",input$linear_regression_y,'`'))
+    (int = linear_regression_model()$coefficient["(Intercept)"])
+    (slope = tryCatch({
+        linear_regression_model()$coefficient[input$linear_regression_y]
+      },
+      error = function(e){
+        linear_regression_model()$coefficient[paste0('`',input$linear_regression_y,'`')]
+        })
+    )
+     
+     plot(as.formula(eq),data = data) 
+     try(abline(int,slope,col = 'blue'))  
      })
   
+  correlation_test = reactive({
+    data = linear_regression_data()
+    method = 'kendal'
+    method = input$linear_regression_cor_method
+    (eq = paste0('~ `',input$linear_regression_x,"` + `",input$linear_regression_y,'`'))
+    
+    if(method == 'auto'){
+      cor_result = cor.test(as.formula(eq), data = data)
+    }else{
+     cor_result = cor.test(as.formula(eq),data = data,method = method)
+    }
+    cor_result
+  })
+  output$correlation_test_table = renderDataTable({
+    tidy(correlation_test())
+  })
+  
+  linear_regression_model = reactive({
+    data = linear_regression_data()
+    #model = lm(data[,input$linear_regression_x] ~ data[,input$linear_regression_y])
+    (eq = paste0('`',input$linear_regression_x,"` ~ `",input$linear_regression_y,'`'))
+    if(input$linear_regression_algorithm == 'lm'){
+     model = lm(as.formula(eq), data = data)
+    }else{
+      model = lmrob(as.formula(eq), data = data)
+      
+    }
+  })
+  
+  output$linear_regression_model_summary = renderPrint({
+    model = linear_regression_model()
+    summary(model)
+  })
+  
+  output$linear_regression_model_table = renderDataTable({
+    if(input$linear_regression_algorithm == 'lm'){
+      tidy(summary(linear_regression_model()))
+    }
+  })
+  
+  output$linear_regression_model_anova_table = renderDataTable({
+    data = linear_regression_data()
+    model = linear_regression_model()
+    if(input$linear_regression_algorithm == 'lm'){
+      anova_result = Anova(model, type = 'II') 
+    }else{
+      (null_eq = paste0('`',input$linear_regression_x,"` ~ 1"))
+      model.null = lmrob(as.formula(null_eq),
+                         data = data)
+      anova_result = anova(model,model.null)
+      
+    }
+    tidy(anova_result)
+  })
+  
+  output$linear_regression_model_hist = renderPlot({
+    model = linear_regression_model() 
+    hist(residuals(model))
+  })
+  
+  output$linear_regression_model_fitted = renderPlot({
+    model = linear_regression_model() 
+    plot(fitted(model),
+         residuals(model))
+  })
 })
 #})
 

@@ -1150,11 +1150,27 @@ shinyUI(fluidPage(
                )
              )
              ),
+  
+  #### REGRESSION #####
   tabPanel('Regression',tabsetPanel(
     tabPanel('Linear Regression',
-             column(6,uiOutput('linear_regression_dependent_ui')),
-             column(6,uiOutput('linear_regression_independent_ui')),
-             column(12,plotOutput('linear_regression_plot')))
+             column(3,uiOutput('linear_regression_y_ui')),
+             column(3,uiOutput('linear_regression_x_ui')),
+             column(3,selectInput('linear_regression_cor_method','Correlation Test Method',c('auto','pearson','kendal','spearman'))),
+             column(3,radioButtons('linear_regression_algorithm','Linear Regression',c('lm','lmrob'),inline = T)),
+             column(12,plotOutput('linear_regression_plot'),
+                    tags$h3('Correlation'),
+                    dataTableOutput('correlation_test_table'),
+                    tags$h3('Linear Regression'),
+                    verbatimTextOutput('linear_regression_model_summary'),
+                    dataTableOutput('linear_regression_model_table'),
+                    tags$h4('ANOVA'),
+                    dataTableOutput('linear_regression_model_anova_table'),
+                    tags$h5('A histogram of residuals from a linear model.  The distribution of these residuals should be approximately normal.'),
+                    plotOutput('linear_regression_model_hist'),
+                    tags$h5('A plot of residuals vs. predicted values.  The residuals should be unbiased and homoscedastic'),
+                    plotOutput('linear_regression_model_fitted')
+                    ))
   ))
   
   )), # BOSS

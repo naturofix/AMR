@@ -404,12 +404,12 @@ shinyUI(fluidPage(
                  
                  
                  column(12,
-                        column(3,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
-                        column(3,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
-                        column(3,numericInput('prcomp_z_component','z axis component',min = 0,max = 12,value = 3)),
+                        column(2,numericInput('prcomp_x_component','x axis component',min = 0,max = 12,value = 1)),
+                        column(2,numericInput('prcomp_y_component','y axis component',min = 0,max = 12,value = 2)),
+                        column(2,numericInput('prcomp_z_component','z axis component',min = 0,max = 12,value = 3)),
                         
-                        column(3,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
-                        column(3,selectInput('prcomp_cluster_col','Colour by',c('none','MixClu',discrete_term_columns,discrete_numeric_columns)))
+                        column(2,numericInput('prcomp_plot_scale','plot_scale',min = 0,max = 12,value = 1)),
+                        column(4,selectInput('prcomp_cluster_col','Colour by',c('none',global_factor_column_list)))
                         
                  ),
                 column(12,

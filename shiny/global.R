@@ -63,7 +63,7 @@ library(cluster)
 library(pheatmap)
 
 library(mice)
-library(rgl)
+#library(rgl)
 library(plotly)
 
 original_theme = theme_get()
@@ -269,6 +269,7 @@ if(read_workspace == T){
   (discrete_term_columns = discrete_term_columns[discrete_term_columns != "Name and notes"])
   (all_continuous_columns = order_columns(all_continuous_columns,colnames(clustering)))
   (all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering))) 
+  global_factor_column_list = c(all_discrete_columns,'cluster','cluster_clumix','cluster_kmeans','cluster_pam','cluster_pca_kmeans','cluster_pca_pam')
   
   
   

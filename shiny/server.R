@@ -308,9 +308,14 @@ shinyServer(function(input, output, session) {
                             add_cluster = 0,
                             add_cluster_fresh = 0,
                             cluster_mapping_fresh = 0,
+                            clumix_run = 0,
                             kmeans_run = 0,
-                            pam_run = 0)
+                            pam_run = 0,
+                            prcomp_pca_pam_run = 0,
+                            prcomp_pca_kmeans_run = 0,
+                            clusters_added = 0)
   
+
   output$r_values_text = renderPrint({
     print(r_values$subset_1)
     print(r_values$select_subset_1)
@@ -1947,27 +1952,87 @@ shinyServer(function(input, output, session) {
     matrix_name
   })
   
-  change_data_full_w = reactive({ 
-    data = change_data() 
-    #o_data = o_data
-    m_data = discrete_cluster_D()$data
-    m_data$MRN = rownames(m_data)
-    c_m_data = m_data
+  
+  add_cluster_list_function = function(name,cluster_list,cluster_data){
+    new_clusters = as.data.frame(continuous_cluster_pam()$clustering)
+    colnames(new_clusters) = c('cluster')
+    new_clusters$MRN = rownames(new_clusters)
+    cluster_data[,name] = as.character(new_clusters$cluster[match(cluster_data$MRN,new_clusters$MRN)])
+    return(cluster_data)
+  }
+  add_cluster_function = function(cluster_data){
+    
+    #m_data = discrete_cluster_D()$data
+    
+    #cluster_data = add_cluster_function(data)
+    #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    #data$cluster
+    
+    if(r_values$clumix_run == 1){
+      m_data = discrete_cluster_D()$data
+      m_data$MRN
+      m_data$MRN = rownames(m_data)
+      
+      unique(m_data$cluster)
+      cluster_data$cluster_clumix = m_data$cluster[match(cluster_data$MRN,m_data$MRN)]
+      cluster_data$cluster = m_data$cluster[match(cluster_data$MRN,m_data$MRN)]
+      unique(cluster_data$cluster)
+      
+    }
+    if(r_values$pam_run == 1){ 
+      (cluster_list = continuous_cluster_pam()$clustering)
+      cluster_data = add_cluster_list_function('cluster_pam',cluster_list,cluster_data)
  
-    data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    data$cluster
-    if(r_values$pam_run == 1){
-      data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
+    }
+    if(r_values$prcomp_pca_pam_run == 1){
+      (cluster_list = prcomp_pca_continuous_cluster_pam()$clustering)
+      cluster_data = add_cluster_list_function('cluster_pca_pam',cluster_list,cluster_data)
+
     }
     if(r_values$kmeans_run == 1){
-      data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
+
+      (cluster_list = kmeans_list()$clusters$cluster)
+      cluster_data = add_cluster_list_function('cluster_kmeans',cluster_list,cluster_data)
+     
+      
     }
+    if(r_values$prcomp_pca_kmeans_run == 1){
+      (cluster_list = prcomp_pca_kmeans_list()$clusters$cluster)
+      cluster_data = add_cluster_list_function('cluster_pca_kmeans',cluster_list,cluster_data)
+    }
+    return(cluster_data)
+  }
+  
+  
+  change_data_full_w = reactive({ 
+    data = change_data()
+    colnames(data)
+    #o_data = o_data
+    #m_data = discrete_cluster_D()$data
+    #m_data$MRN = rownames(m_data)
+    #c_m_data = m_data
+    
+    cluster_data = add_cluster_function(data)
+    r_values$clusters_added = 1
+    colnames(cluster_data)
+    unique(cluster_data$cluster)
+    unique(cluster_data$cluster_pam)
+    unique(cluster_data$cluster_kmeans)
+    #View(cluster_data)
+    #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
+    #data$cluster
+    #if(r_values$pam_run == 1){
+    #  data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
+    #}
+    #if(r_values$kmeans_run == 1){
+    #  data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
+    #}
     
     #data = data[data$cluster %in% input$cluster_select_clusters,]
     #levels(data$cluster) = cluster_levels()
-    dim(data)
-    data_l = data
-    data
+    #dim(data)
+    #data_l = data
+    cluster_data
     
   })
   
@@ -4596,6 +4661,7 @@ shinyServer(function(input, output, session) {
             cluster_data_list = clustering_function(full_data,pre_retained_patients(),input$clutree_num,
                                                   input$fac_weight,input$mix_clust_col_fac,input$fac_weight_2,input$mix_clust_col_fac_2,
                                                   input$num_weight,input$mix_clust_col_num,input$num_weight_2,input$mix_clust_col_num_2)
+            r_values$clumix_run = 1
           #return(list(data_dist = data_dist, D = D, o_data = o_data, data = data, x_cluster = x_cluster, weights = weights))
           #save_cluster_data = save_data
           #save_cluster_data = T
@@ -4818,7 +4884,9 @@ shinyServer(function(input, output, session) {
  
       prcomp_pca = reactive({ 
         data = continuous_cluster_data()
-        data.pca = prcomp(data,center = as.logical(input$prcomp_center_rb))
+        withProgress(message =  'running prcomp',{
+          data.pca = prcomp(data,center = as.logical(input$prcomp_center_rb))
+        })
         
         output$prcomp_patient_numbers = renderText(paste('Number of Individuals = ',dim(data)[1]))
         
@@ -4892,7 +4960,7 @@ shinyServer(function(input, output, session) {
       })
       
       output$prcomp_pca_biplot_edit = renderPlot({
-        full_data = change_data()
+        full_data = change_data_full_w() 
         data = prcomp_pca()$data 
         data.pca = prcomp_pca()$data.pca 
 
@@ -4941,13 +5009,13 @@ shinyServer(function(input, output, session) {
         }
       })
       
-      output$prcomp_pca_3d_plot = renderRglwidget({ 
-        data.pca = prcomp_pca()$data.pca
-        comp <- data.frame(data.pca$x[,1:4])
-        rgl.open(useNULL=T)
-        plot3d(comp$PC1,comp$PC2,comp$PC3)
-        rglwidget()
-      })
+      # output$prcomp_pca_3d_plot = renderRglwidget({ 
+      #   data.pca = prcomp_pca()$data.pca
+      #   comp <- data.frame(data.pca$x[,1:4])
+      #   rgl.open(useNULL=T)
+      #   plot3d(comp$PC1,comp$PC2,comp$PC3)
+      #   rglwidget()
+      # })
       
       
       output$pca_3D_ploty = renderPlotly({
@@ -5041,7 +5109,8 @@ shinyServer(function(input, output, session) {
                           trace = as.logical(input$kmeans_trance))
         
         data$cluster_kmeans_pca = clusters$cluster
-        r_values$promp_pca_kmeans_run = 1
+        #prcomp_pca_kmeans_run
+        r_values$prcomp_pca_kmeans_run = 1
         output$prcomp_pca_kmeans_cluster_df = renderDataTable({
           data
         })
@@ -5116,16 +5185,19 @@ shinyServer(function(input, output, session) {
                      )
         })
       
+
+      
       cluster_tile_data = reactive({
         full_data = change_data()  
         
         cluster_data = full_data[,input$cluster_tile_discrete_variables]
-        if(r_values$pam_run == 1){
-          cluster_data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
-        }
-        if(r_values$kmeans_run == 1){
-          cluster_data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
-        }
+        cluster_data = add_cluster_function(cluster_data)
+        #if(r_values$pam_run == 1){
+        #  cluster_data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
+        #}
+        #if(r_values$kmeans_run == 1){
+        #  cluster_data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
+        #}
         cluster_data
       })
       
@@ -5633,20 +5705,27 @@ shinyServer(function(input, output, session) {
             selectInput("cluster_select_clusters", "Choose Clusters to Use in Analysis", choices = clusters, selected = clusters,multiple = T,width = 1500)
           })
           
+          global_factor_list = reactive({
+            factor_list = c(all_discrete_columns,grep('cluster',colnames(change_data_full_w()),value = T))
+            factor_list
+            
+          })
+          
           output$global_factor_ui = renderUI({
             print('global_factor_ui')
-            #if(!is.null(change_data_l())){
-            #  factor_list = c(all_discrete_columns,grep('cluster',change_data_l(),value = T))
+            #if(r_values$clusters_added == 1){
+            #  (factor_list = c(all_discrete_columns,grep('cluster',colnames(change_data_full_w()),value = T)))
             #}else{
-              factor_list = c(all_discrete_columns,'cluster','kmeans_cluster','pam_cluster')
+            #factor_list = c(all_discrete_columns,'cluster','cluster_clumix','cluster_kmeans','cluster_pam','cluster_pca_kmeans','cluster_pca_pam')
             #}
+            factor_list = global_factor_column_list
             factor_list = factor_list[order(factor_list)]
             selectInput('global_factor','Select Factor',factor_list,multiple = F,selected = 'cluster')
             
           })
           
           output$cluster_select_clusters = renderUI({
-            print('cluster_select_clusters')
+            print('cluster_select_clusters') 
               print('  running')
               factors = tryCatch(unique(change_data_full_w()[,input$global_factor]),error = function(e) {'error'})
               factors

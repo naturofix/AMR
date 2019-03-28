@@ -7788,6 +7788,112 @@ shinyServer(function(input, output, session) {
     plot(fitted(model),
          residuals(model))
   })
+  
+  #### multiple linear regression ####
+   
+  output$mlr_select_vars_ui = renderUI({
+    data = linear_regression_data()
+    selectInput('mlr_vars','Select Multiple Linear Regression Variable',change_data_list()$ccc,multiple = T)
+  })
+  
+  mlr_data = reactive({
+    data = linear_regression_data() %>% select(one_of(input$mlr_vars))
+    as.tbl(data)
+    data
+  })
+  
+  mlr_corr_test = reactive({
+    data = mlr_data()
+    data
+    corr_result = corr.test(data)
+    corr_result
+    })
+  
+
+  output$mlr_pairs_plot = renderPlot({
+    #data = mlr_data()
+    data = linear_regression_data()
+    #as.tbl(data)
+    #(eq = paste('~ ',paste(input$mlr_vars,collapse = ' + ')))
+    #pairs(data = data, as.formula(eq))
+    (eq = paste('~ ',paste(input$mlr_vars,collapse = ' + ')))
+    if(input$mlr_add_global_factor == T){
+      eq = paste(eq,'+',input$global_factor)
+    }
+    output$lmr_pairs_eq = renderText(eq)
+    
+    pairs(as.formula(eq),data)
+  })
+  
+  output$mlr_chart_correlation = renderPlot({
+    data = mlr_data()
+    chart.Correlation(data)
+  })
+  
+  lmr_model = reactive({
+    data = mlr_data()
+    data = linear_regression_data()
+    as.tbl(data)
+    (eq = paste(input$mlr_vars,collapse = ' + '))
+    (eq = paste(input$mlr_vars[1],' ~ ',paste(input$mlr_vars[2:length(input$mlr_vars)],collapse = ' + ')))
+    if(input$mlr_add_global_factor == T){
+      eq = paste(eq,'+',input$global_factor)
+    }
+    output$lmr_eq = renderText(eq)
+    
+    model_result = lm(as.formula(eq),data)
+    model_result
+    })
+  
+  output$lmr_moder_text = renderPrint({
+    summary(lmr_model())
+  })
+  
+  output$slr_continuous_select_ui = renderUI({
+    selectInput('slr_continuous','Select Continous Variable',change_data_list()$ccc)
+  })
+  
+  output$slr_plot = renderPlot({
+    data = linear_regression_data()
+    factor = data[,input$global_factor]
+    factor = as.numeric(as.factor(data[,input$global_factor]))
+    continuous = data[,input$slr_continuous]
+    plot(factor ~ continuous)
+  })
+  
+  slr_model = reactive({
+    data =  linear_regression_data()
+    factor = data[,input$global_factor]
+    factor = as.numeric(as.factor(data[,input$global_factor]))
+    continuous = data[,input$slr_continuous]
+    model = glm(continuous ~ factor)
+    #model = glm(factor ~ continuous)
+    model
+    #summary(model)
+    })
+  output$slr_model_text = renderPrint({
+    slr_model()
+  })
+  output$slr_model_summary_text = renderPrint({
+    summary(slr_model())
+  })
+  
+  slr_model_anova = reactive({
+    model = slr_model()
+    anova_result = Anova(model, type = 'II', test = 'Wald')
+    anova_result
+    })
+  
+  output$slr_model_anova_text = renderPrint({
+    slr_model_anova()
+    })
+  output$slr_model_anova_summary_text = renderPrint({
+    summary(slr_model_anova())
+            })
+  
+  
+  
+  
 })
 #})
 

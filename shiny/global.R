@@ -70,6 +70,9 @@ library(plotly)
 library(car)
 library(robustbase)
 
+library(psych)
+library(PerformanceAnalytics)
+
 original_theme = theme_get()
 
 source('functions.R')
@@ -104,7 +107,7 @@ read_workspace = F
 
 
 if(Sys.info()["nodename"] == 'sg-dell' | Sys.info()["nodename"] == 'SG-Mac.local'){
-  read_workspace = T
+  read_workspace = F
   
 }
 workspace_name = 'backup/workspace_190225.RData'

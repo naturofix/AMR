@@ -1170,7 +1170,29 @@ shinyUI(fluidPage(
                     plotOutput('linear_regression_model_hist'),
                     tags$h5('A plot of residuals vs. predicted values.  The residuals should be unbiased and homoscedastic'),
                     plotOutput('linear_regression_model_fitted')
-                    ))
+                    )),
+    tabPanel('Multiple Linear Regression',
+             column(6,uiOutput('mlr_select_vars_ui')),
+             column(6,radioButtons('mlr_add_global_factor','Add Global Factor',c(F,T))),
+             column(12,
+              textOutput('lmr_pairs_eq'),
+             plotOutput('mlr_pairs_plot'),
+             plotOutput('mlr_chart_correlation'),
+             textOutput('lmr_eq'),
+             verbatimTextOutput('lmr_moder_text')
+             )
+             ),
+    tabPanel('simple logistic regression',
+             uiOutput('slr_continuous_select_ui'),
+             plotOutput('slr_plot'),
+             verbatimTextOutput('slr_model_text'),
+             verbatimTextOutput('slr_model_summary_text'),
+             tags$h4('ANOVA'),
+             verbatimTextOutput('slr_model_anova_text'),
+             verbatimTextOutput('slr_model_anova_summary_text')
+             
+             
+             )
   ))
   
   )), # BOSS

@@ -1966,11 +1966,12 @@ shinyServer(function(input, output, session) {
     
     #cluster_data = add_cluster_function(data)
     #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster
+    #data$cluster 
     
     if(r_values$clumix_run == 1){
       m_data = discrete_cluster_D()$data
-      m_data$MRN
+      dim(m_data)
+      #m_data$MRN
       m_data$MRN = rownames(m_data)
       
       unique(m_data$cluster)
@@ -5188,10 +5189,11 @@ shinyServer(function(input, output, session) {
 
       
       cluster_tile_data = reactive({
-        full_data = change_data()  
+        full_data = change_data_full_w()  
         
-        cluster_data = full_data[,input$cluster_tile_discrete_variables]
-        cluster_data = add_cluster_function(cluster_data)
+        cluster_data = full_data[,c(input$cluster_tile_discrete_variables,grep('cluster',colnames(full_data),value = T))]
+        colnames(cluster_data)
+        #cluster_data = add_cluster_function(cluster_data)
         #if(r_values$pam_run == 1){
         #  cluster_data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
         #}
@@ -5202,7 +5204,7 @@ shinyServer(function(input, output, session) {
       })
       
       output$cluster_tile_order_ui = renderUI({
-        selectInput('cluster_tile_order','Order',colnames(cluster_tile_data()),selected = 'kmeans_cluster')
+        selectInput('cluster_tile_order','Order',colnames(cluster_tile_data()),selected = 'cluster')
       })
         
       output$cluster_tile_plot = renderPlot({
@@ -7849,6 +7851,8 @@ shinyServer(function(input, output, session) {
     summary(lmr_model())
   })
   
+  
+  ##### simple logistic regression ######
   output$slr_continuous_select_ui = renderUI({
     selectInput('slr_continuous','Select Continous Variable',change_data_list()$ccc)
   })
@@ -7892,8 +7896,70 @@ shinyServer(function(input, output, session) {
             })
   
   
+  ##### multiple logistic regression ######
+  output$mlogr_select_vars_ui = renderUI({
+    data = linear_regression_data()
+    selectInput('mlogr_vars','Select Multiple Logistic Regression Variable',c(change_data_list()$ccc,all_discrete_columns),multiple = T)
+  })
   
+  mlogr_model_list = reactive({
+    data = linear_regression_data()[,c(input$mlogr_vars,input$global_factor)]
+    dim(data)
+    data[,input$global_factor] = as.numeric(as.factor(data[,input$global_factor]))
+    data_na = na.omit(data)
+    (eq = paste(input$global_factor,' ~ ',paste(input$mlogr_vars,collapse = ' + ')))
+    #plot(as.formula(eq),data = data_na)
+    output$mlogr_eq = renderText(eq)
+    #if(length(unique(data[,input$global_factor])) == 2){
+    #  model = glm(as.formula(eq),
+    #              data = data_na,
+    #              family = binomial(link="logit")
+    #              )
+    #  
+    #}else{
+      model = glm(as.formula(eq),data = data_na)
+    #}
+    output$mlogr_text = renderPrint(model)
+    output$mlogr_summary_textr = renderPrint(summary(model))
+    #model
+    #summary(model)
+    list(model = model,data = data, data_na = data_na)
+  })
   
+  output$mlogr_chart_correlation = renderPlot({
+    data = mlogr_model_list()$data_na
+    data_num = as.data.frame(apply(data,1,function(x) as.numeric(x)))
+    as.tbl(data_num)
+    rownames(data_num) = colnames(data)
+    head(data_num)
+    dim(data)
+    chart.Correlation(t(data_num))
+  })
+  
+  mlogr_anova = reactive({
+    model = mlogr_model_list()$model
+    anova_result = Anova(model,type = 'II',test = 'Wald')
+    output$mlogr_anova_text = renderPrint(anova_result)
+    anova_result
+  })
+  output$mlogr_anova_summary = renderPrint(summary(mlogr_anova()))
+  
+  output$mlogr_fitted_plot = renderPlot({
+    model = mlogr_model_list()$model
+    plot(fitted(model), rstandard(model))
+  })
+  output$mlogr_predict_plot = renderPlot({
+    model = mlogr_model_list()$model
+    data_na = mlogr_model_list()$data_na
+    data_na$predy = predict(model,type = 'response')
+    (eq = paste0(input$global_factor,' ~ predy'))
+    plot(as.formula(eq),
+         data = data_na,
+         pch = 16,
+         xlab="Predicted probability of 1 response",
+         ylab="Actual response"
+         ) 
+  })
 })
 #})
 

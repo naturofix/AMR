@@ -1192,6 +1192,22 @@ shinyUI(fluidPage(
              verbatimTextOutput('slr_model_anova_summary_text')
              
              
+             ),
+    tabPanel('Multile logistic regression',
+             #selectInput('mlogr_vars','Select Multiple Logistic Regression Variable',c(change_data_list()$ccc,all_discrete_columns),multiple = T)
+             
+            uiOutput('mlogr_select_vars_ui'),
+            plotOutput('mlogr_chart_correlation'),
+            textOutput('mlogr_eq'),
+            tags$h4('glm'),
+            verbatimTextOutput('mlogr_text'),
+            verbatimTextOutput('mlogr_summary_textr'),
+            tags$h4('ANOVA'),
+            verbatimTextOutput('mlogr_anova_text'),
+            verbatimTextOutput('mlogr_anova_summary'),
+            tags$h4('Plot of standardized residuals'),
+            plotOutput('mlogr_fitted_plot'),
+            plotOutput('mlogr_predict_plot')
              )
   ))
   

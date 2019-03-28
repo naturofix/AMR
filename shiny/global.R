@@ -107,7 +107,7 @@ read_workspace = F
 
 
 if(Sys.info()["nodename"] == 'sg-dell' | Sys.info()["nodename"] == 'SG-Mac.local'){
-  read_workspace = F
+  read_workspace = T
   
 }
 workspace_name = 'backup/workspace_190225.RData'

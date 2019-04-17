@@ -1957,7 +1957,7 @@ shinyServer(function(input, output, session) {
     new_clusters = as.data.frame(continuous_cluster_pam()$clustering)
     colnames(new_clusters) = c('cluster')
     new_clusters$MRN = rownames(new_clusters)
-    cluster_data[,name] = as.character(new_clusters$cluster[match(cluster_data$MRN,new_clusters$MRN)])
+    cluster_data[,name] = as.factor(new_clusters$cluster[match(cluster_data$MRN,new_clusters$MRN)])
     return(cluster_data)
   }
   add_cluster_function = function(cluster_data){
@@ -1975,8 +1975,8 @@ shinyServer(function(input, output, session) {
       m_data$MRN = rownames(m_data)
       
       unique(m_data$cluster)
-      cluster_data$cluster_clumix = m_data$cluster[match(cluster_data$MRN,m_data$MRN)]
-      cluster_data$cluster = m_data$cluster[match(cluster_data$MRN,m_data$MRN)]
+      cluster_data$cluster_clumix = as.factor(m_data$cluster[match(cluster_data$MRN,m_data$MRN)])
+      cluster_data$cluster = as.factor(m_data$cluster[match(cluster_data$MRN,m_data$MRN)])
       unique(cluster_data$cluster)
       
     }
@@ -2008,10 +2008,6 @@ shinyServer(function(input, output, session) {
   change_data_full_w = reactive({ 
     data = change_data()
     colnames(data)
-    #o_data = o_data
-    #m_data = discrete_cluster_D()$data
-    #m_data$MRN = rownames(m_data)
-    #c_m_data = m_data
     
     cluster_data = add_cluster_function(data)
     r_values$clusters_added = 1
@@ -2019,20 +2015,6 @@ shinyServer(function(input, output, session) {
     unique(cluster_data$cluster)
     unique(cluster_data$cluster_pam)
     unique(cluster_data$cluster_kmeans)
-    #View(cluster_data)
-    #data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-    #data$cluster
-    #if(r_values$pam_run == 1){
-    #  data$pam_cluster = as.character(continuous_cluster_pam()$clustering)
-    #}
-    #if(r_values$kmeans_run == 1){
-    #  data$kmeans_cluster = as.character(kmeans_list()$clusters$cluster)
-    #}
-    
-    #data = data[data$cluster %in% input$cluster_select_clusters,]
-    #levels(data$cluster) = cluster_levels()
-    #dim(data)
-    #data_l = data
     cluster_data
     
   })
@@ -7700,42 +7682,133 @@ shinyServer(function(input, output, session) {
     data
   })
   
-  output$linear_regression_y_ui = renderUI({
-    data = linear_regression_data()
-    selectInput('linear_regression_y','y axis variable',change_data_list()$ccc)
+  output$linear_regression_first_ui = renderUI({
+    #data = linear_regression_data()
+    selectInput('linear_regression_first','Single Continuous Variable',change_data_list()$ccc,'none')
   })
-  output$linear_regression_x_ui = renderUI({
-    data = linear_regression_data()
-    selectInput('linear_regression_x','x axis variable',change_data_list()$ccc,change_data_list()$ccc[2])
+  output$linear_regression_cont_ui = renderUI({
+    #data = linear_regression_data()
+    selectInput('linear_regression_cont','Additional Continuous Variables',change_data_list()$ccc,multiple = T)
   })
   
-  output$linear_regression_plot = renderPlot({
-    data = linear_regression_data() 
-    (eq = paste0('`',input$linear_regression_x,"` ~ `",input$linear_regression_y,'`'))
-    (int = linear_regression_model()$coefficient["(Intercept)"])
-    (slope = tryCatch({
-        linear_regression_model()$coefficient[input$linear_regression_y]
-      },
-      error = function(e){
-        linear_regression_model()$coefficient[paste0('`',input$linear_regression_y,'`')]
-        })
-    )
+  output$linear_regression_disc_ui = renderUI({
+    #data = linear_regression_data()
+    data = change_data_full_w()
+    cols = colnames(data)
+    selectInput('linear_regression_disc','Additional Discrete Variables',cols,multiple = T)
+  })
+   
+  lm_data = reactive({
+    data = linear_regression_data()
+    lm_data = data.frame(data[,unique(c(input$linear_regression_first,input$linear_regression_cont,input$linear_regression_disc))])
+    as.tbl(lm_data)
+    lm_data
+  })
+  
+  output$lm_plot = renderPlot({
+     plot(lm_data())
+  })
+  
+  output$lm_data_table = renderDataTable({
+    lm_data()
+  })
+  
+  chart_correlation_function = function(data){
+  
+      class_list = sapply(data, class) 
+      class_list
+      if('factor' %in% class_list){
+        (col_names = names(class_list)[class_list == 'factor'])
+        for(col_name in col_names){
+          data[,col_name] = as.numeric(data[,col_name])
+        }
+      }
+      return(data)
      
-     plot(as.formula(eq),data = data) 
-     try(abline(int,slope,col = 'blue'))  
-     })
+    
+  }
+  
+  output$lm_chart_correlation = renderPlot({
+    data = lm_data()
+    if(dim(data)[1] > 1){
+      plot_data = chart_correlation_function(data)
+      chart.Correlation(plot_data)
+    }
+  },height = 800)
+  
+  lm_eq = reactive({
+    (eq = paste0('`',input$linear_regression_first,"` ~ `",paste(input$linear_regression_cont,collapse = '` + `'),'`'))
+    if(!is.null(input$linear_regression_disc)){
+      eq = paste0(eq,' + ',paste(input$linear_regression_disc,collapse = '+ '))
+    }
+    eq
+  })
+  
+  lm_model = reactive({
+    (eq = lm_eq())
+    data = lm_data()
+    if(input$linear_regression_algorithm == 'lm'){
+      (cmd = paste0('model = lm(',eq,',data = data)'))
+      #model = lm(as.formula(eq), data = data)
+    }else{
+      (cmd = paste0('model = lmrob(',eq,',data = data)'))
+    }
+    eval(parse(text = cmd))
+    model
+    summary(model)
+    model
+  })
+  
+  output$lm_model_text = renderPrint({
+    lm_model()
+  })
+  
+  output$lm_model_summary_text = renderPrint({
+    summary(lm_model())
+  })
+  
+  # output$linear_regression_plot = renderPlot({
+  #   model = lm_model()
+  # 
+  #   data = linear_regression_data()  
+  #   #(eq = paste0('',input$linear_regression_first," ~ ",paste(input$linear_regression_cont,collapse = ' ~ ')))
+  #   #if(!is.null(input$linear_regression_disc)){
+  #   #  eq = paste0(eq,' + ',paste(input$linear_regression_disc,collapse = '+ '))
+  #   #}
+  #   #eq
+  #   #input$linear_regression_disc
+  #   #eq
+  #   (int = model$coefficient["(Intercept)"])
+  #   (slope = tryCatch({
+  #       model$coefficient[input$linear_regression_y]
+  #     },
+  #     error = function(e){
+  #       model$coefficient[input$linear_regression_cont]
+  #       })
+  #   )
+  #    
+  #    plot(as.formula(eq),data = data) 
+  #    try(abline(int,slope,col = 'blue'))  
+  #    })
+  
+  
   
   correlation_test = reactive({
     data = linear_regression_data()
     method = 'kendal'
-    method = input$linear_regression_cor_method
-    (eq = paste0('~ `',input$linear_regression_x,"` + `",input$linear_regression_y,'`'))
+    (method = input$linear_regression_cor_method)
+    (eq = lm_eq())
+    #(eq = paste0('~ `',input$linear_regression_x,"` + `",input$linear_regression_y,'`'))
     
     if(method == 'auto'){
+      #(cmd = paste0('cor_result = cor.test(',eq,', data = data)'))
       cor_result = cor.test(as.formula(eq), data = data)
     }else{
-     cor_result = cor.test(as.formula(eq),data = data,method = method)
+      #(cmd = paste0('cor_result = cor.test(',eq,', data = data, method = method)'))
+      cor_result = cor.test(as.formula(eq),data = data,method = method)
     }
+    #print(cmd)
+    #eval(parse(text = cmd))
     cor_result
   })
   output$correlation_test_table = renderDataTable({
@@ -7765,9 +7838,9 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$linear_regression_model_anova_table = renderDataTable({
+  lm_anova = reactive({
     data = linear_regression_data()
-    model = linear_regression_model()
+    model = lm_model()
     if(input$linear_regression_algorithm == 'lm'){
       anova_result = Anova(model, type = 'II') 
     }else{
@@ -7777,16 +7850,28 @@ shinyServer(function(input, output, session) {
       anova_result = anova(model,model.null)
       
     }
-    tidy(anova_result)
+    anova_result
+  })
+  
+  output$lm_anova_text = renderPrint({
+    lm_anova()
+  })
+  
+  output$lm_anova_summary_text = renderPrint({
+    summary(lm_anova())
+  })
+  
+  output$linear_regression_model_anova_table = renderDataTable({
+    tidy(lm_anova())
   })
   
   output$linear_regression_model_hist = renderPlot({
-    model = linear_regression_model() 
+    model = lm_model() 
     hist(residuals(model))
   })
   
   output$linear_regression_model_fitted = renderPlot({
-    model = linear_regression_model() 
+    model = lm_model() 
     plot(fitted(model),
          residuals(model))
   })
@@ -7854,24 +7939,82 @@ shinyServer(function(input, output, session) {
   
   ##### simple logistic regression ######
   output$slr_continuous_select_ui = renderUI({
-    selectInput('slr_continuous','Select Continous Variable',change_data_list()$ccc)
+    #data = linear_regression_data()
+    data = change_data_full_w()
+    class_list = lapply(data,class)
+    names(class_list[class_list == 'numeric'])
+    selectInput('slr_continuous','Select Continous Variable',names(class_list[class_list == 'numeric']),multiple = T)
   })
+  
+  output$slr_factors_select_ui = renderUI({
+    #data = linear_regression_data()
+    data = change_data_full_w()
+    class_list = lapply(data,class)
+    names(class_list[class_list == 'factor'])
+    selectInput('slr_factors','Select Discrete Variables',names(class_list[class_list == 'factor']),multiple = T)
+  })
+  
+  slr_data = reactive({
+    data = linear_regression_data() 
+    
+    colnames(data)
+    slr_data = data.frame(data[,unique(c(input$slr_continuous,input$slr_factors,input$global_factor))])
+    (class_vector = lapply(slr_data,class))
+    (numeric_vector = names(class_vector[class_vector == 'numeric']))
+    #sapply(numeric_vector,function(x) slr_data[,x] = slr_data[,x]/max(slr_data[,x]))
+    #if(input$slr_normalise == T){
+    #  slr_data[,numeric_vector] = apply(as.data.frame(slr_data[,numeric_vector]),2, function(x) x/max(x))
+    #  print(max(slr_data[,numeric_vector]))
+    #}
+    #as.tbl(slr_data)
+    slr_data
+  })
+  
+  output$slr_chart_correlation = renderPlot({
+    data = slr_data()
+    if(dim(data)[1] > 1){
+      plot_data = chart_correlation_function(data)
+      chart.Correlation(plot_data)
+    }
+
+  },height = 800)
+  
+  output$slr_data_table = renderDataTable(slr_data())
   
   output$slr_plot = renderPlot({
-    data = linear_regression_data()
-    factor = data[,input$global_factor]
-    factor = as.numeric(as.factor(data[,input$global_factor]))
-    continuous = data[,input$slr_continuous]
-    plot(factor ~ continuous)
+    plot(slr_data())
   })
   
+  #chart.Correlation(t(slr_data()))
+  
   slr_model = reactive({
-    data =  linear_regression_data()
-    factor = data[,input$global_factor]
-    factor = as.numeric(as.factor(data[,input$global_factor]))
-    continuous = data[,input$slr_continuous]
-    model = glm(continuous ~ factor)
-    #model = glm(factor ~ continuous)
+    slr_data = slr_data()
+    colnames(slr_data)
+    #model = glm(slr_data)
+    #as.formula(eq)
+    add_cols = colnames(slr_data)[colnames(slr_data) != input$global_factor]
+    add_cols
+    #eq = paste(input$global_factor,'~ . ')
+    
+    eq = paste(input$global_factor,'~',paste(add_cols,collapse = ' + '))
+    eq
+    output$slr_model_formula = renderText({
+      eq
+    })
+    model = glm(as.formula(eq), data = slr_data,family = binomial(link = 'logit'))
+    model = glm(as.formula(eq), data = slr_data,family = eval(parse(text = input$slr_family)))
+    cmd = paste0('model = glm(',eq,',family = ',input$slr_family,',data = slr_data)')
+    print(cmd)
+    eval(parse(text = cmd))
+    #model
+    #model = tryCatch({glm(slr_data,family = binomial(link = 'logit'))},
+    #                 error = function(e) {glm(slr_data)}
+    #)
+    #model
+
+    #model = glm(i_pFEV1_ratio_3/max(i_pFEV1_ratio_3) ~ ., family = binomial(link = 'logit'), data = slr_data)
+
+    
     model
     #summary(model)
     })
@@ -7905,7 +8048,7 @@ shinyServer(function(input, output, session) {
   mlogr_model_list = reactive({
     data = linear_regression_data()[,c(input$mlogr_vars,input$global_factor)]
     dim(data)
-    data[,input$global_factor] = as.numeric(as.factor(data[,input$global_factor]))
+    data[,input$global_factor] = as.factor(data[,input$global_factor])
     data_na = na.omit(data)
     (eq = paste(input$global_factor,' ~ ',paste(input$mlogr_vars,collapse = ' + ')))
     #plot(as.formula(eq),data = data_na)
@@ -7917,7 +8060,7 @@ shinyServer(function(input, output, session) {
     #              )
     #  
     #}else{
-      model = glm(as.formula(eq),data = data_na)
+      model = glm(as.formula(eq),data = data_na,family = binomial(link = 'logit'))
     #}
     output$mlogr_text = renderPrint(model)
     output$mlogr_summary_textr = renderPrint(summary(model))

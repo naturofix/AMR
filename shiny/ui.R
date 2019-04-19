@@ -224,12 +224,12 @@ shinyUI(fluidPage(
                column(6,
                       tags$h4('Original Data'),
                       #dataTableOutput('mice_original_data'),
-                      plotOutput('mice_tile_plot_original')
+                      plotOutput('mice_tile_plot_original',height = 1200)
                       ),
                column(6,
                       tags$h4('Imputed Data'),
                       #dataTableOutput('mice_tot_imp'),
-                      plotOutput('mice_tile_plot_complete')
+                      plotOutput('mice_tile_plot_complete',height = 1200)
                ),
                dataTableOutput('mice_tot_imp')
                
@@ -1037,9 +1037,18 @@ shinyUI(fluidPage(
  
                       )
              ),
-             radioButtons('first_and_last','Only do BOS calculation between first and last pFEV1 measurements',c(T,F),selected = F,inline = T),
-             radioButtons('measured_columns','Only do BOS calculation where measurements were taked in any patient, impute missing only for these timepoints',c(T,F),selected = F,inline = T),
-             radioButtons('sequence_correction','Correct BOS assignments so they are always in sequence',c(T,F),selected = F,inline = T),
+             #radioButtons('first_and_last','Only do BOS calculation between first and last pFEV1 measurements',c(T,F),selected = F,inline = T),
+             radioButtons('measured_columns','Ignor imputed timepoints',c(T,F),selected = T,inline = T),
+             radioTooltip('measured_columns', choice = T,
+                  title  = 'Only use the timepoints for which their were measurements in any patients. Ignor all the timpoints that were imputed between the measured timepoints. Still includes the imputed values for individual patients. Use (-24,-16,-8) instead of (-24,-23,-22,...)'),
+             
+             radioButtons('timepoint_range_rb','Timepoint columns',list('All' = 'all','First and last measurement' = 'fl','Original measurements' = 'o'),selected = 'fl',inline = T),
+             radioTooltip('timepoint_range_rb',choice = 'all', title  = 'All the timepoint columns'),
+             radioTooltip('timepoint_range_rb',choice = 'fl', title  = 'Use all imputed timepoints between the first and last measurements per patient'),
+             radioTooltip('timepoint_range_rb',choice = 'o', title  = 'Use only original measurements by patient'),
+             
+             #radioButtons('sequence_correction','Seqence order',c(T,F),selected = F,inline = T),
+             #radioTooltip('sequence_correction',choice = T, title  = 'Ensure the order of BOS1, BOS2 and BOS3 is preserved, the the timpoint at which BOS1 orrurs is after the timepoint of BOS1 >= BOS2, BOS1 = NA. The same applies for BOS2 and BOS3.'),
              
              
              #radioButtons('bos_dataset_select','Select Dataset',list('Data used for Clustering' = 'cluster','After post clustring selection' = 'post'),'cluster', inline = T),
@@ -1059,7 +1068,7 @@ shinyUI(fluidPage(
                         column(3,textInput('BOS_y','x  title','')),
                         column(12,
                         
-                        plotOutput('bos_plots'),
+                        #plotOutput('bos_plots'),
                         
                         textInput('RAS_title','Title','RAS free'),               
                         column(11,plotOutput('RAS_factor_plot')),

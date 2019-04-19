@@ -313,7 +313,8 @@ shinyServer(function(input, output, session) {
                             pam_run = 0,
                             prcomp_pca_pam_run = 0,
                             prcomp_pca_kmeans_run = 0,
-                            clusters_added = 0)
+                            clusters_added = 0,
+                            run_mice = 0)
   
 
   output$r_values_text = renderPrint({
@@ -1954,14 +1955,16 @@ shinyServer(function(input, output, session) {
   
   
   add_cluster_list_function = function(name,cluster_list,cluster_data){
-    new_clusters = as.data.frame(continuous_cluster_pam()$clustering)
+    print('add_cluster_list_function')
+    print(name)
+    new_clusters = as.data.frame(cluster_list)
     colnames(new_clusters) = c('cluster')
     new_clusters$MRN = rownames(new_clusters)
     cluster_data[,name] = as.factor(new_clusters$cluster[match(cluster_data$MRN,new_clusters$MRN)])
     return(cluster_data)
   }
   add_cluster_function = function(cluster_data){
-    
+    print('add_cluster_function')
     #m_data = discrete_cluster_D()$data
     
     #cluster_data = add_cluster_function(data)
@@ -2005,11 +2008,24 @@ shinyServer(function(input, output, session) {
   }
   
   
+  
   change_data_full_w = reactive({ 
     data = change_data()
     colnames(data)
     
     cluster_data = add_cluster_function(data)
+    if(r_values$run_mice == 1){
+      names(mice_imp_reactive())
+      as.tbl(mice_imp_reactive()$tot_imp)
+      imp_table = mice_imp_reactive()$tot_imp
+      colnames(imp_table) = c('MRN',paste0(colnames(imp_table)[colnames(imp_table) != 'MRN'],'_mice'))
+      colnames(imp_table)
+      cluster_data = left_join(cluster_data,imp_table)
+      imp_table = imp_table[imp_table$MRN %in% cluster_data$MRN,]
+      cluster_data = cluster_data[order(cluster_data$MRN),]
+      imp_table = imp_table[order(cluster_data$MRN),]
+      cluster_data = cbind(cluster_data,imp_table)
+    }
     r_values$clusters_added = 1
     colnames(cluster_data)
     unique(cluster_data$cluster)
@@ -4690,12 +4706,12 @@ shinyServer(function(input, output, session) {
               
               cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(cluster_list()[[", i,"]], collapse = ', ')")
               
-              print(cmd)
+              #print(cmd)
               eval(parse(text = cmd))
               cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_name", i)
               cmd = paste0("cluster_data_list$x_cluster[2][cluster_data_list$x_cluster[2] == '",i,"'] = input$cluster_name", i)
               
-              print(cmd)
+              #print(cmd)
               #eval(parse(text = cmd))
               
             }
@@ -6429,6 +6445,8 @@ shinyServer(function(input, output, session) {
         #t2 = input$bos_range[2]
         sequence_correction = input$sequence_correction
         sequence_correction
+        
+        measured_columns_rb = input$measured_columns_rb
         first_and_last = input$first_and_last
         first_and_last
         measured_columns = input$measured_columns
@@ -6691,26 +6709,28 @@ shinyServer(function(input, output, session) {
         list(data = data, BOS_colnames = BOS_colnames)
         
       })
-     BOS_calc_list_loop = reactive({
+     BOS_calc_list_loop = reactive({    
        print('BOS_calc_list_loop')
        if(input$re_run_bos == T){
          shiny = T
          if(shiny == T){
            plot_BOS = F
-           RAS_lower_limit = input$ras_lower
-           RAS_upper_limit = input$ras_upper
-           BOS1_limit = input$bos1_limit
-           BOS2_limit = input$bos2_limit
-           BOS3_limit = input$bos3_limit
-           fall_limit = input$fall
-           history = input$history
-           concurrent = input$concurrent -1
+           (RAS_lower_limit = input$ras_lower)
+           (RAS_upper_limit = input$ras_upper)
+           (BOS1_limit = input$bos1_limit)
+           (BOS2_limit = input$bos2_limit)
+           (BOS3_limit = input$bos3_limit)
+           (fall_limit = input$fall)
+           (history = input$history)
+           (concurrent = input$concurrent -1)
   
-           sequence_correction = input$sequence_correction
+           (sequence_correction = F)
+           #(sequence_correction = input$sequence_correction)
+           
+           #(first_and_last = input$first_and_last)
     
-           first_and_last = input$first_and_last
-    
-           measured_columns = input$measured_columns
+           (measured_columns = input$measured_columns)
+           (timepoint_range = input$timepoint_range_rb)
     
   
            if(input$bos_dataset_select == 'full'){
@@ -6719,49 +6739,41 @@ shinyServer(function(input, output, session) {
              colnames(data)
              dim(data)
            }
-           if(input$bos_dataset_select == 'cluster'){
+           if(input$bos_dataset_select == 'cluster' | input$bos_dataset_select == 'post'){
              #m_data = discrete_cluster_D()$data %>% 
             #   mutate('MRN' = rownames(.))
-             m_data = change_data_w()
-             m_data
-             o_data = processed_data
-             data = o_data[o_data$MRN %in% m_data$MRN,]
-             data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-             if(r_values$pam_run == 1){
-               data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
+             data = change_data_w()
+             # m_data = change_data_w()
+             # dim(m_data)
+             # colnames(m_data$i_pFVC_per_matrix)
+             # 
+             # o_data = processed_data
+             # dim(o_data)
+             # colnames(o_data$i_pFEV_lf_r)
+             # data_r = o_data[o_data$MRN %in% m_data$MRN,]
+             # data_r = data_r[order(data_r$MRN),]
+             # data = cbind(data_r,data.frame(m_data[,c('MRN',grep('cluster',colnames(m_data),value = T))]))
+             # dim(data)
+             # colnames(data)
+             # colnames(data$i_pFEV_lf_r)
+             # data = left_join(data_r,
+             #                  m_data %>% dplyr::select(one_of(c('MRN',grep('cluster',colnames(m_data),value = T)))))
+             # colnames(data)
+   
+           
+             if(input$bos_dataset_select == 'post'){
+               data = data[data$MRN %in% retained_patients(),]
              }
-             if(r_values$kmeans_run == 1){
-               data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
-             }
-             dim(data)
-             colnames(data)
-           }
-           if(input$bos_dataset_select == 'post'){
-             #m_data = discrete_cluster_D()$data %>% 
-            #   mutate('MRN' = rownames(.))
-             m_data = change_data_w()
-             m_data
-             o_data = processed_data
-             
-             data = o_data[o_data$MRN %in% retained_patients(),]
-             data$cluster = m_data$cluster[match(data$MRN,m_data$MRN)]
-             if(r_values$pam_run == 1){
-               data$pam_cluster = m_data$pam_cluster[match(data$MRN,m_data$MRN)]
-             }
-             if(r_values$kmeans_run == 1){
-               data$kmeans_cluster = m_data$kmeans_cluster[match(data$MRN,m_data$MRN)]
-             }
-             dim(data)
            }
            
-           pFEV1_name = input$bos_pFEV1
-           pFEV1_name
-           pRatio_name = input$bos_pRatio
-           pRatio_name
+           (pFEV1_name = input$bos_pFEV1)
+           #pFEV1_name
+           (pRatio_name = input$bos_pRatio)
+           #pRatio_name
   
            if(input$bos_slider_data == T){
-             t1 = input$bos_range[1]
-             t2 = input$bos_range[2]
+             (t1 = input$bos_range[1])
+             (t2 = input$bos_range[2])
            }else{
              df_l = processed_data_l_r()
              t1 = min(df_l$time)
@@ -6796,7 +6808,8 @@ shinyServer(function(input, output, session) {
         }
          t1
          t2
-         
+         RAS_df = data.frame('MRN' = character(0),'RAS' = numeric(0), 'RAS_recovery' = numeric(0) ,BOS1_RAS = numeric(0),BOS2_RAS = numeric(0),BOS3_RAS = numeric(0))
+         RAS_df
          RAS_list = c()
          RAS_recovery_list = c()
          BOS1_RAS_list = c()
@@ -6806,14 +6819,15 @@ shinyServer(function(input, output, session) {
          MRN_select = '4855328d'
          MRN_select = '289266'
          MRN_select = '742758'
-         MRN_select = unique(data$MRN)[1]
+         (MRN_select = unique(data$MRN)[15])
          dim(data)
+         data$MRN[duplicated(data$MRN)]
          for(MRN_select in unique(data$MRN)){
             print(MRN_select)
             x = data[data$MRN == MRN_select,]
             x$MRN
             df = data.frame(
-              time = as.numeric(colnames(x[,pFEV1_name])),
+              time = as.numeric(colnames(data[,pFEV1_name])),
               pFEV = as.numeric(x[,pFEV1_name]),
               pRatio = as.numeric(x[,pRatio_name])
             )
@@ -6823,7 +6837,7 @@ shinyServer(function(input, output, session) {
               df
             }
             
-            if(first_and_last == T){
+            if(timepoint_range == 'fl'){
               original = (x[,'pFEV1_matrix'])
               original
               entry_colnames = as.numeric(colnames(original)[!is.na(original)])
@@ -6833,28 +6847,59 @@ shinyServer(function(input, output, session) {
               df = df[df$time %in% as.numeric(selected_colnames),]
               df
             }
+            if(timepoint_range == 'o'){
+              original = (x[,'pFEV1_matrix'])
+              original
+              entry_colnames = as.numeric(colnames(original)[!is.na(original)])
+              entry_colnames
+              #selected_colnames = seq(min(entry_colnames),max(entry_colnames))
+              #selected_colnames
+              df = df[df$time %in% as.numeric(entry_colnames),]
+              df
+                }
 
             df
-            BOS_limit = BOS2_limit
+            BOS_limit = BOS2_limit 
             t = t1
             #RAS = BOS_RAS_loop('RAS',BOS1_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,df,t1)
             #print(RAS)
+            RAS = NA
             RAS_values = BOS_RAS_loop('RAS',BOS1_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
             #print(as.data.frame(RAS_values))
             RAS = RAS_values$concurrent_time
             RAS
-            BOS1_values = BOS_RAS_loop("BOS1",BOS1_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
-            #print(as.data.frame(BOS1_values))
-            BOS1 = BOS1_values$concurrent_time
-            BOS1
-            BOS2_values = BOS_RAS_loop('BOS2',BOS2_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
-            #print(as.data.frame(BOS2_values))
-            BOS2 = BOS2_values$concurrent_time
-            BOS2
+            
+            BOS3 = NA
             BOS3_values = BOS_RAS_loop('BOS3',BOS3_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
             #print(as.data.frame(BOS3_values))
             BOS3 = BOS3_values$concurrent_time
             BOS3
+            (BOS3 = ifelse(length(BOS3) == 0,NA,BOS3))
+            if(!is.na(BOS3)){
+              df = df[df$time <= BOS3,]
+            }
+            
+            BOS2 = NA
+            if(dim(df)[1] > 1){
+              BOS2_values = BOS_RAS_loop('BOS2',BOS2_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
+              #print(as.data.frame(BOS2_values))
+              BOS2 = BOS2_values$concurrent_time
+              BOS2
+            }
+            (BOS2 = ifelse(length(BOS2) == 0,NA,BOS2))
+            if(!is.na(BOS2)){
+              df = df[df$time <= BOS2,]
+            }
+            
+            BOS1 = NA
+            if(dim(df)[1] > 1){
+              BOS1_values = BOS_RAS_loop("BOS1",BOS1_limit,RAS_lower_limit,RAS_upper_limit,fall_limit,history,concurrent,df)
+              #print(as.data.frame(BOS1_values))
+              BOS1 = BOS1_values$concurrent_time
+              BOS1
+            }
+           
+           
             
             
             if(plot_BOS == T){
@@ -6874,30 +6919,33 @@ shinyServer(function(input, output, session) {
               
             }
             
-            RAS = ifelse(length(RAS) == 0,NA,RAS)
-            BOS1 = ifelse(length(BOS1) == 0,NA,BOS1)
-            BOS2 = ifelse(length(BOS2) == 0,NA,BOS2)
-            BOS3 = ifelse(length(BOS3) == 0,NA,BOS3)
+            (RAS = ifelse(length(RAS) == 0,NA,RAS))
+            (BOS1 = ifelse(length(BOS1) == 0,NA,BOS1))
+           
+            
             
             if(sequence_correction == T){
-              if(is.finite(RAS) & is.finite(BOS1)){
-                if(RAS > BOS1){
-                  BOS1 = NA
+              RAS_correction = F
+              if(RAS_correction == T){
+                if(is.finite(RAS) & is.finite(BOS1)){
+                  if(RAS > BOS1){
+                    BOS1 = NA
+                  }
                 }
-              }
-              if(is.finite(RAS) & is.finite(BOS2)){
-                if(RAS > BOS2){
-                  BOS2 = NA
+                if(is.finite(RAS) & is.finite(BOS2)){
+                  if(RAS > BOS2){
+                    BOS2 = NA
+                  }
                 }
-              }
-              if(is.finite(RAS) & is.finite(BOS3)){
-                if(RAS > BOS3){
-                  BOS3 = NA
+                if(is.finite(RAS) & is.finite(BOS3)){
+                  if(RAS > BOS3){
+                    BOS3 = NA
+                  }
                 }
               }
               if(is.finite(BOS1) & is.finite(BOS2)){
                 if(BOS1 > BOS2){
-                  BOS2 = NA
+                  BOS1 = NA
                 }
                 if(BOS1 == BOS2){
                   BOS1 = NA
@@ -6905,7 +6953,7 @@ shinyServer(function(input, output, session) {
               }
               if(is.finite(BOS1) & is.finite(BOS3)){
                 if(BOS1 > BOS3){
-                  BOS3 = NA
+                  BOS1 = NA
                 }
                 if(BOS1 == BOS3){
                   BOS1 = NA
@@ -6913,7 +6961,7 @@ shinyServer(function(input, output, session) {
               }
               if(is.finite(BOS2) & is.finite(BOS3)){
                 if(BOS2 > BOS3){
-                  BOS3 = NA
+                  BOS2 = NA
                 }
                 if(BOS2 == BOS3){
                   BOS2 = NA
@@ -6926,7 +6974,10 @@ shinyServer(function(input, output, session) {
             }else{
               RAS_recovery = NA
             }
-            
+            RAS_df = RAS_df %>% add_row(MRN = MRN_select, 
+                                        RAS = RAS, RAS_recovery = RAS_recovery, 
+                                        BOS1_RAS = BOS1, BOS2_RAS = BOS2, BOS3_RAS = BOS3
+                                        )
             RAS_list = c(RAS_list,RAS)
             RAS_list
             RAS_recovery_list = c(RAS_recovery_list,RAS_recovery)
@@ -6937,12 +6988,18 @@ shinyServer(function(input, output, session) {
             BOS3_RAS_list = c(BOS3_RAS_list,BOS3)
             BOS3_RAS_list
          }
-         RAS_list
-         data$RAS = RAS_list
-         data$RAS_recovery = RAS_recovery_list
-         data$BOS1_RAS = BOS1_RAS_list
-         data$BOS2_RAS = BOS2_RAS_list
-         data$BOS3_RAS = BOS3_RAS_list
+         print("RAS_df")
+         RAS_df
+         data = left_join(data,RAS_df)
+         #as.tbl(RAS_df)
+         #dim(data)[1]
+         #RAS_list
+         #length(RAS_list)
+         #data$RAS = RAS_list
+         #data$RAS_recovery = RAS_recovery_list
+         #data$BOS1_RAS = BOS1_RAS_list
+         #data$BOS2_RAS = BOS2_RAS_list
+         #data$BOS3_RAS = BOS3_RAS_list
          #print('test')
          #print('test')
          data$RAS_50 = data$RAS
@@ -6966,6 +7023,7 @@ shinyServer(function(input, output, session) {
          #data = data[data$cluster %in% input$cluster_select_clusters,]
          if(input$bos_dataset_select != 'full'){
            cmd = paste0("data = data[data$",input$global_factor," %in% input$cluster_select_clusters,]")
+           print(cmd)
            eval(parse(text = cmd))
          }
         dim(data)
@@ -7575,12 +7633,15 @@ shinyServer(function(input, output, session) {
     full_data = change_data()
     selectInput('mice_col','Select Column',
                 colnames(full_data),
-                discrete_columns_4_comparison[c(10:15)],
+                #discrete_columns_4_comparison[c(10:15)],
+                c(d_list()$values$mix_clust_col_fac,d_list()$values$mix_clust_col_fac_2),
                 multiple = T,width = 1200)
   })
   
   mice_reactive = reactive({ 
-    full_data = change_data() 
+    #full_data = change_data()
+    #full_data = change_data_list()$data
+    full_data = pFEV_wf_c()
     discrete_data = full_data[,c('MRN',input$mice_col)] 
 
     mice_pattern = md.pattern(discrete_data)
@@ -7620,6 +7681,7 @@ shinyServer(function(input, output, session) {
         })
       }
       tot_imp = mice::complete(imp)
+      r_values$run_mice = 1
     }
     result_list = list(imp = imp,tot_imp = tot_imp)
     result_list
@@ -7652,9 +7714,10 @@ shinyServer(function(input, output, session) {
           as.tbl(tile_data)
           
           ggplot(tile_data) + 
-            geom_tile(aes(x = variable,y = MRN,fill = value))
+            geom_tile(aes(x = variable,y = MRN,fill = value)) + 
+            theme(axis.text.x = element_text(angle = 90))
         }
-      })
+      },height = 1200)
       
       output$mice_tile_plot_original = renderPlot({
         cluster_data = mice_reactive()
@@ -7663,8 +7726,9 @@ shinyServer(function(input, output, session) {
         as.tbl(tile_data)
         
         ggplot(tile_data) + 
-          geom_tile(aes(x = variable,y = MRN,fill = value))
-      })
+          geom_tile(aes(x = variable,y = MRN,fill = value)) + 
+          theme(axis.text.x = element_text(angle = 90))
+      },height = 1200)
        
       #tot_imp
     # }

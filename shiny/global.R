@@ -108,9 +108,9 @@ read_workspace = F
 
 if(Sys.info()["nodename"] == 'sg-dell' | Sys.info()["nodename"] == 'SG-Mac.local'){
   read_workspace = T
-  
+  #save_workspace = F
 }
-workspace_name = 'backup/workspace_190225.RData'
+workspace_name = 'backup/workspace_190420.RData'
 
 if(read_workspace == T){
   show_debug = F
@@ -162,7 +162,7 @@ if(read_workspace == T){
 
 
   #### _Define column names ####
-  (colnames(clustering) = clustering[1,])
+  (colnames(clustering) = gsub(' ','_',clustering[1,]))
 
   (variable_type = clustering[2,])
 
@@ -273,7 +273,7 @@ if(read_workspace == T){
   
   (discrete_numeric_columns = order_columns(discrete_numeric_columns,colnames(clustering)))
   (discrete_term_columns = order_columns(discrete_term_columns,colnames(clustering)))
-  (discrete_term_columns = discrete_term_columns[discrete_term_columns != "Name and notes"])
+  (discrete_term_columns = discrete_term_columns[discrete_term_columns != "Name_and_notes"])
   (all_continuous_columns = order_columns(all_continuous_columns,colnames(clustering)))
   (all_discrete_columns = order_columns(all_discrete_columns,colnames(clustering))) 
   global_factor_column_list = c(all_discrete_columns,'cluster','cluster_clumix','cluster_kmeans','cluster_pam','cluster_pca_kmeans','cluster_pca_pam')
@@ -342,7 +342,7 @@ if(read_workspace == T){
   clustering$pRatio_matrix = pRatio_matrix
   rownames(clustering$pRatio_matrix) = rownames(clustering)
   
-  if(length(missing_columns) == 0){
+  if(length(missing_columns) <= 1){
   
     
     
@@ -1104,28 +1104,31 @@ if(read_workspace == T){
   factor_columns
   #factor_columns = colnames(processed_data)[!colnames(processed_data) %in% matrix_column_list]
   #factor_columns
-  for(entry in matrix_column_list){
-    print(entry)
-    matrix_column = entry
-    
-    temp = melt_processed_data(processed_data,factor_columns,entry)$long_df
-    col_names = colnames(temp)
-    entry_name = gsub('_matrix','',entry)
-    entry_name
-    #col_names = gsub('value',entry_name,col_names)
-    #col_names
-    #colnames(temp) = col_names
-    
-    if(dim(processed_long)[1] == 0){
-      processed_long = temp[,!names(temp) == 'value']
+  processed_long = F
+  if(processed_long == T){
+    for(entry in matrix_column_list){
+      print(entry)
+      matrix_column = entry
+      
+      temp = melt_processed_data(processed_data,factor_columns,entry)$long_df
+      col_names = colnames(temp)
+      entry_name = gsub('_matrix','',entry)
+      entry_name
+      #col_names = gsub('value',entry_name,col_names)
+      #col_names
+      #colnames(temp) = col_names
+      
+      if(dim(processed_long)[1] == 0){
+        processed_long = temp[,!names(temp) == 'value']
+      }
+      #cmd = paste0('processed_long$',entry_name,' = temp$value')
+      
+      cmd = paste0('processed_long$',entry_name,' = temp$value[match(processed_long$time, temp$time) & match(processed_long$MRN, temp$MRN)]')
+      
+      print(cmd)
+      eval(parse(text = cmd))
+      
     }
-    #cmd = paste0('processed_long$',entry_name,' = temp$value')
-    
-    cmd = paste0('processed_long$',entry_name,' = temp$value[match(processed_long$time, temp$time) & match(processed_long$MRN, temp$MRN)]')
-    
-    print(cmd)
-    eval(parse(text = cmd))
-    
   }
   
   #View(processed_long)
@@ -1135,6 +1138,6 @@ if(read_workspace == T){
     print('save workspace')
     save.image(workspace_name)
   }
-  
+  colnames(processed_data) = gsub(' ','_',colnames(processed_data))
 }
 

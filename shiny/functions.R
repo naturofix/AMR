@@ -2049,14 +2049,14 @@ dendrogram_plot_function = function(dendr,x_cluster,cut,cluster_levels,cluster_p
       cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
       cmd = paste0("data$cluster[data$cluster == '",i,"'] = paste(cluster_list[[", i,"]], collapse = ', ')")
       
-      print(cmd)
+      #print(cmd)
       eval(parse(text = cmd))
       #cmd = paste0("dendr$labels$cluster[dendr$labels$cluster == '",i,"'] = 'cluster_", i,"'")
       
       cmd = paste0("dendr$label$cluster[dendr$labels$cluster == '",i,"'] = paste(input$cluster_name_", i,", collapse = ', ')")
       cmd = paste0("dendr$label$cluster[dendr$labels$cluster == '",i,"'] = paste(cluster_list[[", i,"]], collapse = ', ')")
       
-      print(cmd)
+      #print(cmd)
       eval(parse(text = cmd))
     }
     
@@ -2254,7 +2254,7 @@ BOS_RAS_loop = function(test,BOS_limit,RAS_lower_limit,RAS_upper_limit,fall_limi
   #print(t)
   BOS_limit
   dim(df)
-  t = min(df$time,as.na = T)
+  (t = min(df$time,na.rm = T))
   if(test == 'RAS'){
     v_list = df %>% filter(pRatio >= RAS_lower_limit & pFEV < BOS_limit) %>% pull(time)
     v_list

@@ -1001,7 +1001,7 @@ shinyUI(fluidPage(
 
     ####### BOSS #######
     tabPanel('BOS', id = 'BOS',
-             column(6,radioButtons('ras_new','RAS NEW DEFINITION',c(F,T),selected = T,inline = T)),
+             #column(6,radioButtons('ras_new','RAS NEW DEFINITION',c(F,T),selected = T,inline = T)),
              column(6,radioButtons('re_run_bos','Run BOS calculations',c(F,T), inline = T)),
              
              column(12,radioButtons('bos_dataset_select','Select Dataset',list('Full Dataset'= 'full', 'Data used for Clustering' = 'cluster','After post clustring selection' = 'post'),selected = 'cluster', inline = T),
@@ -1047,8 +1047,9 @@ shinyUI(fluidPage(
              radioTooltip('timepoint_range_rb',choice = 'fl', title  = 'Use all imputed timepoints between the first and last measurements per patient'),
              radioTooltip('timepoint_range_rb',choice = 'o', title  = 'Use only original measurements by patient'),
              
-             #radioButtons('sequence_correction','Seqence order',c(T,F),selected = F,inline = T),
-             #radioTooltip('sequence_correction',choice = T, title  = 'Ensure the order of BOS1, BOS2 and BOS3 is preserved, the the timpoint at which BOS1 orrurs is after the timepoint of BOS1 >= BOS2, BOS1 = NA. The same applies for BOS2 and BOS3.'),
+             radioButtons('sequence_correction','Seqence order',c('none','simple','df'),selected = 'none',inline = T),
+             radioTooltip('sequence_correction',choice = 'simple', title  = 'Ensure the order of BOS1, BOS2 and BOS3 is preserved, the the timpoint at which BOS1 orrurs is after the timepoint of BOS1 >= BOS2, BOS1 = NA. The same applies for BOS2 and BOS3.'),
+             radioTooltip('sequence_correction',choice = 'simple', title  = 'Ensure the order of BOS1, BOS2 and BOS3 is preserved. Prevent any BOS1 assignment after BOS2, but removing timpoints after BOS2 from the data used for BOS1 calculation.'),
              
              
              #radioButtons('bos_dataset_select','Select Dataset',list('Data used for Clustering' = 'cluster','After post clustring selection' = 'post'),'cluster', inline = T),

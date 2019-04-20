@@ -1104,8 +1104,9 @@ if(read_workspace == T){
   factor_columns
   #factor_columns = colnames(processed_data)[!colnames(processed_data) %in% matrix_column_list]
   #factor_columns
-  processed_long = F
-  if(processed_long == T){
+  run_processed_long = T
+  if(run_processed_long == T){
+    entry = matrix_column_list[1]
     for(entry in matrix_column_list){
       print(entry)
       matrix_column = entry

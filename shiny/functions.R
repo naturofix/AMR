@@ -245,7 +245,8 @@ melt_processed_data = function(processed_data,factor_columns,matrix_column){
   long_df = melt(wide_df,id.vars = factor_columns,measure_vars = p_cols)
   #head(long_df)
   long_df$time = as.numeric(as.character(long_df$variable))
-  long_df[,all_discrete_columns] = apply(long_df[,all_discrete_columns],2,function(x) factor(x))
+  discrete_columns = all_discrete_columns[all_discrete_columns %in% factor_columns]
+  long_df[,discrete_columns] = apply(long_df[,discrete_columns],2,function(x) factor(x))
   data_list = list(wide_df = wide_df,long_df = long_df)
   return(data_list)
 }

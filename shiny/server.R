@@ -6016,7 +6016,7 @@ shinyServer(function(input, output, session) {
           
           bos_factor = reactive({ 
             #full_data = i_pFEV_wf_r()
-            BOS_colnames = BOS_calc_list()$BOS_colnames
+            BOS_colnames = BOS_calc_list_loop()$BOS_colnames
             full_data = BOS_processed_data_w_r() 
             print(dim(full_data))
             global_factor = 'Status'
@@ -6088,7 +6088,7 @@ shinyServer(function(input, output, session) {
           
           output$BOS_plot_ui = renderUI({
             print('BOS_plot_ui')
-            BOS_colnames = BOS_calc_list()$BOS_colnames
+            BOS_colnames = BOS_calc_list_loop()$BOS_colnames
             renderPlots_BOS(BOS_colnames, bos_factor(),input,output,prefix = 'BOS')
             makePlotContainers(BOS_colnames, prefix="BOS") 
             
@@ -6725,7 +6725,7 @@ shinyServer(function(input, output, session) {
            (concurrent = input$concurrent -1)
   
            (sequence_correction = F)
-           #(sequence_correction = input$sequence_correction)
+           (sequence_correction = input$sequence_correction)
            
            #(first_and_last = input$first_and_last)
     
@@ -6875,8 +6875,10 @@ shinyServer(function(input, output, session) {
             BOS3 = BOS3_values$concurrent_time
             BOS3
             (BOS3 = ifelse(length(BOS3) == 0,NA,BOS3))
-            if(!is.na(BOS3)){
-              df = df[df$time <= BOS3,]
+            if(sequence_correction == 'df'){
+              if(!is.na(BOS3)){
+                df = df[df$time < BOS3-1,]
+              }
             }
             
             BOS2 = NA
@@ -6887,8 +6889,10 @@ shinyServer(function(input, output, session) {
               BOS2
             }
             (BOS2 = ifelse(length(BOS2) == 0,NA,BOS2))
-            if(!is.na(BOS2)){
-              df = df[df$time <= BOS2,]
+            if(sequence_correction == 'df'){
+              if(!is.na(BOS2)){
+                df = df[df$time < BOS2-1,]
+              }
             }
             
             BOS1 = NA
@@ -6900,7 +6904,8 @@ shinyServer(function(input, output, session) {
             }
            
            
-            
+            (RAS = ifelse(length(RAS) == 0,NA,RAS))
+            (BOS1 = ifelse(length(BOS1) == 0,NA,BOS1))
             
             if(plot_BOS == T){
               p = ggplot(df) + 
@@ -6919,12 +6924,11 @@ shinyServer(function(input, output, session) {
               
             }
             
-            (RAS = ifelse(length(RAS) == 0,NA,RAS))
-            (BOS1 = ifelse(length(BOS1) == 0,NA,BOS1))
+            
            
             
             
-            if(sequence_correction == T){
+            if(sequence_correction == 'simple'){
               RAS_correction = F
               if(RAS_correction == T){
                 if(is.finite(RAS) & is.finite(BOS1)){
@@ -6990,7 +6994,8 @@ shinyServer(function(input, output, session) {
          }
          print("RAS_df")
          RAS_df
-         data = left_join(data,RAS_df)
+         temp_data = left_join(data,RAS_df)
+         data = cbind(data,temp_data[,colnames(RAS_df)[colnames(RAS_df) != 'MRN']])
          #as.tbl(RAS_df)
          #dim(data)[1]
          #RAS_list
@@ -7290,10 +7295,10 @@ shinyServer(function(input, output, session) {
      })
      
     output$bos_data_length_text = renderText({
-      print(paste0('Number of Patients = ',dim(BOS_calc_list()$data)[1]))
+      print(paste0('Number of Patients = ',dim(BOS_calc_list_loop()$data)[1]))
     })
      
-    BOS_processed_data_w_r = reactive({BOS_calc_list()$data})
+    BOS_processed_data_w_r = reactive({BOS_calc_list_loop()$data})
     
     BOS_processed_data_l_r = reactive({
       print('BOS_processed_data_l_r')
@@ -7369,7 +7374,7 @@ shinyServer(function(input, output, session) {
     output$BOS_data_recalc_table = renderDataTable({
       BOS_columns = c('RAS','BOS1_RAS','BOS2_RAS','BOS3_RAS')
       
-      BOS_processed_data_w_r()[,BOS_columns]
+      BOS_processed_data_w_r()[,c('MRN',BOS_columns)]
       })
     
     
